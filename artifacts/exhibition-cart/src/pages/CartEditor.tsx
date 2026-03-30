@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { useItems } from "@/hooks/use-items";
 import { Navbar } from "@/components/layout/Navbar";
 import { Badge } from "@/components/ui/Badge";
@@ -11,8 +11,10 @@ import {
   X,
   ShoppingCart,
   RotateCcw,
+  Download,
+  FileText,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import type { Item } from "@/lib/supabase";
 
 type SlotId =
@@ -94,6 +96,82 @@ export default function CartEditor() {
     setSelectedItem(null);
     setActiveSlot(null);
   };
+
+  const cartRef = useRef<HTMLDivElement>(null);
+  const [exporting, setExporting] = useState<"png" | "pdf" | null>(null);
+
+  const exportPng = useCallback(async () => {
+    if (!cartRef.current) return;
+    setExporting("png");
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(cartRef.current, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+      const link = document.createElement("a");
+      link.download = `展示カート_${new Date().toISOString().slice(0, 10)}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } catch (e) {
+      console.error("PNG export error:", e);
+      alert("PNGの書き出しに失敗しました。");
+    } finally {
+      setExporting(null);
+    }
+  }, []);
+
+  const exportPdf = useCallback(async () => {
+    if (!cartRef.current) return;
+    setExporting("pdf");
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const { jsPDF } = await import("jspdf");
+
+      const canvas = await html2canvas(cartRef.current, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const imgW = pageW - margin * 2;
+      const imgH = (canvas.height * imgW) / canvas.width;
+
+      const yOffset = imgH < pageH - margin * 2 ? (pageH - imgH) / 2 : margin;
+
+      pdf.setFontSize(11);
+      pdf.setTextColor(80, 80, 80);
+      pdf.text("展示カートレイアウト", pageW / 2, margin - 2, { align: "center" });
+      pdf.addImage(imgData, "PNG", margin, yOffset, imgW, imgH);
+
+      const dateStr = new Date().toLocaleDateString("ja-JP");
+      pdf.setFontSize(8);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text(dateStr, pageW - margin, pageH - 5, { align: "right" });
+
+      pdf.save(`展示カート_${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch (e) {
+      console.error("PDF export error:", e);
+      alert("PDFの書き出しに失敗しました。");
+    } finally {
+      setExporting(null);
+    }
+  }, []);
 
   const filledCount = Object.values(layout).filter(Boolean).length;
 
@@ -236,13 +314,43 @@ export default function CartEditor() {
                 {filledCount} / 7 枠
               </span>
             </div>
-            <button
-              onClick={resetLayout}
-              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 hover:bg-white px-3 py-1.5 rounded-lg border border-transparent hover:border-slate-200 transition-all"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              リセット
-            </button>
+            <div className="flex items-center gap-2">
+              {/* PNG export */}
+              <button
+                onClick={exportPng}
+                disabled={!!exporting}
+                className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-white bg-emerald-50 hover:bg-emerald-500 px-3 py-1.5 rounded-lg border border-emerald-200 hover:border-emerald-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {exporting === "png" ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5" />
+                )}
+                PNG保存
+              </button>
+              {/* PDF export */}
+              <button
+                onClick={exportPdf}
+                disabled={!!exporting}
+                className="flex items-center gap-1.5 text-xs font-medium text-blue-700 hover:text-white bg-blue-50 hover:bg-blue-500 px-3 py-1.5 rounded-lg border border-blue-200 hover:border-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {exporting === "pdf" ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <FileText className="w-3.5 h-3.5" />
+                )}
+                PDF保存
+              </button>
+              {/* Reset */}
+              <button
+                onClick={resetLayout}
+                disabled={!!exporting}
+                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 hover:bg-white px-3 py-1.5 rounded-lg border border-transparent hover:border-slate-200 transition-all disabled:opacity-50"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                リセット
+              </button>
+            </div>
           </div>
 
           {/* Hint when no selection */}
@@ -255,7 +363,7 @@ export default function CartEditor() {
           )}
 
           {/* Cart Frame */}
-          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+          <div ref={cartRef} className="w-full max-w-2xl bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
             {/* Cart Header */}
             <div className="bg-slate-700 text-white px-5 py-2.5 flex items-center gap-2">
               <ShoppingCart className="w-4 h-4" />

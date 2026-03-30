@@ -77,6 +77,8 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.100.1",
     "@types/uuid": "^11.0.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "react-dropzone": "^15.0.0",
     "uuid": "^13.0.0"
   }
