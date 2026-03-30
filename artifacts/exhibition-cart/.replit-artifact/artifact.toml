@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "展示カート作成ツール"
+version = "1.0.0"
+id = "artifacts/exhibition-cart"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18263
+
+[services.development]
+run = "pnpm --filter @workspace/exhibition-cart run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/exhibition-cart", "run", "build" ]
+publicDir = "artifacts/exhibition-cart/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18263"
+BASE_PATH = "/"

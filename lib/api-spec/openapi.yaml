@@ -1,6 +1,5 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
   description: API specification
@@ -10,6 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: items
+    description: Exhibition item operations
 paths:
   /healthz:
     get:
@@ -24,6 +25,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /items:
+    get:
+      operationId: listItems
+      tags: [items]
+      summary: List all items
+      responses:
+        "200":
+          description: List of items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Item"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +48,24 @@ components:
           type: string
       required:
         - status
-
+    Item:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        category:
+          type: string
+        language:
+          type: string
+        created_at:
+          type: string
+      required:
+        - id
+        - name
+        - url
+        - category
+        - language

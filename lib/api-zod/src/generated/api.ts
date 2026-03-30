@@ -14,3 +14,16 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary List all items
+ */
+export const ListItemsResponseItem = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  url: zod.string(),
+  category: zod.string(),
+  language: zod.string(),
+  created_at: zod.string().optional(),
+});
+export const ListItemsResponse = zod.array(ListItemsResponseItem);
