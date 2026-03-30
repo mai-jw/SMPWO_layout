@@ -13,6 +13,8 @@ import {
   RotateCcw,
   Download,
   FileText,
+  Table2,
+  CheckCircle2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Item } from "@/lib/supabase";
@@ -98,7 +100,7 @@ export default function CartEditor() {
   };
 
   const cartRef = useRef<HTMLDivElement>(null);
-  const [exporting, setExporting] = useState<"png" | "pdf" | null>(null);
+  const [exporting, setExporting] = useState<"png" | "pdf" | "xlsx" | null>(null);
 
   const exportPng = useCallback(async () => {
     if (!cartRef.current) return;
@@ -172,6 +174,82 @@ export default function CartEditor() {
       setExporting(null);
     }
   }, []);
+
+  const exportXlsx = useCallback(async () => {
+    setExporting("xlsx");
+    try {
+      const XLSX = await import("xlsx");
+
+      const CATEGORY_LABELS: Record<string, string> = {
+        poster: "ポスター",
+        general: "一般",
+      };
+      const LANGUAGE_LABELS: Record<string, string> = {
+        ja: "日本語",
+        en: "英語（外国語）",
+        other: "その他",
+      };
+
+      // Sheet 1: Layout summary table
+      const summaryRows = [
+        ["展示カートレイアウト表"],
+        ["出力日時", new Date().toLocaleString("ja-JP")],
+        [],
+        ["配置枠", "画像名", "カテゴリ", "言語", "画像URL", "画像ID"],
+        ...(Object.entries(layout) as [SlotId, Item | null][]).map(([slotId, item]) => [
+          SLOT_LABELS[slotId],
+          item?.name ?? "（未配置）",
+          item ? (CATEGORY_LABELS[item.category] ?? item.category) : "",
+          item ? (LANGUAGE_LABELS[item.language] ?? item.language) : "",
+          item?.url ?? "",
+          item?.id ?? "",
+        ]),
+      ];
+
+      const ws1 = XLSX.utils.aoa_to_sheet(summaryRows);
+
+      // Column widths
+      ws1["!cols"] = [
+        { wch: 16 },
+        { wch: 30 },
+        { wch: 14 },
+        { wch: 16 },
+        { wch: 60 },
+        { wch: 38 },
+      ];
+
+      // Sheet 2: カート図面（位置マップ）
+      const mapRows = [
+        ["", "【展示カート 配置マップ】", ""],
+        [],
+        ["", "ポスター枠（全幅）", ""],
+        ["", layout.poster?.name ?? "（未配置）", ""],
+        [],
+        ["1段目・左", "", "1段目・右"],
+        [layout.shelf1_left?.name ?? "（未配置）", "", layout.shelf1_right?.name ?? "（未配置）"],
+        [],
+        ["2段目・左", "", "2段目・右"],
+        [layout.shelf2_left?.name ?? "（未配置）", "", layout.shelf2_right?.name ?? "（未配置）"],
+        [],
+        ["3段目・左", "", "3段目・右"],
+        [layout.shelf3_left?.name ?? "（未配置）", "", layout.shelf3_right?.name ?? "（未配置）"],
+      ];
+
+      const ws2 = XLSX.utils.aoa_to_sheet(mapRows);
+      ws2["!cols"] = [{ wch: 30 }, { wch: 6 }, { wch: 30 }];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws1, "配置リスト");
+      XLSX.utils.book_append_sheet(wb, ws2, "配置マップ");
+
+      XLSX.writeFile(wb, `展示カート_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } catch (e) {
+      console.error("XLSX export error:", e);
+      alert("Excelの書き出しに失敗しました。");
+    } finally {
+      setExporting(null);
+    }
+  }, [layout]);
 
   const filledCount = Object.values(layout).filter(Boolean).length;
 
@@ -340,6 +418,19 @@ export default function CartEditor() {
                   <FileText className="w-3.5 h-3.5" />
                 )}
                 PDF保存
+              </button>
+              {/* XLSX export */}
+              <button
+                onClick={exportXlsx}
+                disabled={!!exporting}
+                className="flex items-center gap-1.5 text-xs font-medium text-amber-700 hover:text-white bg-amber-50 hover:bg-amber-500 px-3 py-1.5 rounded-lg border border-amber-200 hover:border-amber-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {exporting === "xlsx" ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Table2 className="w-3.5 h-3.5" />
+                )}
+                Excel保存
               </button>
               {/* Reset */}
               <button

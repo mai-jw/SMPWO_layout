@@ -12,14 +12,14 @@ export function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 group cursor-pointer">
-          <div className="bg-gradient-to-br from-primary to-indigo-500 text-white p-2 rounded-xl shadow-md group-hover:scale-105 transition-transform duration-300">
-            <GalleryVerticalEnd className="w-5 h-5" />
+    <header className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-sm">
+      <div className="px-4 sm:px-6 h-14 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 group cursor-pointer flex-shrink-0">
+          <div className="bg-gradient-to-br from-primary to-indigo-500 text-white p-1.5 rounded-lg shadow-sm group-hover:scale-105 transition-transform duration-200">
+            <ShoppingCart className="w-4 h-4" />
           </div>
-          <span className="font-display font-bold text-xl text-slate-900 tracking-tight">
-            Exhibition<span className="text-primary">Cart</span>
+          <span className="font-bold text-base text-slate-900 tracking-tight">
+            展示カート<span className="text-primary ml-0.5">作成ツール</span>
           </span>
         </Link>
 
