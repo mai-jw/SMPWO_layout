@@ -1,47 +1,33 @@
-import { useState, useMemo, useRef, useCallback } from "react";
-import { useItems } from "@/hooks/use-items";
-import { Navbar } from "@/components/layout/Navbar";
-import { Badge } from "@/components/ui/Badge";
+import { useState, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search,
-  Loader2,
-  Image as ImageIcon,
-  AlertCircle,
-  MousePointerClick,
-  X,
   ShoppingCart,
-  RotateCcw,
+  Image as ImageIcon,
+  X,
   Download,
-  FileText,
-  Table2,
+  FileSpreadsheet,
+  FileImage,
+  Save,
+  Copy,
+  CalendarDays,
+  RotateCcw,
   CheckCircle2,
+  ChevronDown,
 } from "lucide-react";
-import { motion } from "framer-motion";
-import type { Item } from "@/lib/supabase";
+import { useItems } from "@/hooks/use-items";
+import { useLayouts, useSaveLayout } from "@/hooks/use-layouts";
+import {
+  type Item,
+  type SlotId,
+  type CartLayout,
+  INITIAL_CART_LAYOUT,
+  SLOT_LABELS,
+  SLOT_IDS,
+} from "@/lib/supabase";
 
-type SlotId =
-  | "poster"
-  | "shelf1_left"
-  | "shelf1_right"
-  | "shelf2_left"
-  | "shelf2_right"
-  | "shelf3_left"
-  | "shelf3_right";
-
-type CartLayout = Record<SlotId, Item | null>;
-
-const INITIAL_LAYOUT: CartLayout = {
-  poster: null,
-  shelf1_left: null,
-  shelf1_right: null,
-  shelf2_left: null,
-  shelf2_right: null,
-  shelf3_left: null,
-  shelf3_right: null,
-};
-
+type CartId = "A" | "B";
+type ActiveTarget = { cart: CartId; slotId: SlotId } | null;
 type SidebarFilter = "all" | "poster" | "ja" | "foreign";
-
 const FILTER_LABELS: Record<SidebarFilter, string> = {
   all: "すべて",
   poster: "ポスター",
@@ -49,518 +35,600 @@ const FILTER_LABELS: Record<SidebarFilter, string> = {
   foreign: "外国語",
 };
 
-export default function CartEditor() {
-  const { data: items = [], isLoading, error } = useItems();
-  const [layout, setLayout] = useState<CartLayout>(INITIAL_LAYOUT);
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
-  const [activeSlot, setActiveSlot] = useState<SlotId | null>(null);
+function filledCount(layout: CartLayout) {
+  return SLOT_IDS.filter((id) => layout[id] !== null).length;
+}
+
+/* ─────────────────────── CartSlot ─────────────────────── */
+interface CartSlotProps {
+  slotId: SlotId;
+  cart: CartId;
+  item: Item | null;
+  isActive: boolean;
+  isSelecting: boolean;
+  tall?: boolean;
+  onSlotClick: (cart: CartId, slotId: SlotId) => void;
+  onClear: (cart: CartId, slotId: SlotId) => void;
+}
+
+function CartSlot({ slotId, cart, item, isActive, isSelecting, tall, onSlotClick, onClear }: CartSlotProps) {
+  const height = tall ? "h-28" : "h-20";
+  const borderColor = isActive
+    ? "border-primary bg-primary/5 shadow-md shadow-primary/20"
+    : isSelecting && !item
+    ? "border-primary/40 bg-primary/5 hover:border-primary/70"
+    : item
+    ? "border-slate-300 bg-white hover:border-slate-400"
+    : "border-slate-200 bg-slate-50/50 hover:border-slate-300";
+
+  return (
+    <div
+      className={`relative rounded-lg border-2 border-dashed ${borderColor} ${height} flex items-center justify-center cursor-pointer transition-all duration-150 overflow-hidden group`}
+      onClick={() => onSlotClick(cart, slotId)}
+    >
+      {item ? (
+        <>
+          <img src={item.url} alt={item.name} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+          <button
+            onClick={(e) => { e.stopPropagation(); onClear(cart, slotId); }}
+            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+          >
+            <X className="w-3 h-3" />
+          </button>
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <p className="text-white text-[9px] font-medium truncate">{item.name}</p>
+          </div>
+          {isActive && (
+            <div className="absolute inset-0 ring-2 ring-primary ring-offset-1 rounded-lg pointer-events-none" />
+          )}
+        </>
+      ) : (
+        <div className="flex flex-col items-center gap-1">
+          {isActive ? (
+            <div className="flex flex-col items-center gap-0.5">
+              <ImageIcon className="w-4 h-4 text-primary animate-pulse" />
+              <span className="text-[9px] text-primary font-semibold">画像を選択</span>
+            </div>
+          ) : (
+            <>
+              <ImageIcon className="w-4 h-4 text-slate-300" />
+              <span className="text-[9px] text-slate-400">{SLOT_LABELS[slotId]}</span>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────── CartPanel ─────────────────────── */
+interface CartPanelProps {
+  cartId: CartId;
+  layout: CartLayout;
+  activeTarget: ActiveTarget;
+  isSelecting: boolean;
+  onSlotClick: (cart: CartId, slotId: SlotId) => void;
+  onClear: (cart: CartId, slotId: SlotId) => void;
+}
+
+function CartPanel({ cartId, layout, activeTarget, isSelecting, onSlotClick, onClear }: CartPanelProps) {
+  const count = filledCount(layout);
+  const isActiveCart = activeTarget?.cart === cartId;
+  const cartColor = cartId === "A" ? "from-indigo-700 to-indigo-900" : "from-teal-700 to-teal-900";
+  const badgeColor = cartId === "A" ? "bg-indigo-100 text-indigo-700" : "bg-teal-100 text-teal-700";
+  const ringColor = isActiveCart ? (cartId === "A" ? "ring-2 ring-indigo-400" : "ring-2 ring-teal-400") : "";
+
+  return (
+    <div className={`bg-white rounded-2xl border border-slate-200 shadow-md flex-shrink-0 w-[300px] overflow-hidden ${ringColor} transition-all`}>
+      <div className={`bg-gradient-to-r ${cartColor} text-white px-4 py-2 flex items-center justify-between`}>
+        <div className="flex items-center gap-2">
+          <ShoppingCart className="w-3.5 h-3.5" />
+          <span className="text-sm font-bold">カート{cartId}</span>
+        </div>
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${badgeColor}`}>
+          {count} / 7
+        </span>
+      </div>
+
+      <div className="p-4 space-y-3">
+        <div>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">ポスター枠</p>
+          <CartSlot
+            slotId="poster" cart={cartId}
+            item={layout.poster}
+            isActive={activeTarget?.cart === cartId && activeTarget.slotId === "poster"}
+            isSelecting={isSelecting}
+            onSlotClick={onSlotClick} onClear={onClear}
+            tall
+          />
+        </div>
+
+        <div>
+          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">棚（3段 × 2枠）</p>
+          <div className="space-y-2.5">
+            {([
+              ["shelf1_left", "shelf1_right", "1段目"],
+              ["shelf2_left", "shelf2_right", "2段目"],
+              ["shelf3_left", "shelf3_right", "3段目"],
+            ] as [SlotId, SlotId, string][]).map(([left, right, label]) => (
+              <div key={label}>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="h-px flex-1 bg-slate-200" />
+                  <span className="text-[9px] text-slate-400 font-medium">{label}</span>
+                  <div className="h-px flex-1 bg-slate-200" />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <CartSlot slotId={left} cart={cartId} item={layout[left]}
+                    isActive={activeTarget?.cart === cartId && activeTarget.slotId === left}
+                    isSelecting={isSelecting} onSlotClick={onSlotClick} onClear={onClear} />
+                  <CartSlot slotId={right} cart={cartId} item={layout[right]}
+                    isActive={activeTarget?.cart === cartId && activeTarget.slotId === right}
+                    isSelecting={isSelecting} onSlotClick={onSlotClick} onClear={onClear} />
+                </div>
+                <div className="mt-2 h-2.5 bg-gradient-to-b from-slate-300 to-slate-400 rounded-sm shadow-sm" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-around px-6 pt-0.5">
+          {[...Array(4)].map((_, i) => <div key={i} className="w-2.5 h-5 bg-slate-400 rounded-b-sm" />)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────── Main Component ─────────────────────── */
+export function CartEditor() {
+  const [period, setPeriod] = useState(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const h = now.getDate() <= 15 ? "前半" : "後半";
+    return `${y}-${m}-${h}`;
+  });
+  const [cartA, setCartA] = useState<CartLayout>({ ...INITIAL_CART_LAYOUT });
+  const [cartB, setCartB] = useState<CartLayout>({ ...INITIAL_CART_LAYOUT });
+  const [activeTarget, setActiveTarget] = useState<ActiveTarget>(null);
+  const [sidebarSelected, setSidebarSelected] = useState<Item | null>(null);
   const [filter, setFilter] = useState<SidebarFilter>("all");
-  const [search, setSearch] = useState("");
-
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
-      let matchesFilter = true;
-      if (filter === "poster") matchesFilter = item.category === "poster";
-      else if (filter === "ja") matchesFilter = item.language === "ja";
-      else if (filter === "foreign") matchesFilter = item.language === "en";
-      return matchesSearch && matchesFilter;
-    });
-  }, [items, filter, search]);
-
-  const handleSidebarClick = (item: Item) => {
-    if (selectedItem?.id === item.id) {
-      setSelectedItem(null);
-    } else {
-      setSelectedItem(item);
-      setActiveSlot(null);
-    }
-  };
-
-  const handleSlotClick = (slotId: SlotId) => {
-    if (selectedItem) {
-      setLayout((prev) => ({ ...prev, [slotId]: selectedItem }));
-      setSelectedItem(null);
-      setActiveSlot(null);
-    } else {
-      setActiveSlot(activeSlot === slotId ? null : slotId);
-    }
-  };
-
-  const clearSlot = (slotId: SlotId, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setLayout((prev) => ({ ...prev, [slotId]: null }));
-    if (activeSlot === slotId) setActiveSlot(null);
-  };
-
-  const resetLayout = () => {
-    setLayout(INITIAL_LAYOUT);
-    setSelectedItem(null);
-    setActiveSlot(null);
-  };
-
-  const cartRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [exporting, setExporting] = useState<"png" | "pdf" | "xlsx" | null>(null);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [copySource, setCopySource] = useState("");
+  const [showCopyPanel, setShowCopyPanel] = useState(false);
 
-  const exportPng = useCallback(async () => {
-    if (!cartRef.current) return;
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const { data: items = [], isLoading } = useItems();
+  const { data: layouts = [] } = useLayouts();
+  const saveLayout = useSaveLayout();
+
+  const filteredItems = items.filter((item) => {
+    const matchFilter =
+      filter === "all" ||
+      (filter === "poster" && item.category === "poster") ||
+      (filter === "ja" && item.language === "ja") ||
+      (filter === "foreign" && item.language !== "ja" && item.language !== "other");
+    const matchSearch = !searchQuery || item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchFilter && matchSearch;
+  });
+
+  /* ─── Interaction handlers ─── */
+  const handleSlotClick = useCallback((cart: CartId, slotId: SlotId) => {
+    if (sidebarSelected) {
+      const setter = cart === "A" ? setCartA : setCartB;
+      setter((prev) => ({ ...prev, [slotId]: sidebarSelected }));
+      setSidebarSelected(null);
+    } else {
+      setActiveTarget((prev) =>
+        prev?.cart === cart && prev.slotId === slotId ? null : { cart, slotId }
+      );
+    }
+  }, [sidebarSelected]);
+
+  const handleSidebarImageClick = useCallback((item: Item) => {
+    if (activeTarget) {
+      const setter = activeTarget.cart === "A" ? setCartA : setCartB;
+      setter((prev) => ({ ...prev, [activeTarget.slotId]: item }));
+      setActiveTarget(null);
+    } else {
+      setSidebarSelected((prev) => (prev?.id === item.id ? null : item));
+    }
+  }, [activeTarget]);
+
+  const clearSlot = useCallback((cart: CartId, slotId: SlotId) => {
+    const setter = cart === "A" ? setCartA : setCartB;
+    setter((prev) => ({ ...prev, [slotId]: null }));
+  }, []);
+
+  const handleReset = () => {
+    setCartA({ ...INITIAL_CART_LAYOUT });
+    setCartB({ ...INITIAL_CART_LAYOUT });
+    setActiveTarget(null);
+    setSidebarSelected(null);
+  };
+
+  /* ─── Save to Supabase ─── */
+  const handleSave = async () => {
+    if (!period.trim()) return;
+    setSaveStatus("saving");
+    try {
+      await saveLayout.mutateAsync({ period, cart_a: cartA, cart_b: cartB });
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2500);
+    } catch {
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    }
+  };
+
+  /* ─── Copy previous layout ─── */
+  const handleCopyLayout = () => {
+    const src = layouts.find((l) => l.period === copySource);
+    if (!src) return;
+    setCartA({ ...src.cart_a });
+    setCartB({ ...src.cart_b });
+    setShowCopyPanel(false);
+    setCopySource("");
+  };
+
+  /* ─── Exports ─── */
+  const handleExportPng = async () => {
+    if (!canvasRef.current) return;
     setExporting("png");
     try {
       const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(cartRef.current, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: "#ffffff",
-        logging: false,
-      });
+      const canvas = await html2canvas(canvasRef.current, { scale: 2.5, useCORS: true, backgroundColor: "#f8fafc" });
       const link = document.createElement("a");
-      link.download = `展示カート_${new Date().toISOString().slice(0, 10)}.png`;
+      link.download = `展示カート_${period}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
-    } catch (e) {
-      console.error("PNG export error:", e);
-      alert("PNGの書き出しに失敗しました。");
-    } finally {
-      setExporting(null);
-    }
-  }, []);
+    } finally { setExporting(null); }
+  };
 
-  const exportPdf = useCallback(async () => {
-    if (!cartRef.current) return;
+  const handleExportPdf = async () => {
+    if (!canvasRef.current) return;
     setExporting("pdf");
     try {
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
-
-      const canvas = await html2canvas(cartRef.current, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: "#ffffff",
-        logging: false,
-      });
-
+      const canvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: "#f8fafc" });
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
-      const margin = 10;
-      const imgW = pageW - margin * 2;
-      const imgH = (canvas.height * imgW) / canvas.width;
-
-      const yOffset = imgH < pageH - margin * 2 ? (pageH - imgH) / 2 : margin;
-
       pdf.setFontSize(11);
-      pdf.setTextColor(80, 80, 80);
-      pdf.text("展示カートレイアウト", pageW / 2, margin - 2, { align: "center" });
-      pdf.addImage(imgData, "PNG", margin, yOffset, imgW, imgH);
-
-      const dateStr = new Date().toLocaleDateString("ja-JP");
+      pdf.setFont("helvetica", "bold");
+      pdf.text(`展示カートレイアウト — ${period}`, 12, 10);
       pdf.setFontSize(8);
-      pdf.setTextColor(150, 150, 150);
-      pdf.text(dateStr, pageW - margin, pageH - 5, { align: "right" });
+      pdf.setFont("helvetica", "normal");
+      pdf.text(new Date().toLocaleDateString("ja-JP"), pageW - 12, 10, { align: "right" });
+      const ratio = canvas.width / canvas.height;
+      const imgW = pageW - 24;
+      const imgH = imgW / ratio;
+      const yOffset = Math.max(15, (pageH - imgH) / 2);
+      pdf.addImage(imgData, "PNG", 12, yOffset, imgW, Math.min(imgH, pageH - yOffset - 8));
+      pdf.save(`展示カート_${period}.pdf`);
+    } finally { setExporting(null); }
+  };
 
-      pdf.save(`展示カート_${new Date().toISOString().slice(0, 10)}.pdf`);
-    } catch (e) {
-      console.error("PDF export error:", e);
-      alert("PDFの書き出しに失敗しました。");
-    } finally {
-      setExporting(null);
-    }
-  }, []);
-
-  const exportXlsx = useCallback(async () => {
+  const handleExportXlsx = async () => {
     setExporting("xlsx");
     try {
       const XLSX = await import("xlsx");
-
-      const CATEGORY_LABELS: Record<string, string> = {
-        poster: "ポスター",
-        general: "一般",
-      };
-      const LANGUAGE_LABELS: Record<string, string> = {
-        ja: "日本語",
-        en: "英語（外国語）",
-        other: "その他",
-      };
-
-      // Sheet 1: Layout summary table
-      const summaryRows = [
-        ["展示カートレイアウト表"],
-        ["出力日時", new Date().toLocaleString("ja-JP")],
-        [],
-        ["配置枠", "画像名", "カテゴリ", "言語", "画像URL", "画像ID"],
-        ...(Object.entries(layout) as [SlotId, Item | null][]).map(([slotId, item]) => [
-          SLOT_LABELS[slotId],
-          item?.name ?? "（未配置）",
-          item ? (CATEGORY_LABELS[item.category] ?? item.category) : "",
-          item ? (LANGUAGE_LABELS[item.language] ?? item.language) : "",
-          item?.url ?? "",
-          item?.id ?? "",
-        ]),
-      ];
-
-      const ws1 = XLSX.utils.aoa_to_sheet(summaryRows);
-
-      // Column widths
-      ws1["!cols"] = [
-        { wch: 16 },
-        { wch: 30 },
-        { wch: 14 },
-        { wch: 16 },
-        { wch: 60 },
-        { wch: 38 },
-      ];
-
-      // Sheet 2: カート図面（位置マップ）
-      const mapRows = [
-        ["", "【展示カート 配置マップ】", ""],
-        [],
-        ["", "ポスター枠（全幅）", ""],
-        ["", layout.poster?.name ?? "（未配置）", ""],
-        [],
-        ["1段目・左", "", "1段目・右"],
-        [layout.shelf1_left?.name ?? "（未配置）", "", layout.shelf1_right?.name ?? "（未配置）"],
-        [],
-        ["2段目・左", "", "2段目・右"],
-        [layout.shelf2_left?.name ?? "（未配置）", "", layout.shelf2_right?.name ?? "（未配置）"],
-        [],
-        ["3段目・左", "", "3段目・右"],
-        [layout.shelf3_left?.name ?? "（未配置）", "", layout.shelf3_right?.name ?? "（未配置）"],
-      ];
-
-      const ws2 = XLSX.utils.aoa_to_sheet(mapRows);
-      ws2["!cols"] = [{ wch: 30 }, { wch: 6 }, { wch: 30 }];
-
       const wb = XLSX.utils.book_new();
+
+      const listRows: string[][] = [
+        ["配置枠", "カートA — 画像名", "カテゴリ", "言語", "URL", "", "カートB — 画像名", "カテゴリ", "言語", "URL"],
+      ];
+      for (const slotId of SLOT_IDS) {
+        const a = cartA[slotId];
+        const b = cartB[slotId];
+        listRows.push([
+          SLOT_LABELS[slotId],
+          a?.name ?? "（未配置）", a?.category ?? "", a?.language ?? "", a?.url ?? "",
+          "",
+          b?.name ?? "（未配置）", b?.category ?? "", b?.language ?? "", b?.url ?? "",
+        ]);
+      }
+      const ws1 = XLSX.utils.aoa_to_sheet(listRows);
+      ws1["!cols"] = [14, 24, 10, 8, 40, 3, 24, 10, 8, 40].map((w) => ({ wch: w }));
       XLSX.utils.book_append_sheet(wb, ws1, "配置リスト");
+
+      const mapRows: string[][] = [
+        [`期間: ${period}`, "", "カートA", "", "カートB"],
+        ["位置", "", "画像名", "", "画像名"],
+        ["ポスター枠", "", cartA.poster?.name ?? "（未配置）", "", cartB.poster?.name ?? "（未配置）"],
+        [],
+        ["棚 1段目 左", "", cartA.shelf1_left?.name ?? "（未配置）", "", cartB.shelf1_left?.name ?? "（未配置）"],
+        ["棚 1段目 右", "", cartA.shelf1_right?.name ?? "（未配置）", "", cartB.shelf1_right?.name ?? "（未配置）"],
+        [],
+        ["棚 2段目 左", "", cartA.shelf2_left?.name ?? "（未配置）", "", cartB.shelf2_left?.name ?? "（未配置）"],
+        ["棚 2段目 右", "", cartA.shelf2_right?.name ?? "（未配置）", "", cartB.shelf2_right?.name ?? "（未配置）"],
+        [],
+        ["棚 3段目 左", "", cartA.shelf3_left?.name ?? "（未配置）", "", cartB.shelf3_left?.name ?? "（未配置）"],
+        ["棚 3段目 右", "", cartA.shelf3_right?.name ?? "（未配置）", "", cartB.shelf3_right?.name ?? "（未配置）"],
+      ];
+      const ws2 = XLSX.utils.aoa_to_sheet(mapRows);
+      ws2["!cols"] = [18, 2, 28, 2, 28].map((w) => ({ wch: w }));
       XLSX.utils.book_append_sheet(wb, ws2, "配置マップ");
 
-      XLSX.writeFile(wb, `展示カート_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    } catch (e) {
-      console.error("XLSX export error:", e);
-      alert("Excelの書き出しに失敗しました。");
-    } finally {
-      setExporting(null);
-    }
-  }, [layout]);
+      XLSX.writeFile(wb, `展示カート_${period}.xlsx`);
+    } finally { setExporting(null); }
+  };
 
-  const filledCount = Object.values(layout).filter(Boolean).length;
+  const totalFilled = filledCount(cartA) + filledCount(cartB);
+  const isSelecting = !!sidebarSelected;
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
-      <Navbar />
+    <div className="flex flex-col h-[calc(100vh-56px)] bg-slate-100">
 
+      {/* ─── Session toolbar ─── */}
+      <div className="flex-shrink-0 bg-white border-b border-slate-200 px-4 py-2.5 flex flex-wrap items-center gap-3">
+        {/* Period input */}
+        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
+          <CalendarDays className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+          <input
+            type="text"
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            placeholder="例: 2026-05-前半"
+            className="text-sm font-medium text-slate-700 bg-transparent outline-none w-36 placeholder:text-slate-400"
+          />
+        </div>
+
+        {/* Quick period buttons */}
+        <div className="flex gap-1">
+          {(() => {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, "0");
+            const nm = String(now.getMonth() + 2).padStart(2, "0");
+            return [
+              [`${y}-${m}-前半`, `${m}月前半`],
+              [`${y}-${m}-後半`, `${m}月後半`],
+              [`${y}-${nm}-前半`, `${nm}月前半`],
+            ].map(([val, label]) => (
+              <button key={val} onClick={() => setPeriod(val)}
+                className={`text-[11px] px-2 py-1 rounded-md border font-medium transition-colors ${period === val ? "bg-primary text-white border-primary" : "bg-white text-slate-600 border-slate-200 hover:border-primary/40"}`}>
+                {label}
+              </button>
+            ));
+          })()}
+        </div>
+
+        <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+        {/* Copy previous layout */}
+        <div className="relative">
+          <button
+            onClick={() => setShowCopyPanel((v) => !v)}
+            className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-medium transition-colors"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            前回コピー
+            <ChevronDown className="w-3 h-3" />
+          </button>
+          <AnimatePresence>
+            {showCopyPanel && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-xl border border-slate-200 p-3 z-30 min-w-[220px]"
+              >
+                <p className="text-xs font-semibold text-slate-500 mb-2">コピー元の期間を選択</p>
+                {layouts.length === 0 ? (
+                  <p className="text-xs text-slate-400">保存済みレイアウトがありません</p>
+                ) : (
+                  <>
+                    <select
+                      value={copySource}
+                      onChange={(e) => setCopySource(e.target.value)}
+                      className="w-full text-sm border border-slate-200 rounded-lg px-2 py-1.5 bg-slate-50 outline-none mb-2"
+                    >
+                      <option value="">選択してください</option>
+                      {layouts.map((l) => (
+                        <option key={l.period} value={l.period}>{l.period}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={handleCopyLayout}
+                      disabled={!copySource}
+                      className="w-full text-sm bg-primary text-white rounded-lg py-1.5 font-medium hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      このレイアウトをコピー
+                    </button>
+                  </>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <div className="flex-1" />
+
+        {/* Save */}
+        <button
+          onClick={handleSave}
+          disabled={saveStatus === "saving" || !period.trim()}
+          className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg font-medium transition-all ${
+            saveStatus === "saved" ? "bg-green-500 text-white" :
+            saveStatus === "error" ? "bg-red-500 text-white" :
+            "bg-slate-800 text-white hover:bg-slate-700"
+          } disabled:opacity-60`}
+        >
+          {saveStatus === "saved" ? <CheckCircle2 className="w-3.5 h-3.5" /> :
+           saveStatus === "saving" ? <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> :
+           <Save className="w-3.5 h-3.5" />}
+          {saveStatus === "saved" ? "保存済み" : saveStatus === "error" ? "エラー" : saveStatus === "saving" ? "保存中..." : "保存"}
+        </button>
+
+        {/* Export buttons */}
+        <div className="flex items-center gap-1.5">
+          <button onClick={handleExportPng} disabled={!!exporting}
+            className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-green-200 bg-green-50 text-green-700 hover:bg-green-100 font-medium disabled:opacity-50 transition-colors">
+            {exporting === "png" ? <div className="w-3.5 h-3.5 border-2 border-green-400/40 border-t-green-600 rounded-full animate-spin" /> : <FileImage className="w-3.5 h-3.5" />}
+            PNG
+          </button>
+          <button onClick={handleExportPdf} disabled={!!exporting}
+            className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium disabled:opacity-50 transition-colors">
+            {exporting === "pdf" ? <div className="w-3.5 h-3.5 border-2 border-blue-400/40 border-t-blue-600 rounded-full animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+            PDF
+          </button>
+          <button onClick={handleExportXlsx} disabled={!!exporting}
+            className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 font-medium disabled:opacity-50 transition-colors">
+            {exporting === "xlsx" ? <div className="w-3.5 h-3.5 border-2 border-amber-400/40 border-t-amber-600 rounded-full animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5" />}
+            Excel
+          </button>
+          <button onClick={handleReset}
+            className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-medium transition-colors">
+            <RotateCcw className="w-3.5 h-3.5" />
+            リセット
+          </button>
+        </div>
+      </div>
+
+      {/* ─── Main layout ─── */}
       <div className="flex flex-1 overflow-hidden">
-        {/* ── Sidebar ── */}
-        <aside className="w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-slate-100">
-            <h2 className="font-bold text-slate-900 text-sm mb-3">画像を選択</h2>
 
-            {/* Search */}
-            <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="検索..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-slate-50"
-              />
-            </div>
-
-            {/* Filter tabs */}
+        {/* Sidebar */}
+        <aside className="w-52 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col overflow-hidden">
+          <div className="p-3 border-b border-slate-100">
+            <p className="text-xs font-bold text-slate-600 mb-2">画像を選択</p>
+            <input
+              type="text"
+              placeholder="検索..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 outline-none focus:border-primary/50 mb-2 placeholder:text-slate-400"
+            />
             <div className="grid grid-cols-2 gap-1">
-              {(Object.keys(FILTER_LABELS) as SidebarFilter[]).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`text-xs px-2 py-1.5 rounded-lg font-medium transition-colors ${
-                    filter === f
-                      ? "bg-primary text-white shadow-sm"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  {FILTER_LABELS[f]}
+              {(Object.entries(FILTER_LABELS) as [SidebarFilter, string][]).map(([key, label]) => (
+                <button key={key} onClick={() => setFilter(key)}
+                  className={`text-[11px] py-1 rounded-md font-semibold transition-colors ${filter === key ? "bg-primary text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}>
+                  {label}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Hint */}
-          {selectedItem && (
-            <div className="mx-3 mt-3 px-3 py-2 bg-primary/10 border border-primary/20 rounded-lg">
-              <p className="text-xs text-primary font-medium flex items-center gap-1.5">
-                <MousePointerClick className="w-3.5 h-3.5 flex-shrink-0" />
-                カートの枠をクリックして配置
-              </p>
+          {/* Instruction hint */}
+          {(sidebarSelected || activeTarget) && (
+            <div className={`mx-2 mt-2 text-[10px] rounded-lg px-2 py-1.5 font-medium ${sidebarSelected ? "bg-primary/10 text-primary" : "bg-amber-50 text-amber-700 border border-amber-200"}`}>
+              {sidebarSelected
+                ? "▶ カートの枠をクリックして配置"
+                : `▶ カート${activeTarget!.cart}「${SLOT_LABELS[activeTarget!.slotId]}」に配置する画像を選択`}
             </div>
           )}
 
-          {/* Image list */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+          <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
             {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-5 h-5 animate-spin text-primary" />
-              </div>
-            ) : error ? (
-              <div className="py-6 text-center text-xs text-slate-500">
-                <AlertCircle className="w-5 h-5 mx-auto mb-2 text-destructive" />
-                読み込みエラー
+              <div className="flex items-center justify-center h-24">
+                <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-400">
-                <ImageIcon className="w-6 h-6 mx-auto mb-2 opacity-40" />
-                画像がありません
-              </div>
+              <p className="text-[11px] text-slate-400 text-center py-6">該当する画像がありません</p>
             ) : (
               filteredItems.map((item) => {
-                const isSelected = selectedItem?.id === item.id;
+                const isSelected = sidebarSelected?.id === item.id;
                 return (
-                  <motion.button
-                    key={item.id}
-                    onClick={() => handleSidebarClick(item)}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`w-full flex items-center gap-2.5 p-2 rounded-xl border text-left transition-all ${
-                      isSelected
-                        ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/30"
-                        : "border-transparent hover:border-slate-200 hover:bg-slate-50"
-                    }`}
-                  >
-                    <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100">
-                      <img
-                        src={item.url}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-slate-800 truncate leading-tight">
-                        {item.name}
-                      </p>
-                      <div className="flex gap-1 mt-1 flex-wrap">
-                        <Badge
-                          variant={item.category === "poster" ? "default" : "secondary"}
-                          className="text-[10px] px-1.5 py-0"
-                        >
-                          {item.category === "poster" ? "ポスター" : "一般"}
-                        </Badge>
-                        <Badge
-                          variant={
-                            item.language === "ja"
-                              ? "success"
-                              : item.language === "en"
-                              ? "warning"
-                              : "outline"
-                          }
-                          className="text-[10px] px-1.5 py-0"
-                        >
-                          {item.language === "ja"
-                            ? "日本語"
-                            : item.language === "en"
-                            ? "EN"
-                            : "他"}
-                        </Badge>
+                  <button key={item.id} onClick={() => handleSidebarImageClick(item)}
+                    className={`w-full flex items-center gap-2 rounded-lg p-1.5 text-left transition-all border ${
+                      isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-transparent hover:bg-slate-50 hover:border-slate-200"
+                    }`}>
+                    <img src={item.url} alt={item.name} className="w-9 h-9 object-cover rounded-md flex-shrink-0 bg-slate-100" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-medium text-slate-700 truncate leading-tight">{item.name}</p>
+                      <div className="flex gap-1 mt-0.5">
+                        {item.category === "poster" && (
+                          <span className="text-[9px] bg-violet-100 text-violet-600 rounded px-1 font-medium">ポスター</span>
+                        )}
+                        {item.language === "ja" && (
+                          <span className="text-[9px] bg-blue-100 text-blue-600 rounded px-1 font-medium">日本語</span>
+                        )}
+                        {item.language === "en" && (
+                          <span className="text-[9px] bg-orange-100 text-orange-600 rounded px-1 font-medium">英語</span>
+                        )}
                       </div>
                     </div>
-                    {isSelected && (
-                      <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 animate-pulse" />
-                    )}
-                  </motion.button>
+                    {isSelected && <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />}
+                  </button>
                 );
               })
             )}
           </div>
         </aside>
 
-        {/* ── Main Canvas ── */}
-        <main className="flex-1 overflow-auto bg-slate-100 p-6 flex flex-col items-center">
-          {/* Toolbar */}
-          <div className="w-full max-w-2xl flex items-center justify-between mb-5">
+        {/* Canvas area */}
+        <main className="flex-1 overflow-auto p-4">
+          {/* Status bar */}
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5 text-slate-600" />
-              <span className="font-bold text-slate-800 text-lg">カートレイアウト</span>
-              <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 font-medium">
-                {filledCount} / 7 枠
+              <h2 className="text-sm font-bold text-slate-700">カートレイアウト</h2>
+              <span className="text-xs bg-slate-200 text-slate-600 rounded-full px-2 py-0.5 font-semibold">
+                {totalFilled} / 14 枠
               </span>
+              {period && (
+                <span className="text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5 font-semibold">
+                  {period}
+                </span>
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              {/* PNG export */}
-              <button
-                onClick={exportPng}
-                disabled={!!exporting}
-                className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:text-white bg-emerald-50 hover:bg-emerald-500 px-3 py-1.5 rounded-lg border border-emerald-200 hover:border-emerald-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {exporting === "png" ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Download className="w-3.5 h-3.5" />
-                )}
-                PNG保存
+            {(sidebarSelected || activeTarget) && (
+              <button onClick={() => { setSidebarSelected(null); setActiveTarget(null); }}
+                className="text-xs text-slate-500 hover:text-slate-700 flex items-center gap-1 border border-slate-200 rounded-lg px-2 py-1 bg-white">
+                <X className="w-3 h-3" /> 選択解除
               </button>
-              {/* PDF export */}
-              <button
-                onClick={exportPdf}
-                disabled={!!exporting}
-                className="flex items-center gap-1.5 text-xs font-medium text-blue-700 hover:text-white bg-blue-50 hover:bg-blue-500 px-3 py-1.5 rounded-lg border border-blue-200 hover:border-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {exporting === "pdf" ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <FileText className="w-3.5 h-3.5" />
-                )}
-                PDF保存
-              </button>
-              {/* XLSX export */}
-              <button
-                onClick={exportXlsx}
-                disabled={!!exporting}
-                className="flex items-center gap-1.5 text-xs font-medium text-amber-700 hover:text-white bg-amber-50 hover:bg-amber-500 px-3 py-1.5 rounded-lg border border-amber-200 hover:border-amber-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {exporting === "xlsx" ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Table2 className="w-3.5 h-3.5" />
-                )}
-                Excel保存
-              </button>
-              {/* Reset */}
-              <button
-                onClick={resetLayout}
-                disabled={!!exporting}
-                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 hover:bg-white px-3 py-1.5 rounded-lg border border-transparent hover:border-slate-200 transition-all disabled:opacity-50"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                リセット
-              </button>
-            </div>
+            )}
           </div>
 
-          {/* Hint when no selection */}
-          {!selectedItem && (
-            <div className="w-full max-w-2xl mb-4">
-              <p className="text-xs text-slate-400 text-center">
-                ← 左のサイドバーから画像を選び、カートの枠をクリックして配置してください
-              </p>
-            </div>
+          {/* Instruction */}
+          {!sidebarSelected && !activeTarget && (
+            <p className="text-xs text-slate-400 mb-3">
+              ← 左サイドバーから画像を選ぶか、カートの枠をクリックして配置してください
+            </p>
           )}
 
-          {/* Cart Frame */}
-          <div ref={cartRef} className="w-full max-w-2xl bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
-            {/* Cart Header */}
-            <div className="bg-slate-700 text-white px-5 py-2.5 flex items-center gap-2">
-              <ShoppingCart className="w-4 h-4" />
-              <span className="text-sm font-bold tracking-wide">展示カート</span>
-            </div>
-
-            <div className="p-5 space-y-4">
-              {/* Poster Slot */}
-              <div>
-                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                  ポスター枠
-                </p>
-                <CartSlot
-                  slotId="poster"
-                  item={layout.poster}
-                  isActive={activeSlot === "poster"}
-                  isSelecting={!!selectedItem}
-                  onClick={handleSlotClick}
-                  onClear={clearSlot}
-                  tall
-                />
-              </div>
-
-              {/* Shelves */}
-              <div>
-                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                  棚（3段 × 2枠）
-                </p>
-                <div className="space-y-3">
-                  {(
-                    [
-                      ["shelf1_left", "shelf1_right", "1段目"],
-                      ["shelf2_left", "shelf2_right", "2段目"],
-                      ["shelf3_left", "shelf3_right", "3段目"],
-                    ] as [SlotId, SlotId, string][]
-                  ).map(([left, right, label]) => (
-                    <div key={label}>
-                      {/* Shelf label */}
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <div className="h-px flex-1 bg-slate-200" />
-                        <span className="text-[10px] text-slate-400 font-medium">{label}</span>
-                        <div className="h-px flex-1 bg-slate-200" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <CartSlot
-                          slotId={left}
-                          item={layout[left]}
-                          isActive={activeSlot === left}
-                          isSelecting={!!selectedItem}
-                          onClick={handleSlotClick}
-                          onClear={clearSlot}
-                        />
-                        <CartSlot
-                          slotId={right}
-                          item={layout[right]}
-                          isActive={activeSlot === right}
-                          isSelecting={!!selectedItem}
-                          onClick={handleSlotClick}
-                          onClear={clearSlot}
-                        />
-                      </div>
-                      {/* Shelf board */}
-                      <div className="mt-2 h-3 bg-gradient-to-b from-slate-300 to-slate-400 rounded-sm shadow-sm" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Cart legs */}
-              <div className="flex justify-around px-8 pt-1">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="w-3 h-6 bg-slate-400 rounded-b-sm" />
-                ))}
-              </div>
-            </div>
+          {/* Cart canvases (both captured by ref) */}
+          <div ref={canvasRef} className="flex gap-5 items-start">
+            <CartPanel
+              cartId="A" layout={cartA} activeTarget={activeTarget}
+              isSelecting={isSelecting} onSlotClick={handleSlotClick} onClear={clearSlot}
+            />
+            <CartPanel
+              cartId="B" layout={cartB} activeTarget={activeTarget}
+              isSelecting={isSelecting} onSlotClick={handleSlotClick} onClear={clearSlot}
+            />
           </div>
 
-          {/* Layout summary */}
-          {filledCount > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="w-full max-w-2xl mt-5 bg-white rounded-xl border border-slate-200 p-4"
-            >
-              <h3 className="text-xs font-bold text-slate-600 mb-3 uppercase tracking-wide">
-                配置済みアイテム一覧
-              </h3>
-              <div className="grid grid-cols-2 gap-2">
-                {(Object.entries(layout) as [SlotId, Item | null][])
-                  .filter(([, item]) => item !== null)
-                  .map(([slotId, item]) => (
-                    <div
-                      key={slotId}
-                      className="flex items-center gap-2 text-xs bg-slate-50 rounded-lg p-2"
-                    >
-                      <img
-                        src={item!.url}
-                        alt={item!.name}
-                        className="w-8 h-8 object-cover rounded flex-shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <p className="font-medium text-slate-700 truncate">{item!.name}</p>
-                        <p className="text-slate-400">{SLOT_LABELS[slotId]}</p>
+          {/* Summary table */}
+          {totalFilled > 0 && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              className="mt-5 bg-white rounded-xl border border-slate-200 p-4 max-w-2xl">
+              <h3 className="text-xs font-bold text-slate-600 mb-3 uppercase tracking-wide">配置済みアイテム一覧</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {(["A", "B"] as CartId[]).map((cid) => {
+                  const layout = cid === "A" ? cartA : cartB;
+                  const entries = (Object.entries(layout) as [SlotId, Item | null][]).filter(([, v]) => v !== null);
+                  if (entries.length === 0) return null;
+                  return (
+                    <div key={cid}>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">カート{cid}</p>
+                      <div className="space-y-1">
+                        {entries.map(([slotId, item]) => (
+                          <div key={slotId} className="flex items-center gap-2 text-xs bg-slate-50 rounded-lg p-1.5">
+                            <img src={item!.url} alt={item!.name} className="w-7 h-7 object-cover rounded flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="font-medium text-slate-700 truncate">{item!.name}</p>
+                              <p className="text-slate-400 text-[10px]">{SLOT_LABELS[slotId]}</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
               </div>
             </motion.div>
           )}
@@ -569,94 +637,3 @@ export default function CartEditor() {
     </div>
   );
 }
-
-/* ── CartSlot Component ── */
-interface CartSlotProps {
-  slotId: SlotId;
-  item: Item | null;
-  isActive: boolean;
-  isSelecting: boolean;
-  onClick: (slotId: SlotId) => void;
-  onClear: (slotId: SlotId, e: React.MouseEvent) => void;
-  tall?: boolean;
-}
-
-function CartSlot({ slotId, item, isActive, isSelecting, onClick, onClear, tall }: CartSlotProps) {
-  const isEmpty = !item;
-  const heightClass = tall ? "h-40" : "h-28";
-
-  return (
-    <motion.div
-      onClick={() => onClick(slotId)}
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.98 }}
-      className={`relative ${heightClass} rounded-xl border-2 overflow-hidden cursor-pointer transition-all duration-200 ${
-        isSelecting && isEmpty
-          ? "border-primary border-dashed bg-primary/5 shadow-md shadow-primary/10"
-          : isSelecting && !isEmpty
-          ? "border-primary border-dashed hover:brightness-95"
-          : isActive
-          ? "border-primary bg-primary/5"
-          : isEmpty
-          ? "border-dashed border-slate-300 bg-slate-50 hover:border-slate-400 hover:bg-slate-100"
-          : "border-slate-200 hover:border-slate-300"
-      }`}
-    >
-      {isEmpty ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-          {isSelecting ? (
-            <>
-              <MousePointerClick className="w-5 h-5 text-primary animate-bounce" />
-              <span className="text-xs text-primary font-medium">ここに配置</span>
-            </>
-          ) : (
-            <>
-              <ImageIcon className="w-5 h-5 text-slate-300" />
-              <span className="text-[11px] text-slate-300">{SLOT_LABELS[slotId]}</span>
-            </>
-          )}
-        </div>
-      ) : (
-        <>
-          <img
-            src={item.url}
-            alt={item.name}
-            className="w-full h-full object-contain bg-slate-50"
-          />
-          {/* Overlay on selecting */}
-          {isSelecting && (
-            <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-              <span className="text-xs bg-white/90 text-primary font-bold px-2 py-1 rounded-lg shadow">
-                入れ替え
-              </span>
-            </div>
-          )}
-          {/* Clear button */}
-          <button
-            onClick={(e) => onClear(slotId, e)}
-            className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ opacity: undefined }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0")}
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-          {/* Item name tooltip */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-            <p className="text-[10px] text-white font-medium truncate">{item.name}</p>
-          </div>
-        </>
-      )}
-    </motion.div>
-  );
-}
-
-const SLOT_LABELS: Record<SlotId, string> = {
-  poster: "ポスター枠",
-  shelf1_left: "1段目・左",
-  shelf1_right: "1段目・右",
-  shelf2_left: "2段目・左",
-  shelf2_right: "2段目・右",
-  shelf3_left: "3段目・左",
-  shelf3_right: "3段目・右",
-};
