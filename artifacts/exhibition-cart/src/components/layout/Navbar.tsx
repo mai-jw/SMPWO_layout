@@ -1,13 +1,14 @@
 import { Link, useLocation } from "wouter";
-import { GalleryVerticalEnd, UploadCloud } from "lucide-react";
+import { GalleryVerticalEnd, UploadCloud, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function Navbar() {
   const [location] = useLocation();
 
   const navItems = [
-    { href: "/", label: "ギャラリー", icon: GalleryVerticalEnd },
-    { href: "/upload", label: "管理画面 (アップロード)", icon: UploadCloud },
+    { href: "/", label: "カート編集", icon: ShoppingCart },
+    { href: "/gallery", label: "ギャラリー", icon: GalleryVerticalEnd },
+    { href: "/upload", label: "アップロード", icon: UploadCloud },
   ];
 
   return (

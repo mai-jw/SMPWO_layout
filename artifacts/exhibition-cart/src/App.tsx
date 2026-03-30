@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 // Page Imports
 import ItemsList from "@/pages/ItemsList";
 import UploadAdmin from "@/pages/UploadAdmin";
+import CartEditor from "@/pages/CartEditor";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,7 +21,8 @@ const queryClient = new QueryClient({
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={ItemsList} />
+      <Route path="/" component={CartEditor} />
+      <Route path="/gallery" component={ItemsList} />
       <Route path="/upload" component={UploadAdmin} />
       <Route path="/admin" component={UploadAdmin} />
       <Route component={NotFound} />
