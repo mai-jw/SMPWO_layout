@@ -1,15 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL || "") as string;
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "") as string;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    "VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set in environment variables"
+  console.warn(
+    "[Supabase] 環境変数が設定されていません。VITE_SUPABASE_URL と VITE_SUPABASE_ANON_KEY を Replit Secrets に追加してください。"
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder-key"
+);
 
 export const STORAGE_BUCKET = "exhibition-images";
 

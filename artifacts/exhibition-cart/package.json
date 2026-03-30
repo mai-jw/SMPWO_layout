@@ -75,6 +75,9 @@
     "zod": "catalog:"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.100.1"
+    "@supabase/supabase-js": "^2.100.1",
+    "@types/uuid": "^11.0.0",
+    "react-dropzone": "^15.0.0",
+    "uuid": "^13.0.0"
   }
 }
