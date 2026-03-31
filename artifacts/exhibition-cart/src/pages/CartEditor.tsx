@@ -181,7 +181,7 @@ function CartPanel({ cartId, layout, activeTarget, isSelecting, onSlotClick, onC
 }
 
 /* ─────────────────────── Main Component ─────────────────────── */
-export function CartEditor() {
+export default function CartEditor() {
   const [period, setPeriod] = useState(() => {
     const now = new Date();
     const y = now.getFullYear();
