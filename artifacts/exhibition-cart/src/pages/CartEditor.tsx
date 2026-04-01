@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingCart, Image as ImageIcon, X, Download, FileSpreadsheet,
@@ -29,9 +29,17 @@ const SHELF_LABELS: Record<ShelfKey, string> = {
 
 function getTagLabel(tag: TagData): string {
   if (tag.type === "none") return "";
-  if (tag.type === "free") return tag.value || "フリー";
-  return tag.value || "—";
+  if (tag.type === "free_dist") return "無料配布";
+  return tag.value || "";
 }
+
+/* ════════════════ Language list ════════════════ */
+const LANGUAGES = [
+  "日本語", "外国語", "英語",
+  "中国語（簡体字）", "中国語（繁体字）",
+  "韓国語", "ベトナム語", "タガログ語",
+  "タイ語", "インドネシア語", "スペイン語",
+];
 
 /* ════════════════ TagBar ════════════════ */
 interface TagBarProps {
@@ -41,110 +49,148 @@ interface TagBarProps {
   onTagChange: (which: "tag_1" | "tag_2", tag: TagData) => void;
 }
 
-const LANG_OPTIONS = [
-  { value: "none", label: "なし" },
-  { value: "ja", label: "日本語" },
-  { value: "en", label: "外国語" },
-];
-
 function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
-  const [open, setOpen] = useState(false);
-  const [freeVal1, setFreeVal1] = useState(shelf.tag_1.value);
-  const [freeVal2, setFreeVal2] = useState(shelf.tag_2.value);
+  const [showMenu, setShowMenu] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const label1 = getTagLabel(shelf.tag_1);
-  const label2 = getTagLabel(shelf.tag_2);
-  const displayTag = [label1, label2].filter(Boolean).join(" / ") || "タグ設定";
+  // Rules
+  const isShelf1 = shelfKey === "shelf1";
+  const is2Cols = shelf.layout_type === "2_cols";
+  const canTag = !is2Cols || isShelf1;       // 2冊+shelf1 → lang only; 3冊/4冊 → all
+  const canFreeDist = !is2Cols;              // 無料配布は3冊/4冊のみ
 
-  const setLangTag = (which: "tag_1" | "tag_2", val: string) => {
-    if (val === "none") onTagChange(which, { type: "none", value: "" });
-    else if (val === "free") onTagChange(which, { type: "free", value: which === "tag_1" ? freeVal1 : freeVal2 });
-    else onTagChange(which, { type: "lang", value: val === "ja" ? "日本語" : "外国語" });
+  const mode = shelf.tag_1.type; // "none" | "lang" | "free_dist" | "free"
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!showMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setShowMenu(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showMenu]);
+
+  const setMode = (newMode: "none" | "lang" | "free_dist") => {
+    if (newMode === "none") {
+      onTagChange("tag_1", { type: "none", value: "" });
+      onTagChange("tag_2", { type: "none", value: "" });
+    } else if (newMode === "lang") {
+      onTagChange("tag_1", { type: "lang", value: mode === "lang" ? shelf.tag_1.value : "" });
+      onTagChange("tag_2", { type: "none", value: "" });
+    } else {
+      onTagChange("tag_1", { type: "free_dist", value: "無料で差し上げています" });
+      onTagChange("tag_2", { type: "none", value: "" });
+    }
+    setShowMenu(false);
   };
 
+  // Bar background based on mode & state
+  const barBg = !canTag
+    ? "bg-zinc-700/60"
+    : mode === "free_dist" ? "bg-zinc-900"
+    : mode === "lang"      ? "bg-red-600"
+    :                        "bg-red-900/50";
+
   return (
-    <div className="relative">
-      {/* Red tag bar */}
-      <div className="bg-red-600 rounded-t-md flex items-center px-2 py-1 gap-1.5 select-none">
-        <button
-          className="flex items-center gap-1 flex-1 min-w-0 text-left"
-          onClick={() => setOpen((v) => !v)}
-        >
-          <Tag className="w-3 h-3 text-red-200 flex-shrink-0" />
-          <span className="text-white text-[11px] font-semibold truncate">{displayTag}</span>
-          <ChevronDown className={`w-3 h-3 text-red-200 flex-shrink-0 transition-transform ml-0.5 ${open ? "rotate-180" : ""}`} />
-        </button>
-        {/* Layout switcher */}
+    <div className="relative" ref={containerRef}>
+      {/* ── Tag bar ── */}
+      <div className={`rounded-t-md flex items-center gap-1 px-1.5 py-1 text-white text-[11px] transition-colors duration-150 ${barBg}`}>
+
+        {/* Mode selector button */}
+        {canTag ? (
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v); }}
+            className="flex-shrink-0 flex items-center gap-0.5 text-white/70 hover:text-white transition-colors"
+          >
+            <Tag className="w-3 h-3" />
+            <ChevronDown className={`w-2.5 h-2.5 transition-transform ${showMenu ? "rotate-180" : ""}`} />
+          </button>
+        ) : (
+          <span className="text-[10px] text-zinc-500 flex-shrink-0 select-none">冊子類</span>
+        )}
+
+        {/* Content */}
+        <div className="flex-1 min-w-0 flex items-center gap-1">
+          {mode === "lang" && canTag ? (
+            // Two language dropdowns side by side
+            <>
+              <select
+                value={shelf.tag_1.value}
+                onChange={(e) => onTagChange("tag_1", { type: "lang", value: e.target.value })}
+                onClick={(e) => e.stopPropagation()}
+                className="flex-1 min-w-0 text-[10px] bg-red-700/60 text-white border border-white/10 rounded px-1 py-0 h-[18px] outline-none cursor-pointer"
+              >
+                <option value="">左：―</option>
+                {LANGUAGES.map((l) => (
+                  <option key={l} value={l} className="bg-red-900 text-white">{l}</option>
+                ))}
+              </select>
+              <select
+                value={shelf.tag_2.type === "lang" ? shelf.tag_2.value : ""}
+                onChange={(e) =>
+                  onTagChange("tag_2", e.target.value ? { type: "lang", value: e.target.value } : { type: "none", value: "" })
+                }
+                onClick={(e) => e.stopPropagation()}
+                className="flex-1 min-w-0 text-[10px] bg-red-700/60 text-white border border-white/10 rounded px-1 py-0 h-[18px] outline-none cursor-pointer"
+              >
+                <option value="">右：―</option>
+                {LANGUAGES.map((l) => (
+                  <option key={l} value={l} className="bg-red-900 text-white">{l}</option>
+                ))}
+              </select>
+            </>
+          ) : mode === "free_dist" ? (
+            <span className="flex-1 text-center font-bold text-xs tracking-wide">無料で差し上げています</span>
+          ) : canTag ? (
+            <span className="text-[10px] text-white/25 select-none">タグなし</span>
+          ) : null}
+        </div>
+
+        {/* Layout switcher — always visible */}
         <div className="flex gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
           {(["2_cols", "3_cols", "4_cols"] as ShelfLayoutType[]).map((t) => (
-            <button key={t}
+            <button
+              key={t}
               onClick={() => onLayoutChange(t)}
-              className={`text-[10px] font-bold px-1.5 py-0.5 rounded transition-colors ${
-                shelf.layout_type === t ? "bg-red-900 text-white" : "bg-red-500/60 text-red-100 hover:bg-red-800"
-              }`}>
-              {t === "2_cols" ? "2冊" : t === "3_cols" ? "3冊" : "4冊"}
+              className={`text-[10px] font-bold w-5 text-center py-0.5 rounded transition-colors ${
+                shelf.layout_type === t ? "bg-white/25 text-white" : "text-white/40 hover:text-white hover:bg-white/15"
+              }`}
+            >
+              {t === "2_cols" ? "2" : t === "3_cols" ? "3" : "4"}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Dropdown */}
+      {/* ── Mode selector dropdown ── */}
       <AnimatePresence>
-        {open && (
+        {showMenu && canTag && (
           <motion.div
-            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-            className="absolute top-full left-0 right-0 z-30 bg-red-700 rounded-b-md px-2.5 pt-1.5 pb-2 shadow-xl"
+            initial={{ opacity: 0, y: -4, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.97 }}
+            className="absolute top-full left-0 z-40 bg-white rounded-xl shadow-2xl border border-slate-200 py-1 min-w-[150px] overflow-hidden"
           >
-            {/* Tag 1 */}
-            <p className="text-[9px] text-red-200 font-bold uppercase tracking-wider mb-1">タグ1（左側）</p>
-            <div className="flex gap-1 flex-wrap mb-1">
-              {[...LANG_OPTIONS, { value: "free", label: "フリー" }].map(({ value, label }) => {
-                const current = shelf.tag_1.type === "none" && value === "none"
-                  ? true : shelf.tag_1.type === "lang" && shelf.tag_1.value === (value === "ja" ? "日本語" : "外国語")
-                  ? true : shelf.tag_1.type === "free" && value === "free"
-                  ? true : false;
-                return (
-                  <button key={value} onClick={() => setLangTag("tag_1", value)}
-                    className={`text-[10px] px-2 py-0.5 rounded font-semibold transition-colors ${
-                      current ? "bg-white text-red-700" : "bg-red-800/60 text-white hover:bg-red-900"
-                    }`}>
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-            {shelf.tag_1.type === "free" && (
-              <input
-                value={freeVal1}
-                onChange={(e) => { setFreeVal1(e.target.value); onTagChange("tag_1", { type: "free", value: e.target.value }); }}
-                placeholder="テキストを入力..."
-                className="w-full text-[11px] bg-red-900/60 text-white placeholder:text-red-300 border border-red-500 rounded px-2 py-0.5 outline-none mb-1.5"
-              />
-            )}
-            {/* Tag 2 */}
-            <p className="text-[9px] text-red-200 font-bold uppercase tracking-wider mb-1">タグ2（右側）</p>
-            <div className="flex gap-1 flex-wrap">
-              {LANG_OPTIONS.map(({ value, label }) => {
-                const current = shelf.tag_2.type === "none" && value === "none"
-                  ? true : shelf.tag_2.type === "lang" && shelf.tag_2.value === (value === "ja" ? "日本語" : "外国語")
-                  ? true : false;
-                return (
-                  <button key={value} onClick={() => setLangTag("tag_2", value)}
-                    className={`text-[10px] px-2 py-0.5 rounded font-semibold transition-colors ${
-                      current ? "bg-white text-red-700" : "bg-red-800/60 text-white hover:bg-red-900"
-                    }`}>
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-            {shelf.tag_2.type === "free" && (
-              <input
-                value={freeVal2}
-                onChange={(e) => { setFreeVal2(e.target.value); onTagChange("tag_2", { type: "free", value: e.target.value }); }}
-                placeholder="テキストを入力..."
-                className="w-full text-[11px] bg-red-900/60 text-white border border-red-500 rounded px-2 py-0.5 outline-none mt-1"
-              />
+            <button
+              onClick={() => setMode("none")}
+              className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-slate-50 transition-colors ${mode === "none" ? "text-slate-900 font-bold" : "text-slate-500"}`}
+            >
+              <X className="w-3 h-3 text-slate-400 flex-shrink-0" /> タグなし
+            </button>
+            <button
+              onClick={() => setMode("lang")}
+              className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-red-50 transition-colors ${mode === "lang" ? "text-red-700 font-bold bg-red-50" : "text-slate-600"}`}
+            >
+              <span className="w-3 h-3 rounded-sm bg-red-600 flex-shrink-0 inline-block" /> 言語表示（赤）
+            </button>
+            {canFreeDist && (
+              <button
+                onClick={() => setMode("free_dist")}
+                className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-zinc-50 transition-colors ${mode === "free_dist" ? "text-zinc-900 font-bold bg-zinc-50" : "text-slate-600"}`}
+              >
+                <span className="w-3 h-3 rounded-sm bg-zinc-900 flex-shrink-0 inline-block" /> 無料配布（黒）
+              </button>
             )}
           </motion.div>
         )}
@@ -428,7 +474,20 @@ export default function CartEditor() {
         : t === "3_cols"
         ? [shelf.items[0] ?? null, shelf.items[1] ?? null, shelf.items[2] ?? null]
         : [shelf.items[0] ?? null, shelf.items[1] ?? null];
-      return { ...prev, [shelfKey]: { ...shelf, layout_type: t, items: newItems } };
+      // Clear tags when switching to 2_cols (except shelf1 keeps lang tag)
+      let tag_1 = shelf.tag_1;
+      let tag_2 = shelf.tag_2;
+      if (t === "2_cols") {
+        if (shelfKey !== "shelf1") {
+          tag_1 = { type: "none", value: "" };
+          tag_2 = { type: "none", value: "" };
+        } else if (tag_1.type === "free_dist") {
+          // shelf1 with 2_cols can't have free_dist
+          tag_1 = { type: "none", value: "" };
+          tag_2 = { type: "none", value: "" };
+        }
+      }
+      return { ...prev, [shelfKey]: { ...shelf, layout_type: t, items: newItems, tag_1, tag_2 } };
     });
   }, [getSetCart]);
 

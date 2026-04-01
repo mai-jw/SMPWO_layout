@@ -27,7 +27,7 @@ export interface Item {
 
 /* ─── Cart Layout V2 ─── */
 export type ShelfLayoutType = "2_cols" | "3_cols" | "4_cols";
-export type TagType = "lang" | "free" | "none";
+export type TagType = "lang" | "free" | "free_dist" | "none";
 export type ShelfKey = "shelf1" | "shelf2" | "shelf3";
 
 export interface TagData {
