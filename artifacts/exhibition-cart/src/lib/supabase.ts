@@ -4,9 +4,7 @@ const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_P
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "") as string;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    "[Supabase] 環境変数が設定されていません。VITE_SUPABASE_URL と VITE_SUPABASE_ANON_KEY を Replit Secrets に追加してください。"
-  );
+  console.warn("[Supabase] 環境変数が設定されていません。VITE_SUPABASE_URL と VITE_SUPABASE_ANON_KEY を Replit Secrets に追加してください。");
 }
 
 export const supabase = createClient(
@@ -17,6 +15,7 @@ export const supabase = createClient(
 export const STORAGE_BUCKET = "exhibition-images";
 export const LAYOUTS_TABLE = "layouts";
 
+/* ─── Item ─── */
 export interface Item {
   id?: string;
   name: string;
@@ -26,60 +25,78 @@ export interface Item {
   created_at?: string;
 }
 
-export type SlotId =
-  | "poster"
-  | "shelf1_left"
-  | "shelf1_right"
-  | "shelf2_left"
-  | "shelf2_right"
-  | "shelf3_left"
-  | "shelf3_right";
+/* ─── Cart Layout V2 ─── */
+export type ShelfLayoutType = "2_cols" | "3_cols";
+export type TagType = "lang" | "free" | "none";
+export type ShelfKey = "shelf1" | "shelf2" | "shelf3";
 
-export type CartLayout = Record<SlotId, Item | null>;
+export interface TagData {
+  type: TagType;
+  value: string; // "日本語" | "外国語" | custom
+}
 
-export const INITIAL_CART_LAYOUT: CartLayout = {
-  poster: null,
-  shelf1_left: null,
-  shelf1_right: null,
-  shelf2_left: null,
-  shelf2_right: null,
-  shelf3_left: null,
-  shelf3_right: null,
-};
+export interface ShelfData {
+  layout_type: ShelfLayoutType;
+  tag_1: TagData;
+  tag_2: TagData;
+  items: (string | null)[]; // item IDs, length matches layout_type
+}
 
-export const SLOT_IDS: SlotId[] = [
-  "poster",
-  "shelf1_left",
-  "shelf1_right",
-  "shelf2_left",
-  "shelf2_right",
-  "shelf3_left",
-  "shelf3_right",
-];
+export interface CartLayoutV2 {
+  poster: string | null; // item ID
+  shelf1: ShelfData;
+  shelf2: ShelfData;
+  shelf3: ShelfData;
+}
 
-export const SLOT_LABELS: Record<SlotId, string> = {
-  poster: "ポスター枠",
-  shelf1_left: "1段目・左",
-  shelf1_right: "1段目・右",
-  shelf2_left: "2段目・左",
-  shelf2_right: "2段目・右",
-  shelf3_left: "3段目・左",
-  shelf3_right: "3段目・右",
-};
+export const DEFAULT_TAG: TagData = { type: "none", value: "" };
 
+export function makeDefaultShelf(): ShelfData {
+  return {
+    layout_type: "2_cols",
+    tag_1: { type: "none", value: "" },
+    tag_2: { type: "none", value: "" },
+    items: [null, null],
+  };
+}
+
+export function makeInitialCartLayoutV2(): CartLayoutV2 {
+  return {
+    poster: null,
+    shelf1: makeDefaultShelf(),
+    shelf2: makeDefaultShelf(),
+    shelf3: makeDefaultShelf(),
+  };
+}
+
+export function filledCountV2(layout: CartLayoutV2): number {
+  let n = layout.poster !== null ? 1 : 0;
+  for (const key of ["shelf1", "shelf2", "shelf3"] as ShelfKey[]) {
+    n += layout[key].items.filter((id) => id !== null).length;
+  }
+  return n;
+}
+
+export function maxCountV2(layout: CartLayoutV2): number {
+  let n = 1;
+  for (const key of ["shelf1", "shelf2", "shelf3"] as ShelfKey[]) {
+    n += layout[key].layout_type === "3_cols" ? 3 : 2;
+  }
+  return n;
+}
+
+/* ─── Layout record (Supabase) ─── */
 export interface LayoutRecord {
   id?: string;
   period: string;
-  cart_a: CartLayout;
-  cart_b: CartLayout;
+  cart_a: CartLayoutV2;
+  cart_b: CartLayoutV2;
   created_at?: string;
   updated_at?: string;
 }
 
-export function detectCategoryAndLanguage(filename: string): {
-  category: string;
-  language: string;
-} {
+/* ─── Detect helpers ─── */
+export function detectCategoryAndLanguage(filename: string): { category: string; language: string } {
   const lower = filename.toLowerCase();
   let category = "general";
   if (lower.includes("_poster")) category = "poster";

@@ -2,22 +2,37 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   supabase,
   LAYOUTS_TABLE,
-  type CartLayout,
+  makeInitialCartLayoutV2,
+  makeDefaultShelf,
+  type CartLayoutV2,
+  type ShelfData,
   type LayoutRecord,
-  INITIAL_CART_LAYOUT,
-  SLOT_IDS,
 } from "@/lib/supabase";
 
 export const LAYOUTS_QUERY_KEY = ["supabase-layouts"];
 
-function hydrateLayout(raw: Record<string, unknown> | null | undefined): CartLayout {
-  if (!raw) return { ...INITIAL_CART_LAYOUT };
-  const result = { ...INITIAL_CART_LAYOUT };
-  for (const slotId of SLOT_IDS) {
-    const val = raw[slotId];
-    result[slotId] = val && typeof val === "object" ? (val as CartLayout[typeof slotId]) : null;
-  }
-  return result;
+function hydrateShelf(raw: unknown): ShelfData {
+  const def = makeDefaultShelf();
+  if (!raw || typeof raw !== "object") return def;
+  const r = raw as Record<string, unknown>;
+  return {
+    layout_type: (r.layout_type as ShelfData["layout_type"]) ?? def.layout_type,
+    tag_1: (r.tag_1 as ShelfData["tag_1"]) ?? def.tag_1,
+    tag_2: (r.tag_2 as ShelfData["tag_2"]) ?? def.tag_2,
+    items: Array.isArray(r.items) ? (r.items as (string | null)[]) : def.items,
+  };
+}
+
+function hydrateLayout(raw: unknown): CartLayoutV2 {
+  const def = makeInitialCartLayoutV2();
+  if (!raw || typeof raw !== "object") return def;
+  const r = raw as Record<string, unknown>;
+  return {
+    poster: typeof r.poster === "string" ? r.poster : null,
+    shelf1: hydrateShelf(r.shelf1),
+    shelf2: hydrateShelf(r.shelf2),
+    shelf3: hydrateShelf(r.shelf3),
+  };
 }
 
 export function useLayouts() {
@@ -31,8 +46,8 @@ export function useLayouts() {
       if (error) throw new Error(error.message);
       return (data ?? []).map((row) => ({
         ...row,
-        cart_a: hydrateLayout(row.cart_a as Record<string, unknown>),
-        cart_b: hydrateLayout(row.cart_b as Record<string, unknown>),
+        cart_a: hydrateLayout(row.cart_a),
+        cart_b: hydrateLayout(row.cart_b),
       }));
     },
   });
@@ -41,28 +56,15 @@ export function useLayouts() {
 export function useSaveLayout() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      period,
-      cart_a,
-      cart_b,
-    }: {
-      period: string;
-      cart_a: CartLayout;
-      cart_b: CartLayout;
-    }): Promise<LayoutRecord> => {
+    mutationFn: async ({ period, cart_a, cart_b }: { period: string; cart_a: CartLayoutV2; cart_b: CartLayoutV2 }): Promise<LayoutRecord> => {
       const { data, error } = await supabase
         .from(LAYOUTS_TABLE)
-        .upsert(
-          { period, cart_a, cart_b, updated_at: new Date().toISOString() },
-          { onConflict: "period" }
-        )
+        .upsert({ period, cart_a, cart_b, updated_at: new Date().toISOString() }, { onConflict: "period" })
         .select()
         .single();
       if (error) throw new Error(error.message);
       return data as LayoutRecord;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: LAYOUTS_QUERY_KEY });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: LAYOUTS_QUERY_KEY }),
   });
 }
