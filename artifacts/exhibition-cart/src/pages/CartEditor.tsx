@@ -76,13 +76,13 @@ function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
         </button>
         {/* Layout switcher */}
         <div className="flex gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-          {(["2_cols", "3_cols"] as ShelfLayoutType[]).map((t) => (
+          {(["2_cols", "3_cols", "4_cols"] as ShelfLayoutType[]).map((t) => (
             <button key={t}
               onClick={() => onLayoutChange(t)}
               className={`text-[10px] font-bold px-1.5 py-0.5 rounded transition-colors ${
                 shelf.layout_type === t ? "bg-red-900 text-white" : "bg-red-500/60 text-red-100 hover:bg-red-800"
               }`}>
-              {t === "2_cols" ? "2冊" : "3冊"}
+              {t === "2_cols" ? "2冊" : t === "3_cols" ? "3冊" : "4冊"}
             </button>
           ))}
         </div>
@@ -228,7 +228,7 @@ function ShelfSection({
         shelfKey={shelfKey} shelf={shelf}
         onLayoutChange={onLayoutChange} onTagChange={onTagChange}
       />
-      <div className={`bg-zinc-700 rounded-b-md p-2 grid gap-2 ${shelf.layout_type === "3_cols" ? "grid-cols-3" : "grid-cols-2"}`}>
+      <div className={`bg-zinc-700 rounded-b-md p-2 grid gap-2 ${shelf.layout_type === "4_cols" ? "grid-cols-4" : shelf.layout_type === "3_cols" ? "grid-cols-3" : "grid-cols-2"}`}>
         {shelf.items.map((itemId, idx) => (
           <ItemSlot
             key={idx}
@@ -423,7 +423,9 @@ export default function CartEditor() {
     const setter = getSetCart(cart);
     setter((prev) => {
       const shelf = prev[shelfKey];
-      const newItems = t === "3_cols"
+      const newItems = t === "4_cols"
+        ? [shelf.items[0] ?? null, shelf.items[1] ?? null, shelf.items[2] ?? null, shelf.items[3] ?? null]
+        : t === "3_cols"
         ? [shelf.items[0] ?? null, shelf.items[1] ?? null, shelf.items[2] ?? null]
         : [shelf.items[0] ?? null, shelf.items[1] ?? null];
       return { ...prev, [shelfKey]: { ...shelf, layout_type: t, items: newItems } };

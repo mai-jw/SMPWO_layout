@@ -26,7 +26,7 @@ export interface Item {
 }
 
 /* ─── Cart Layout V2 ─── */
-export type ShelfLayoutType = "2_cols" | "3_cols";
+export type ShelfLayoutType = "2_cols" | "3_cols" | "4_cols";
 export type TagType = "lang" | "free" | "none";
 export type ShelfKey = "shelf1" | "shelf2" | "shelf3";
 
@@ -80,7 +80,7 @@ export function filledCountV2(layout: CartLayoutV2): number {
 export function maxCountV2(layout: CartLayoutV2): number {
   let n = 1;
   for (const key of ["shelf1", "shelf2", "shelf3"] as ShelfKey[]) {
-    n += layout[key].layout_type === "3_cols" ? 3 : 2;
+    n += layout[key].layout_type === "4_cols" ? 4 : layout[key].layout_type === "3_cols" ? 3 : 2;
   }
   return n;
 }
