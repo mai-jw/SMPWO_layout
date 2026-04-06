@@ -1,9 +1,12 @@
-import { Link, useLocation } from "wouter";
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { GalleryVerticalEnd, UploadCloud, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function Navbar() {
-  const [location] = useLocation();
+  const pathname = usePathname();
 
   const navItems = [
     { href: "/", label: "カート編集", icon: ShoppingCart },
@@ -25,7 +28,7 @@ export function Navbar() {
 
         <nav className="flex items-center gap-2">
           {navItems.map((item) => {
-            const isActive = location === item.href;
+            const isActive = pathname === item.href;
             return (
               <Link
                 key={item.href}

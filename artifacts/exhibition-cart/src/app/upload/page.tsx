@@ -1,10 +1,10 @@
+"use client";
+
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import { detectCategoryAndLanguage } from "@/lib/supabase";
 import { useUploadItem } from "@/hooks/use-items";
-import { Navbar } from "@/components/layout/Navbar";
-import { Badge } from "@/components/ui/Badge";
 import { 
   UploadCloud, 
   X, 
@@ -30,7 +30,7 @@ interface StagedFile {
   errorMessage?: string;
 }
 
-export default function UploadAdmin() {
+export default function UploadAdminPage() {
   const [stagedFiles, setStagedFiles] = useState<StagedFile[]>([]);
   const [isUploadingAll, setIsUploadingAll] = useState(false);
   const uploadMutation = useUploadItem();
@@ -43,7 +43,7 @@ export default function UploadAdmin() {
         id: Math.random().toString(36).substring(7),
         file,
         preview: URL.createObjectURL(file),
-        name: file.name.split('.').slice(0, -1).join('.'), // Remove extension for display name
+        name: file.name.split('.').slice(0, -1).join('.'),
         category,
         language,
         status: "idle" as UploadStatus,
@@ -85,7 +85,6 @@ export default function UploadAdmin() {
     let errorCount = 0;
 
     for (const item of pendingFiles) {
-      // Update specific file to uploading state
       setStagedFiles((prev) =>
         prev.map((f) => (f.id === item.id ? { ...f, status: "uploading" } : f))
       );
@@ -102,11 +101,12 @@ export default function UploadAdmin() {
           prev.map((f) => (f.id === item.id ? { ...f, status: "success" } : f))
         );
         successCount++;
-      } catch (error: any) {
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "不明なエラーが発生しました";
         setStagedFiles((prev) =>
           prev.map((f) =>
             f.id === item.id
-              ? { ...f, status: "error", errorMessage: error.message }
+              ? { ...f, status: "error", errorMessage }
               : f
           )
         );
@@ -126,7 +126,6 @@ export default function UploadAdmin() {
   const clearCompleted = () => {
     setStagedFiles((prev) => {
       const remaining = prev.filter((f) => f.status !== "success");
-      // Cleanup Object URLs for removed files
       prev.filter((f) => f.status === "success").forEach((f) => URL.revokeObjectURL(f.preview));
       return remaining;
     });
@@ -134,19 +133,11 @@ export default function UploadAdmin() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background relative overflow-hidden">
-      {/* Abstract Background Element */}
       <div className="absolute top-0 left-0 right-0 h-[50vh] z-0 overflow-hidden pointer-events-none opacity-30">
-        <img 
-          src={`${import.meta.env.BASE_URL}images/hero-bg.png`} 
-          alt="" 
-          className="w-full h-full object-cover blur-3xl scale-110" 
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background"></div>
+        <div className="absolute inset-0 bg-linear-to-b from-transparent to-background"></div>
       </div>
 
       <div className="relative z-10">
-        <Navbar />
-
         <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
           <div className="mb-8 text-center md:text-left">
             <h1 className="text-4xl font-bold text-slate-900 tracking-tight">アップロード管理</h1>
@@ -156,8 +147,6 @@ export default function UploadAdmin() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            
-            {/* Dropzone Column */}
             <div className="lg:col-span-1">
               <div
                 {...getRootProps()}
@@ -178,7 +167,6 @@ export default function UploadAdmin() {
               </div>
             </div>
 
-            {/* Staged Files Column */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[calc(100vh-16rem)] min-h-[500px]">
                 <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
@@ -274,7 +262,6 @@ export default function UploadAdmin() {
                           </div>
 
                           <div className="flex flex-wrap gap-3 mt-3">
-                            {/* Category Select */}
                             <div className="flex items-center gap-1.5">
                               <Tag className="w-3.5 h-3.5 text-slate-400" />
                               <select
@@ -288,7 +275,6 @@ export default function UploadAdmin() {
                               </select>
                             </div>
 
-                            {/* Language Select */}
                             <div className="flex items-center gap-1.5">
                               <span className="text-xs font-bold text-slate-400 px-1">Aあ</span>
                               <select

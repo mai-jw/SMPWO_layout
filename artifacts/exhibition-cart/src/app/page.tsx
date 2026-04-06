@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -33,12 +35,12 @@ function getTagLabel(tag: TagData): string {
   return tag.value || "";
 }
 
-/* ════════════════ Language list ════════════════ */
 const LANGUAGES = [
   "日本語", "外国語", "英語",
   "中国語（簡体字）", "中国語（繁体字）",
   "韓国語", "ベトナム語", "タガログ語",
   "タイ語", "インドネシア語", "スペイン語",
+  "教育語",
 ];
 
 /* ════════════════ TagBar ════════════════ */
@@ -53,15 +55,13 @@ function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
   const [showMenu, setShowMenu] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Rules
   const isShelf1 = shelfKey === "shelf1";
   const is2Cols = shelf.layout_type === "2_cols";
-  const canTag = !is2Cols || isShelf1;       // 2冊+shelf1 → lang only; 3冊/4冊 → all
-  const canFreeDist = !is2Cols;              // 無料配布は3冊/4冊のみ
+  const canTag = !is2Cols || isShelf1;
+  const canFreeDist = !is2Cols;
 
-  const mode = shelf.tag_1.type; // "none" | "lang" | "free_dist" | "free"
+  const mode = shelf.tag_1.type;
 
-  // Close menu on outside click
   useEffect(() => {
     if (!showMenu) return;
     const handler = (e: MouseEvent) => {
@@ -85,7 +85,6 @@ function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
     setShowMenu(false);
   };
 
-  // Bar background based on mode & state
   const barBg = !canTag
     ? "bg-zinc-700/60"
     : mode === "free_dist" ? "bg-zinc-900"
@@ -94,10 +93,7 @@ function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
 
   return (
     <div className="relative" ref={containerRef}>
-      {/* ── Tag bar ── */}
       <div className={`rounded-t-md flex items-center gap-1 px-1.5 py-1 text-white text-[11px] transition-colors duration-150 ${barBg}`}>
-
-        {/* Mode selector button */}
         {canTag ? (
           <button
             onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v); }}
@@ -110,14 +106,12 @@ function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
           <span className="text-[10px] text-zinc-500 flex-shrink-0 select-none">冊子類</span>
         )}
 
-        {/* Content */}
         <div className="flex-1 min-w-0 flex items-center gap-1">
           {mode === "lang" && canTag ? (
-            // Two language dropdowns side by side
             <>
               <select
                 value={shelf.tag_1.value}
-                onChange={(e) => onTagChange("tag_1", { type: "lang", value: e.target.value })}
+                onChange={(e) => onTagChange("tag_1", { type: "lang", value: (e.target as HTMLSelectElement).value })}
                 onClick={(e) => e.stopPropagation()}
                 className="flex-1 min-w-0 text-[10px] bg-red-700/60 text-white border border-white/10 rounded px-1 py-0 h-[18px] outline-none cursor-pointer"
               >
@@ -128,9 +122,10 @@ function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
               </select>
               <select
                 value={shelf.tag_2.type === "lang" ? shelf.tag_2.value : ""}
-                onChange={(e) =>
-                  onTagChange("tag_2", e.target.value ? { type: "lang", value: e.target.value } : { type: "none", value: "" })
-                }
+                onChange={(e) => {
+                  const val = (e.target as HTMLSelectElement).value;
+                  onTagChange("tag_2", val ? { type: "lang", value: val } : { type: "none", value: "" });
+                }}
                 onClick={(e) => e.stopPropagation()}
                 className="flex-1 min-w-0 text-[10px] bg-red-700/60 text-white border border-white/10 rounded px-1 py-0 h-[18px] outline-none cursor-pointer"
               >
@@ -147,8 +142,7 @@ function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
           ) : null}
         </div>
 
-        {/* Layout switcher — always visible */}
-        <div className="flex gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+        <div className="flex gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
           {(["2_cols", "3_cols", "4_cols"] as ShelfLayoutType[]).map((t) => (
             <button
               key={t}
@@ -163,7 +157,6 @@ function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
         </div>
       </div>
 
-      {/* ── Mode selector dropdown ── */}
       <AnimatePresence>
         {showMenu && canTag && (
           <motion.div
@@ -176,20 +169,20 @@ function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
               onClick={() => setMode("none")}
               className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-slate-50 transition-colors ${mode === "none" ? "text-slate-900 font-bold" : "text-slate-500"}`}
             >
-              <X className="w-3 h-3 text-slate-400 flex-shrink-0" /> タグなし
+              <X className="w-3 h-3 text-slate-400 shrink-0" /> タグなし
             </button>
             <button
               onClick={() => setMode("lang")}
               className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-red-50 transition-colors ${mode === "lang" ? "text-red-700 font-bold bg-red-50" : "text-slate-600"}`}
             >
-              <span className="w-3 h-3 rounded-sm bg-red-600 flex-shrink-0 inline-block" /> 言語表示（赤）
+              <span className="w-3 h-3 rounded-sm bg-red-600 shrink-0 inline-block" /> 言語表示（赤）
             </button>
             {canFreeDist && (
               <button
                 onClick={() => setMode("free_dist")}
                 className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-zinc-50 transition-colors ${mode === "free_dist" ? "text-zinc-900 font-bold bg-zinc-50" : "text-slate-600"}`}
               >
-                <span className="w-3 h-3 rounded-sm bg-zinc-900 flex-shrink-0 inline-block" /> 無料配布（黒）
+                <span className="w-3 h-3 rounded-sm bg-zinc-900 shrink-0 inline-block" /> 無料配布（黒）
               </button>
             )}
           </motion.div>
@@ -230,7 +223,7 @@ function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster }: Ite
           >
             <X className="w-2.5 h-2.5" />
           </button>
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 to-transparent px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             <p className="text-white text-[9px] font-medium truncate leading-tight">{item.name}</p>
           </div>
         </>
@@ -313,9 +306,8 @@ function CartPanel({
   const isPosterActive = activeTarget?.cart === cartId && activeTarget.section === "poster";
 
   return (
-    <div className="bg-zinc-800 rounded-2xl shadow-2xl flex-shrink-0 w-[270px] overflow-visible pb-3">
-      {/* Header */}
-      <div className={`bg-gradient-to-r ${headerGrad} text-white px-4 py-2 rounded-t-2xl flex items-center justify-between`}>
+    <div className="bg-zinc-800 rounded-2xl shadow-2xl shrink-0 w-[270px] overflow-visible pb-3">
+      <div className={`bg-linear-to-r ${headerGrad} text-white px-4 py-2 rounded-t-2xl flex items-center justify-between`}>
         <div className="flex items-center gap-1.5">
           <ShoppingCart className="w-3.5 h-3.5" />
           <span className="text-sm font-bold tracking-wide">カート{cartId}</span>
@@ -326,7 +318,6 @@ function CartPanel({
       </div>
 
       <div className="px-3 pt-3 space-y-2.5">
-        {/* Poster area */}
         <div>
           <div className={`rounded-lg overflow-hidden border-2 transition-all ${
             isPosterActive ? "border-yellow-400 shadow-lg shadow-yellow-400/30" : "border-white/20"
@@ -344,7 +335,6 @@ function CartPanel({
           </div>
         </div>
 
-        {/* Shelves */}
         {(["shelf1", "shelf2", "shelf3"] as ShelfKey[]).map((key) => (
           <ShelfSection
             key={key}
@@ -361,7 +351,6 @@ function CartPanel({
           />
         ))}
 
-        {/* Wheels */}
         <div className="flex justify-around px-6 pt-1">
           {[0, 1].map((i) => (
             <div key={i} className="w-9 h-9 rounded-full bg-zinc-600 border-2 border-zinc-500 shadow-inner flex items-center justify-center">
@@ -374,7 +363,6 @@ function CartPanel({
   );
 }
 
-/* ════════════════ CartEditor (Main) ════════════════ */
 export default function CartEditor() {
   const [period, setPeriod] = useState(() => {
     const now = new Date();
@@ -410,7 +398,6 @@ export default function CartEditor() {
     return mf && ms;
   }), [items, filter, searchQuery]);
 
-  /* ─── Helpers ─── */
   const getSetCart = useCallback((cart: CartId) => cart === "A" ? setCartA : setCartB, []);
 
   const handleSlotClick = useCallback((cart: CartId, section: "poster" | ShelfKey, index?: number) => {
@@ -474,7 +461,6 @@ export default function CartEditor() {
         : t === "3_cols"
         ? [shelf.items[0] ?? null, shelf.items[1] ?? null, shelf.items[2] ?? null]
         : [shelf.items[0] ?? null, shelf.items[1] ?? null];
-      // Clear tags when switching to 2_cols (except shelf1 keeps lang tag)
       let tag_1 = shelf.tag_1;
       let tag_2 = shelf.tag_2;
       if (t === "2_cols") {
@@ -482,7 +468,6 @@ export default function CartEditor() {
           tag_1 = { type: "none", value: "" };
           tag_2 = { type: "none", value: "" };
         } else if (tag_1.type === "free_dist") {
-          // shelf1 with 2_cols can't have free_dist
           tag_1 = { type: "none", value: "" };
           tag_2 = { type: "none", value: "" };
         }
@@ -503,7 +488,6 @@ export default function CartEditor() {
     setSidebarSelected(null);
   };
 
-  /* ─── Save ─── */
   const handleSave = async () => {
     if (!period.trim()) return;
     setSaveStatus("saving");
@@ -523,7 +507,6 @@ export default function CartEditor() {
     setCopySource("");
   };
 
-  /* ─── Exports ─── */
   const handleExportPng = async () => {
     if (!canvasRef.current) return;
     setExporting("png");
@@ -532,7 +515,7 @@ export default function CartEditor() {
       const canvas = await html2canvas(canvasRef.current, { scale: 2.5, useCORS: true, backgroundColor: "#1c1c1e" });
       const a = document.createElement("a");
       a.download = `展示カート_${period}.png`;
-      a.href = canvas.toDataURL("image/png");
+      a.href = (canvas as HTMLCanvasElement).toDataURL("image/png");
       a.click();
     } finally { setExporting(null); }
   };
@@ -544,7 +527,7 @@ export default function CartEditor() {
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
       const canvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: "#1c1c1e" });
-      const imgData = canvas.toDataURL("image/png");
+      const imgData = (canvas as HTMLCanvasElement).toDataURL("image/png");
       const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
       const pW = pdf.internal.pageSize.getWidth();
       const pH = pdf.internal.pageSize.getHeight();
@@ -552,7 +535,7 @@ export default function CartEditor() {
       pdf.text(`展示カートレイアウト — ${period}`, 12, 10);
       pdf.setFontSize(8); pdf.setFont("helvetica", "normal");
       pdf.text(new Date().toLocaleDateString("ja-JP"), pW - 12, 10, { align: "right" });
-      const ratio = canvas.width / canvas.height;
+      const ratio = (canvas as HTMLCanvasElement).width / (canvas as HTMLCanvasElement).height;
       const imgW = pW - 24;
       const imgH = Math.min(imgW / ratio, pH - 20);
       pdf.addImage(imgData, "PNG", 12, 15, imgW, imgH);
@@ -566,15 +549,12 @@ export default function CartEditor() {
       const XLSX = await import("xlsx");
       const wb = XLSX.utils.book_new();
       const headers = ["区分", "段", "スロット", "レイアウト", "タグ1", "タグ2", "カートA — 画像名", "", "カートB — 画像名"];
-
       const rows: (string | number)[][] = [headers];
       const addRow = (区分: string, 段: string, スロット: string, レイアウト: string, タグ1: string, タグ2: string, a: string, b: string) => {
         rows.push([区分, 段, スロット, レイアウト, タグ1, タグ2, a, "", b]);
       };
-
       const getItemName = (id: string | null) => (id && itemMap[id] ? itemMap[id].name : id ? "（削除済）" : "（未配置）");
       addRow("ポスター", "—", "—", "—", "—", "—", getItemName(cartA.poster), getItemName(cartB.poster));
-
       for (const key of ["shelf1", "shelf2", "shelf3"] as ShelfKey[]) {
         const la = cartA[key]; const lb = cartB[key];
         const t1a = getTagLabel(la.tag_1) || "なし"; const t1b = getTagLabel(lb.tag_1) || "なし";
@@ -589,7 +569,6 @@ export default function CartEditor() {
           );
         }
       }
-
       const ws = XLSX.utils.aoa_to_sheet(rows);
       ws["!cols"] = [8, 6, 8, 12, 10, 10, 28, 2, 28].map((w) => ({ wch: w }));
       XLSX.utils.book_append_sheet(wb, ws, `配置リスト_${period}`);
@@ -601,7 +580,6 @@ export default function CartEditor() {
   const totalA = filledCountV2(cartA);
   const totalB = filledCountV2(cartB);
 
-  /* ─── Quick period helpers ─── */
   const quickPeriods = (() => {
     const now = new Date();
     const y = now.getFullYear();
@@ -617,13 +595,10 @@ export default function CartEditor() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-56px)] bg-zinc-900">
-
-      {/* ── Toolbar ── */}
-      <div className="flex-shrink-0 bg-zinc-800 border-b border-zinc-700 px-4 py-2 flex flex-wrap items-center gap-2.5">
-        {/* Period */}
+      <div className="shrink-0 bg-zinc-800 border-b border-zinc-700 px-4 py-2 flex flex-wrap items-center gap-2.5">
         <div className="flex items-center gap-1.5 bg-zinc-700 border border-zinc-600 rounded-lg px-2.5 py-1.5">
           <CalendarDays className="w-3.5 h-3.5 text-zinc-400" />
-          <input type="text" value={period} onChange={(e) => setPeriod(e.target.value)}
+          <input type="text" value={period} onChange={(e) => setPeriod((e.target as HTMLInputElement).value)}
             placeholder="例: 2026-05-前半"
             className="text-sm font-medium text-zinc-100 bg-transparent outline-none w-36 placeholder:text-zinc-500" />
         </div>
@@ -635,10 +610,7 @@ export default function CartEditor() {
             {label}
           </button>
         ))}
-
         <div className="h-5 w-px bg-zinc-600" />
-
-        {/* Copy previous */}
         <div className="relative">
           <button onClick={() => setShowCopyPanel((v) => !v)}
             className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-zinc-600 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 font-medium transition-colors">
@@ -653,7 +625,7 @@ export default function CartEditor() {
                   <p className="text-xs text-zinc-500">保存済みデータなし</p>
                 ) : (
                   <>
-                    <select value={copySource} onChange={(e) => setCopySource(e.target.value)}
+                    <select value={copySource} onChange={(e) => setCopySource((e.target as HTMLSelectElement).value)}
                       className="w-full text-sm border border-zinc-600 rounded-lg px-2 py-1.5 bg-zinc-700 text-zinc-200 outline-none mb-2">
                       <option value="">選択...</option>
                       {layouts.map((l) => <option key={l.period} value={l.period}>{l.period}</option>)}
@@ -668,10 +640,7 @@ export default function CartEditor() {
             )}
           </AnimatePresence>
         </div>
-
         <div className="flex-1" />
-
-        {/* Save */}
         <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()}
           className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg font-medium transition-all disabled:opacity-60 ${
             saveStatus === "saved" ? "bg-green-600 text-white" :
@@ -682,8 +651,6 @@ export default function CartEditor() {
            <Save className="w-3.5 h-3.5" />}
           {saveStatus === "saved" ? "保存済み" : saveStatus === "error" ? "エラー" : saveStatus === "saving" ? "保存中…" : "保存"}
         </button>
-
-        {/* Export */}
         {[
           { key: "png" as const, label: "PNG", icon: <FileImage className="w-3.5 h-3.5" />, cls: "border-green-700 bg-green-900/50 text-green-300 hover:bg-green-800/60" },
           { key: "pdf" as const, label: "PDF", icon: <Download className="w-3.5 h-3.5" />, cls: "border-blue-700 bg-blue-900/50 text-blue-300 hover:bg-blue-800/60" },
@@ -696,21 +663,17 @@ export default function CartEditor() {
             {label}
           </button>
         ))}
-
         <button onClick={handleReset}
           className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-zinc-600 bg-zinc-700 text-zinc-300 hover:bg-zinc-600 font-medium transition-colors">
           <RotateCcw className="w-3.5 h-3.5" />リセット
         </button>
       </div>
 
-      {/* ── Main area ── */}
       <div className="flex flex-1 overflow-hidden">
-
-        {/* Sidebar */}
-        <aside className="w-52 flex-shrink-0 bg-zinc-800 border-r border-zinc-700 flex flex-col overflow-hidden">
+        <aside className="w-52 shrink-0 bg-zinc-800 border-r border-zinc-700 flex flex-col overflow-hidden">
           <div className="p-3 border-b border-zinc-700">
             <p className="text-xs font-bold text-zinc-300 mb-2">画像を選択</p>
-            <input type="text" placeholder="検索..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+            <input type="text" placeholder="検索..." value={searchQuery} onChange={(e) => setSearchQuery((e.target as HTMLInputElement).value)}
               className="w-full text-xs border border-zinc-600 rounded-lg px-2.5 py-1.5 bg-zinc-700 text-zinc-200 outline-none focus:border-primary/60 mb-2 placeholder:text-zinc-500" />
             <div className="grid grid-cols-2 gap-1">
               {(Object.entries(FILTER_LABELS) as [SidebarFilter, string][]).map(([key, label]) => (
@@ -723,7 +686,6 @@ export default function CartEditor() {
               ))}
             </div>
           </div>
-
           {(sidebarSelected || activeTarget) && (
             <div className={`mx-2 mt-2 text-[10px] rounded-lg px-2 py-1.5 font-medium ${
               sidebarSelected ? "bg-primary/20 text-primary border border-primary/30" : "bg-yellow-900/40 text-yellow-300 border border-yellow-700/40"
@@ -733,7 +695,6 @@ export default function CartEditor() {
                 : `▶ カート${activeTarget!.cart}の枠が選択中\n画像を選んでください`}
             </div>
           )}
-
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {isLoading ? (
               <div className="flex items-center justify-center h-20">
@@ -749,7 +710,7 @@ export default function CartEditor() {
                     className={`w-full flex items-center gap-2 rounded-lg p-1.5 text-left transition-all border ${
                       isSel ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-transparent hover:bg-zinc-700 hover:border-zinc-600"
                     }`}>
-                    <img src={item.url} alt={item.name} className="w-9 h-9 object-cover rounded-md flex-shrink-0 bg-zinc-700" />
+                    <img src={item.url} alt={item.name} className="w-9 h-9 object-cover rounded-md shrink-0 bg-zinc-700" />
                     <div className="min-w-0 flex-1">
                       <p className="text-[11px] font-medium text-zinc-200 truncate leading-tight">{item.name}</p>
                       <div className="flex gap-1 mt-0.5 flex-wrap">
@@ -758,15 +719,13 @@ export default function CartEditor() {
                         {item.language === "en" && <span className="text-[9px] bg-orange-900/60 text-orange-300 rounded px-1">英語</span>}
                       </div>
                     </div>
-                    {isSel && <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />}
+                    {isSel && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}
                   </button>
                 );
               })
             )}
           </div>
         </aside>
-
-        {/* Canvas */}
         <main className="flex-1 overflow-auto p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -787,14 +746,11 @@ export default function CartEditor() {
               </button>
             )}
           </div>
-
           {!sidebarSelected && !activeTarget && (
             <p className="text-xs text-zinc-500 mb-4">
               ← 左サイドバーから画像を選ぶか、カートの枠をクリックして配置
             </p>
           )}
-
-          {/* Both carts — ref captures here for export */}
           <div ref={canvasRef} className="flex gap-5 items-start p-4 rounded-2xl bg-zinc-900/50">
             <CartPanel
               cartId="A" layout={cartA} activeTarget={activeTarget}

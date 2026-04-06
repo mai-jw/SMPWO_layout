@@ -1,13 +1,15 @@
+"use client";
+
 import { useState, useMemo } from "react";
 import { useItems, useDeleteItem } from "@/hooks/use-items";
-import { Navbar } from "@/components/layout/Navbar";
-import { Badge } from "@/components/ui/Badge";
+import type { Item } from "@/lib/supabase";
+import { Badge } from "@/components/ui/badge";
 import { Search, Loader2, Image as ImageIcon, Trash2, Filter, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 
-export default function ItemsList() {
+export default function ItemsListPage() {
   const { data: items = [], isLoading, error } = useItems();
   const deleteMutation = useDeleteItem();
   
@@ -24,7 +26,7 @@ export default function ItemsList() {
     });
   }, [items, searchQuery, filterCategory, filterLanguage]);
 
-  const handleDelete = async (item: any) => {
+  const handleDelete = async (item: Item) => {
     if (confirm(`「${item.name}」を削除してもよろしいですか？`)) {
       await deleteMutation.mutateAsync(item);
     }
@@ -47,10 +49,8 @@ export default function ItemsList() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <div className="min-h-screen bg-background">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
@@ -127,11 +127,6 @@ export default function ItemsList() {
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 px-4 text-center bg-white rounded-3xl border border-slate-100 shadow-sm border-dashed">
-            <img 
-              src={`${import.meta.env.BASE_URL}images/empty-gallery.png`} 
-              alt="Empty Gallery" 
-              className="w-64 max-w-full opacity-80 mb-6 drop-shadow-xl"
-            />
             <h3 className="text-xl font-bold text-slate-800">アイテムが見つかりません</h3>
             <p className="mt-2 text-slate-500 max-w-md">
               条件に一致する画像がありません。アップロード画面から新しいアイテムを追加してください。
