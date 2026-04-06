@@ -44,9 +44,7 @@ export interface ShelfData {
 
 export interface CartLayoutV2 {
   poster: string | null; // item ID
-  shelf1: ShelfData;
-  shelf2: ShelfData;
-  shelf3: ShelfData;
+  shelves: ShelfData[]; // Up to 3 shelves
 }
 
 export const DEFAULT_TAG: TagData = { type: "none", value: "" };
@@ -63,25 +61,23 @@ export function makeDefaultShelf(): ShelfData {
 export function makeInitialCartLayoutV2(): CartLayoutV2 {
   return {
     poster: null,
-    shelf1: makeDefaultShelf(),
-    shelf2: makeDefaultShelf(),
-    shelf3: makeDefaultShelf(),
+    shelves: [makeDefaultShelf()], // Start with 1 row as default
   };
 }
 
 export function filledCountV2(layout: CartLayoutV2): number {
   let n = layout.poster !== null ? 1 : 0;
-  for (const key of ["shelf1", "shelf2", "shelf3"] as ShelfKey[]) {
-    n += layout[key].items.filter((id) => id !== null).length;
-  }
+  layout.shelves.forEach((s) => {
+    n += s.items.filter((id) => id !== null).length;
+  });
   return n;
 }
 
 export function maxCountV2(layout: CartLayoutV2): number {
   let n = 1;
-  for (const key of ["shelf1", "shelf2", "shelf3"] as ShelfKey[]) {
-    n += layout[key].layout_type === "4_cols" ? 4 : layout[key].layout_type === "3_cols" ? 3 : 2;
-  }
+  layout.shelves.forEach((s) => {
+    n += s.layout_type === "4_cols" ? 4 : s.layout_type === "3_cols" ? 3 : 2;
+  });
   return n;
 }
 

@@ -18,7 +18,7 @@ import {
 type CartId = "A" | "B";
 type ActiveTarget =
   | { cart: CartId; section: "poster" }
-  | { cart: CartId; section: ShelfKey; index: number }
+  | { cart: CartId; section: "shelf"; shelfIndex: number; slotIndex: number }
   | null;
 type SidebarFilter = "all" | "poster" | "ja" | "foreign";
 
@@ -40,27 +40,34 @@ const LANGUAGES = [
   "中国語（簡体字）", "中国語（繁体字）",
   "韓国語", "ベトナム語", "タガログ語",
   "タイ語", "インドネシア語", "スペイン語",
-  "教育語",
+  "その他",
 ];
 
 /* ════════════════ TagBar ════════════════ */
 interface TagBarProps {
-  shelfKey: ShelfKey;
+  shelfIndex: number;
   shelf: ShelfData;
   onLayoutChange: (t: ShelfLayoutType) => void;
   onTagChange: (which: "tag_1" | "tag_2", tag: TagData) => void;
 }
 
-function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
+function TagBar({ shelfIndex, shelf, onLayoutChange, onTagChange }: TagBarProps) {
   const [showMenu, setShowMenu] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const isShelf1 = shelfKey === "shelf1";
-  const is2Cols = shelf.layout_type === "2_cols";
-  const canTag = !is2Cols || isShelf1;
-  const canFreeDist = !is2Cols;
+  const isRow1 = shelfIndex === 0;
+  const is3or4Cols = shelf.layout_type === "3_cols" || shelf.layout_type === "4_cols";
+  
+  // Rules: 
+  // 1. Language tag (Red): Allowed if Row 1 OR (Row 2+ AND 3/4 columns)
+  const canLangTag = isRow1 || is3or4Cols;
+  // 2. Free Dist tag (Black): Allowed ONLY if 3/4 columns
+  const canFreeDist = is3or4Cols;
 
   const mode = shelf.tag_1.type;
+  const barBg = mode === "free_dist" ? "bg-zinc-900"
+    : mode === "lang"      ? "bg-red-600"
+    :                        "bg-red-700";
 
   useEffect(() => {
     if (!showMenu) return;
@@ -85,17 +92,10 @@ function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
     setShowMenu(false);
   };
 
-  const isFreeDist = mode === "free_dist";
   const label = mode === "lang" 
     ? (shelf.tag_1.value || shelf.tag_2.value ? `${shelf.tag_1.value}${shelf.tag_2.value ? ` / ${shelf.tag_2.value}` : ""}` : "言語を選択")
     : mode === "free_dist" ? "無料で差し上げています"
     : "タグを選択";
-
-  const barBg = !canTag
-    ? "bg-red-800"  /* still red, just slightly darker to hint it's non-taggable */
-    : mode === "free_dist" ? "bg-zinc-900"
-    : mode === "lang"      ? "bg-red-600"
-    :                        "bg-red-700";
 
   return (
     <div className="relative group/tag" ref={containerRef}>
@@ -122,11 +122,12 @@ function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
                 <button
                   key={t}
                   onClick={() => onLayoutChange(t)}
-                  className={`text-[10px] font-black py-2 rounded-lg transition-all ${
-                    shelf.layout_type === t ? "bg-primary text-white shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                  className={`text-[9px] font-bold py-2 rounded-lg transition-all border flex flex-col items-center gap-0.5 ${
+                    shelf.layout_type === t ? "bg-primary text-white border-primary shadow-sm" : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
                   }`}
                 >
-                  {t === "2_cols" ? "2列" : t === "3_cols" ? "3列" : "4列"}
+                  <span>{t === "2_cols" ? "冊子類" : t === "3_cols" ? "文書" : "パンフ"}</span>
+                  <span className="opacity-60 text-[8px]">{t === "2_cols" ? "2列" : t === "3_cols" ? "3列" : "4列"}</span>
                 </button>
               ))}
             </div>
@@ -138,10 +139,15 @@ function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
                 {mode === "none" && <CheckCircle2 className="w-3.5 h-3.5" />}
               </button>
               
-              <button onClick={() => setMode("lang")}
-                className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between rounded-lg transition-colors ${mode === "lang" ? "bg-red-50 text-red-700 font-bold" : "text-slate-600 hover:bg-red-50/50"}`}>
+              <button 
+                disabled={!canLangTag}
+                onClick={() => setMode("lang")}
+                className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between rounded-lg transition-colors ${
+                  !canLangTag ? "opacity-30 cursor-not-allowed" :
+                  mode === "lang" ? "bg-red-50 text-red-700 font-bold" : "text-slate-600 hover:bg-red-50/50"
+                }`}>
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-red-600" />
+                  <div className={`w-2.5 h-2.5 rounded-full ${canLangTag ? "bg-red-600" : "bg-slate-300"}`} />
                   <span>言語表示</span>
                 </div>
                 {mode === "lang" && <CheckCircle2 className="w-3.5 h-3.5" />}
@@ -176,7 +182,7 @@ function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
                   className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between rounded-lg transition-colors ${mode === "free_dist" ? "bg-zinc-100 text-zinc-900 font-bold" : "text-slate-600 hover:bg-zinc-50"}`}>
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full bg-zinc-900" />
-                    <span>無料配布</span>
+                    <span className="text-[10px]">無料で差し上げています</span>
                   </div>
                   {mode === "free_dist" && <CheckCircle2 className="w-3.5 h-3.5" />}
                 </button>
@@ -197,24 +203,38 @@ interface ItemSlotProps {
   onClick: () => void;
   onClear: () => void;
   poster?: boolean;
+  layoutType?: ShelfLayoutType;
 }
 
-function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster }: ItemSlotProps) {
+function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster, layoutType }: ItemSlotProps) {
   const base = poster ? "w-full overflow-hidden" : "overflow-hidden";
-  const aspect = poster ? "aspect-[5/7]" : "aspect-[3/4]";
-  const bg = item ? "bg-white" : "bg-zinc-200/80";
-  const ring = isActive ? "ring-4 ring-yellow-400 z-10 scale-[1.02]" : "";
-  const border = poster ? "border-[3px] border-blue-600 shadow-lg" : "border border-zinc-400/30 shadow-inner";
+  
+  // Specific Aspect Ratios:
+  // Booklet (2-cols): 1:1.4
+  // Document (3-cols): 1:1.5
+  // Pamphlet (4-cols): 1:3
+  const aspect = poster ? "aspect-[4/5]" 
+    : layoutType === "2_cols" ? "aspect-[1/1.4]"
+    : layoutType === "3_cols" ? "aspect-[1/1.5]"
+    : "aspect-[1/3]";
+
+  const bg = item ? "bg-transparent" : "bg-zinc-200/40";
+  const ring = isActive ? "ring-4 ring-yellow-400 z-10 scale-[1.05]" : "";
+  const border = poster ? "border-[3px] border-blue-600 shadow-lg bg-white" : "border-b border-zinc-400/50"; // Bottom-only border for shelves to look like feet
 
   return (
     <div
-      className={`relative cursor-pointer transition-all duration-300 group ${base} ${aspect} ${bg} ${ring} ${border}`}
+      className={`relative cursor-pointer transition-all duration-300 group flex flex-col justify-end ${base} ${aspect} ${bg} ${ring} ${border}`}
       onClick={onClick}
     >
       {item ? (
-        <div className="w-full h-full p-0.5">
-          <img src={item.url} alt={item.name} className="w-full h-full object-contain" />
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+        <div className="w-full h-full p-0.5 flex flex-col justify-end">
+          <img 
+            src={item.url} 
+            alt={item.name} 
+            className="w-full h-full object-contain object-bottom drop-shadow-md" 
+          />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
           <button
             onClick={(e) => { e.stopPropagation(); onClear(); }}
             className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-20"
@@ -248,39 +268,54 @@ function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster }: Ite
 /* ════════════════ ShelfSection ════════════════ */
 interface ShelfSectionProps {
   cartId: CartId;
-  shelfKey: ShelfKey;
+  shelfIndex: number;
   shelf: ShelfData;
   activeTarget: ActiveTarget;
   isSelecting: boolean;
   itemMap: Record<string, Item>;
-  onSlotClick: (cart: CartId, section: ShelfKey, index: number) => void;
-  onClear: (cart: CartId, section: ShelfKey, index: number) => void;
+  onSlotClick: (cart: CartId, section: "shelf", shelfIndex: number, slotIndex: number) => void;
+  onClear: (cart: CartId, section: "shelf", shelfIndex: number, slotIndex: number) => void;
   onLayoutChange: (t: ShelfLayoutType) => void;
   onTagChange: (which: "tag_1" | "tag_2", tag: TagData) => void;
+  onDelete: () => void;
 }
 
 function ShelfSection({
-  cartId, shelfKey, shelf, activeTarget, isSelecting, itemMap,
-  onSlotClick, onClear, onLayoutChange, onTagChange,
+  cartId, shelfIndex, shelf, activeTarget, isSelecting, itemMap,
+  onSlotClick, onClear, onLayoutChange, onTagChange, onDelete,
 }: ShelfSectionProps) {
   return (
-    <div>
+    <div className="relative group/shelf">
       <TagBar
-        shelfKey={shelfKey} shelf={shelf}
+        shelfIndex={shelfIndex} shelf={shelf}
         onLayoutChange={onLayoutChange} onTagChange={onTagChange}
       />
-      <div className={`p-1 grid gap-1 ${shelf.layout_type === "4_cols" ? "grid-cols-4" : shelf.layout_type === "3_cols" ? "grid-cols-3" : "grid-cols-2"}`}>
+      <div className={`p-1 grid relative items-end ${
+        shelf.layout_type === "4_cols" ? "grid-cols-4 gap-2 px-3" : 
+        shelf.layout_type === "3_cols" ? "grid-cols-3 gap-1.5 px-2" : 
+        "grid-cols-2 gap-1.5 px-4"
+      }`}>
         {shelf.items.map((itemId, idx) => (
           <ItemSlot
             key={idx}
             item={itemId ? itemMap[itemId] : undefined}
-            isActive={activeTarget?.cart === cartId && activeTarget.section === shelfKey && (activeTarget as { index: number }).index === idx}
+            layoutType={shelf.layout_type}
+            isActive={activeTarget?.cart === cartId && activeTarget.section === "shelf" && (activeTarget as any).shelfIndex === shelfIndex && (activeTarget as any).slotIndex === idx}
             isSelecting={isSelecting}
-            onClick={() => onSlotClick(cartId, shelfKey, idx)}
-            onClear={() => onClear(cartId, shelfKey, idx)}
+            onClick={() => onSlotClick(cartId, "shelf", shelfIndex, idx)}
+            onClear={() => onClear(cartId, "shelf", shelfIndex, idx)}
           />
         ))}
       </div>
+      
+      {/* Delete Row button - appears on hover */}
+      <button 
+        onClick={onDelete}
+        className="absolute -right-6 top-1/2 -translate-y-1/2 p-1 bg-red-100 text-red-500 rounded-full opacity-0 group-hover/shelf:opacity-100 transition-all hover:bg-red-200 shadow-sm z-30"
+        title="この段を削除"
+      >
+        <X className="w-3 h-3" />
+      </button>
     </div>
   );
 }
@@ -292,10 +327,10 @@ interface CartPanelProps {
   activeTarget: ActiveTarget;
   isSelecting: boolean;
   itemMap: Record<string, Item>;
-  onSlotClick: (cart: CartId, section: "poster" | ShelfKey, index?: number) => void;
-  onClear: (cart: CartId, section: "poster" | ShelfKey, index?: number) => void;
-  onLayoutChange: (cart: CartId, shelfKey: ShelfKey, t: ShelfLayoutType) => void;
-  onTagChange: (cart: CartId, shelfKey: ShelfKey, which: "tag_1" | "tag_2", tag: TagData) => void;
+  onSlotClick: (cart: CartId, section: "poster" | "shelf" | "add_row", shelfIdx?: number, slotIdx?: number) => void;
+  onClear: (cart: CartId, section: "poster" | "shelf" | "delete_row", shelfIdx?: number, slotIdx?: number) => void;
+  onLayoutChange: (cart: CartId, shelfIdx: number, t: ShelfLayoutType) => void;
+  onTagChange: (cart: CartId, shelfIdx: number, which: "tag_1" | "tag_2", tag: TagData) => void;
 }
 
 function CartPanel({
@@ -307,46 +342,63 @@ function CartPanel({
   const isPosterActive = activeTarget?.cart === cartId && activeTarget.section === "poster";
 
   return (
-    <div className="flex flex-col items-center w-[220px]">
-      {/* Poster - floats ABOVE the cart body */}
-      <div className={`w-full transition-all ${isPosterActive ? "ring-4 ring-yellow-400 z-20" : ""}`}>
-        <ItemSlot
-          item={layout.poster ? itemMap[layout.poster] : undefined}
-          isActive={isPosterActive}
-          isSelecting={isSelecting}
-          onClick={() => onSlotClick(cartId, "poster")}
-          onClear={() => onClear(cartId, "poster")}
-          poster
+    <div className="flex flex-col items-center w-[480px]">
+      <div className="relative w-full aspect-1080/1350">
+        {/* Background Image Template */}
+        <img 
+          src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/cart_empty.png" 
+          alt={`Cart ${cartId} Template`}
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-2xl"
         />
-      </div>
 
-      {/* Cart body - only shelves, no poster */}
-      <div className="bg-[#555555] rounded-[24px] shadow-2xl w-full overflow-hidden py-1 border-2 border-white/5">
-        <div className="px-2 space-y-1">
-          {(["shelf1", "shelf2", "shelf3"] as ShelfKey[]).map((key) => (
-            <ShelfSection
-              key={key}
-              cartId={cartId}
-              shelfKey={key}
-              shelf={layout[key]}
-              activeTarget={activeTarget}
-              isSelecting={isSelecting}
-              itemMap={itemMap}
-              onSlotClick={(c, s, i) => onSlotClick(c, s, i)}
-              onClear={(c, s, i) => onClear(c, s, i)}
-              onLayoutChange={(t) => onLayoutChange(cartId, key, t)}
-              onTagChange={(w, t) => onTagChange(cartId, key, w, t)}
-            />
-          ))}
+        {/* Poster Overlay - Precisely aligned with the white box in the template */}
+        <div className={`absolute top-[5%] left-[23%] w-[54%] h-[32.4%] transition-all ${isPosterActive ? "ring-4 ring-yellow-400 z-20" : ""}`}>
+          <ItemSlot
+            item={layout.poster ? itemMap[layout.poster] : undefined}
+            isActive={isPosterActive}
+            isSelecting={isSelecting}
+            onClick={() => onSlotClick(cartId, "poster")}
+            onClear={() => onClear(cartId, "poster")}
+            poster
+          />
+        </div>
+
+        {/* Shelves Overlay - Placed in the dark grey body area */}
+        <div className="absolute top-[38%] left-[21.5%] w-[57%] h-[53%] flex flex-col bg-transparent overflow-y-auto custom-scrollbar pt-0.5">
+          <div className="space-y-0.5">
+            {layout.shelves.map((shelf, idx) => (
+              <ShelfSection
+                key={idx}
+                cartId={cartId}
+                shelfIndex={idx}
+                shelf={shelf}
+                activeTarget={activeTarget}
+                isSelecting={isSelecting}
+                itemMap={itemMap}
+                onSlotClick={(c, s, si, sli) => onSlotClick(c, s as any, si, sli)}
+                onClear={(c, s, si, sli) => onClear(c, s as any, si, sli)}
+                onLayoutChange={(t) => onLayoutChange(cartId, idx, t)}
+                onTagChange={(w, t) => onTagChange(cartId, idx, w, t)}
+                onDelete={() => (onClear as any)(cartId, "delete_row", idx)}
+              />
+            ))}
+          </div>
+
+          {/* Add Row Button */}
+          {layout.shelves.length < 3 && (
+            <button 
+              onClick={() => (onSlotClick as any)(cartId, "add_row")}
+              className="w-full mt-1.5 py-2 border-2 border-dashed border-white/20 rounded-xl text-white/40 hover:text-white/60 hover:border-white/40 hover:bg-white/5 transition-all flex items-center justify-center gap-1.5"
+            >
+              <ShoppingCart className="w-3.5 h-3.5" />
+              <span className="text-[10px] font-black uppercase tracking-wider">Add Row</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Cart Handle at bottom */}
-      <div className="w-20 h-10 border-x-[8px] border-b-[8px] border-[#555555] rounded-b-[28px] -mt-0.5 flex items-end justify-center pb-1">
-        <div className="w-12 h-0.5 bg-[#555555]/20 rounded-full" />
-      </div>
-
-      <div className="mt-2 flex items-center gap-2">
+      {/* Cart Label Below the handle */}
+      <div className="mt-1.5 flex items-center gap-2">
         <div className={`w-2.5 h-2.5 rounded-full ${cartId === "A" ? "bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]" : "bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.6)]"}`} />
         <span className="text-xs font-black text-foreground/80 uppercase tracking-widest italic flex items-center gap-1.5">
           Cart {cartId}
@@ -396,23 +448,28 @@ export default function CartEditor() {
 
   const getSetCart = useCallback((cart: CartId) => cart === "A" ? setCartA : setCartB, []);
 
-  const handleSlotClick = useCallback((cart: CartId, section: "poster" | ShelfKey, index?: number) => {
+  const handleSlotClick = useCallback((cart: CartId, section: "poster" | "shelf" | "add_row", shelfIdx?: number, slotIdx?: number) => {
+    const setter = getSetCart(cart);
+    if (section === "add_row") {
+      setter((prev) => prev.shelves.length < 3 ? { ...prev, shelves: [...prev.shelves, makeDefaultShelf()] } : prev);
+      return;
+    }
+
     if (sidebarSelected) {
-      const setter = getSetCart(cart);
       if (section === "poster") {
         setter((prev) => ({ ...prev, poster: sidebarSelected.id! }));
       } else {
         setter((prev) => ({
           ...prev,
-          [section]: { ...prev[section], items: prev[section].items.map((id, i) => i === index ? sidebarSelected.id! : id) },
+          shelves: prev.shelves.map((s, i) => i === shelfIdx ? { ...s, items: s.items.map((id, j) => j === slotIdx ? sidebarSelected.id! : id) } : s),
         }));
       }
       setSidebarSelected(null);
     } else {
       setActiveTarget((prev) => {
         const same = prev?.cart === cart && prev.section === section &&
-          (section === "poster" || (prev as { index: number }).index === index);
-        return same ? null : section === "poster" ? { cart, section } : { cart, section: section as ShelfKey, index: index! };
+          (section === "poster" || ((prev as any).shelfIndex === shelfIdx && (prev as any).slotIndex === slotIdx));
+        return same ? null : section === "poster" ? { cart, section } : { cart, section: "shelf", shelfIndex: shelfIdx!, slotIndex: slotIdx! };
       });
     }
   }, [sidebarSelected, getSetCart]);
@@ -424,10 +481,10 @@ export default function CartEditor() {
       if (section === "poster") {
         setter((prev) => ({ ...prev, poster: item.id! }));
       } else {
-        const idx = (activeTarget as { index: number }).index;
+        const { shelfIndex, slotIndex } = activeTarget as { shelfIndex: number; slotIndex: number };
         setter((prev) => ({
           ...prev,
-          [section]: { ...prev[section], items: prev[section].items.map((id, i) => i === idx ? item.id! : id) },
+          shelves: prev.shelves.map((s, i) => i === shelfIndex ? { ...s, items: s.items.map((id, j) => j === slotIndex ? item.id! : id) } : s),
         }));
       }
       setActiveTarget(null);
@@ -436,45 +493,58 @@ export default function CartEditor() {
     }
   }, [activeTarget, getSetCart]);
 
-  const handleClear = useCallback((cart: CartId, section: "poster" | ShelfKey, index?: number) => {
+  const handleClear = useCallback((cart: CartId, section: "poster" | "shelf" | "delete_row", shelfIdx?: number, slotIdx?: number) => {
     const setter = getSetCart(cart);
+    if (section === "delete_row") {
+      setter((prev) => ({ ...prev, shelves: prev.shelves.filter((_, i) => i !== shelfIdx) }));
+      return;
+    }
     if (section === "poster") {
       setter((prev) => ({ ...prev, poster: null }));
     } else {
       setter((prev) => ({
         ...prev,
-        [section]: { ...prev[section], items: prev[section].items.map((id, i) => i === index ? null : id) },
+        shelves: prev.shelves.map((s, i) => i === shelfIdx ? { ...s, items: s.items.map((id, j) => j === slotIdx ? null : id) } : s),
       }));
     }
   }, [getSetCart]);
 
-  const handleLayoutChange = useCallback((cart: CartId, shelfKey: ShelfKey, t: ShelfLayoutType) => {
+  const handleLayoutChange = useCallback((cart: CartId, shelfIdx: number, t: ShelfLayoutType) => {
     const setter = getSetCart(cart);
     setter((prev) => {
-      const shelf = prev[shelfKey];
+      const shelf = prev.shelves[shelfIdx];
       const newItems = t === "4_cols"
         ? [shelf.items[0] ?? null, shelf.items[1] ?? null, shelf.items[2] ?? null, shelf.items[3] ?? null]
         : t === "3_cols"
         ? [shelf.items[0] ?? null, shelf.items[1] ?? null, shelf.items[2] ?? null]
         : [shelf.items[0] ?? null, shelf.items[1] ?? null];
+      
       let tag_1 = shelf.tag_1;
       let tag_2 = shelf.tag_2;
-      if (t === "2_cols") {
-        if (shelfKey !== "shelf1") {
-          tag_1 = { type: "none", value: "" };
-          tag_2 = { type: "none", value: "" };
-        } else if (tag_1.type === "free_dist") {
-          tag_1 = { type: "none", value: "" };
-          tag_2 = { type: "none", value: "" };
-        }
+      
+      // Validation on layout change
+      const is3or4 = t === "3_cols" || t === "4_cols";
+      const isRow1 = shelfIdx === 0;
+      
+      if (!isRow1 && !is3or4) {
+        if (tag_1.type === "lang") tag_1 = { type: "none", value: "" };
+        if (tag_2.type === "lang") tag_2 = { type: "none", value: "" };
       }
-      return { ...prev, [shelfKey]: { ...shelf, layout_type: t, items: newItems, tag_1, tag_2 } };
+      if (!is3or4 && tag_1.type === "free_dist") {
+        tag_1 = { type: "none", value: "" };
+      }
+
+      const newShelves = prev.shelves.map((s, i) => i === shelfIdx ? { ...shelf, layout_type: t, items: newItems, tag_1, tag_2 } : s);
+      return { ...prev, shelves: newShelves };
     });
   }, [getSetCart]);
 
-  const handleTagChange = useCallback((cart: CartId, shelfKey: ShelfKey, which: "tag_1" | "tag_2", tag: TagData) => {
+  const handleTagChange = useCallback((cart: CartId, shelfIdx: number, which: "tag_1" | "tag_2", tag: TagData) => {
     const setter = getSetCart(cart);
-    setter((prev) => ({ ...prev, [shelfKey]: { ...prev[shelfKey], [which]: tag } }));
+    setter((prev) => ({
+      ...prev,
+      shelves: prev.shelves.map((s, i) => i === shelfIdx ? { ...s, [which]: tag } : s),
+    }));
   }, [getSetCart]);
 
   const handleReset = () => {
@@ -551,18 +621,29 @@ export default function CartEditor() {
       };
       const getItemName = (id: string | null) => (id && itemMap[id] ? itemMap[id].name : id ? "（削除済）" : "（未配置）");
       addRow("ポスター", "—", "—", "—", "—", "—", getItemName(cartA.poster), getItemName(cartB.poster));
-      for (const key of ["shelf1", "shelf2", "shelf3"] as ShelfKey[]) {
-        const la = cartA[key]; const lb = cartB[key];
-        const t1a = getTagLabel(la.tag_1) || "なし"; const t1b = getTagLabel(lb.tag_1) || "なし";
-        const t2a = getTagLabel(la.tag_2) || "なし"; const t2b = getTagLabel(lb.tag_2) || "なし";
-        const cnt = Math.max(la.items.length, lb.items.length);
-        for (let i = 0; i < cnt; i++) {
-          addRow(
-            "棚", SHELF_LABELS[key], `スロット${i + 1}`,
-            `${la.layout_type === "3_cols" ? "3冊" : "2冊"} / ${lb.layout_type === "3_cols" ? "3冊" : "2冊"}`,
-            i === 0 ? t1a : "〃", i === 0 ? t2a : "〃",
-            getItemName(la.items[i] ?? null), getItemName(lb.items[i] ?? null),
-          );
+      
+      const maxRows = Math.max(cartA.shelves.length, cartB.shelves.length);
+      for (let idx = 0; idx < maxRows; idx++) {
+        const la = cartA.shelves[idx]; 
+        const lb = cartB.shelves[idx];
+        
+        const shelfLabel = `${idx + 1}段目`;
+        
+        if (la || lb) {
+          const t1a = la ? getTagLabel(la.tag_1) || "なし" : "—";
+          const t1b = lb ? getTagLabel(lb.tag_1) || "なし" : "—";
+          const t2a = la ? getTagLabel(la.tag_2) || "なし" : "—";
+          const t2b = lb ? getTagLabel(lb.tag_2) || "なし" : "—";
+          
+          const maxSlots = Math.max(la?.items.length || 0, lb?.items.length || 0);
+          for (let i = 0; i < maxSlots; i++) {
+            addRow(
+              "棚", shelfLabel, `スロット${i + 1}`,
+              `${la ? (la.layout_type === "3_cols" ? "3冊" : la.layout_type === "4_cols" ? "4冊" : "2冊") : "—"} / ${lb ? (lb.layout_type === "3_cols" ? "3冊" : lb.layout_type === "4_cols" ? "4冊" : "2冊") : "—"}`,
+              i === 0 ? t1a : "〃", i === 0 ? t2a : "〃",
+              getItemName(la?.items[i] ?? null), getItemName(lb?.items[i] ?? null),
+            );
+          }
         }
       }
       const ws = XLSX.utils.aoa_to_sheet(rows);
@@ -747,7 +828,7 @@ export default function CartEditor() {
               ← 左サイドバーから画像を選ぶか、カートの枠をクリックして配置
             </p>
           )}
-          <div ref={canvasRef} className="flex gap-12 items-start p-10 rounded-[40px] bg-background shadow-inner border border-border/50">
+          <div ref={canvasRef} className="flex gap-16 items-start p-4 bg-background">
             <CartPanel
               cartId="A" layout={cartA} activeTarget={activeTarget}
               isSelecting={isSelecting} itemMap={itemMap}
