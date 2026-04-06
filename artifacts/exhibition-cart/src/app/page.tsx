@@ -101,7 +101,7 @@ function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
     <div className="relative group/tag" ref={containerRef}>
       <button
         onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v); }}
-        className={`w-full flex items-center justify-between px-3 py-1.5 text-white transition-all duration-200 shadow-md ${barBg} ${showMenu ? "brightness-110" : ""}`}
+        className={`w-full flex items-center justify-between px-3 py-1 text-white transition-all duration-200 shadow-md ${barBg} ${showMenu ? "brightness-110" : ""}`}
       >
         <div className="flex-1 flex justify-center items-center gap-2">
           <span className="text-[11px] font-black tracking-widest truncate">{label}</span>
@@ -201,7 +201,7 @@ interface ItemSlotProps {
 
 function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster }: ItemSlotProps) {
   const base = poster ? "w-full overflow-hidden" : "overflow-hidden";
-  const aspect = poster ? "aspect-[3.5/5]" : "aspect-[3.5/5]";
+  const aspect = poster ? "aspect-[5/7]" : "aspect-[3/4]";
   const bg = item ? "bg-white" : "bg-zinc-200/80";
   const ring = isActive ? "ring-4 ring-yellow-400 z-10 scale-[1.02]" : "";
   const border = poster ? "border-[3px] border-blue-600 shadow-lg" : "border border-zinc-400/30 shadow-inner";
@@ -269,7 +269,7 @@ function ShelfSection({
         shelfKey={shelfKey} shelf={shelf}
         onLayoutChange={onLayoutChange} onTagChange={onTagChange}
       />
-      <div className={`p-2 grid gap-2 ${shelf.layout_type === "4_cols" ? "grid-cols-4" : shelf.layout_type === "3_cols" ? "grid-cols-3" : "grid-cols-2"}`}>
+      <div className={`p-1 grid gap-1 ${shelf.layout_type === "4_cols" ? "grid-cols-4" : shelf.layout_type === "3_cols" ? "grid-cols-3" : "grid-cols-2"}`}>
         {shelf.items.map((itemId, idx) => (
           <ItemSlot
             key={idx}
@@ -307,54 +307,50 @@ function CartPanel({
   const isPosterActive = activeTarget?.cart === cartId && activeTarget.section === "poster";
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="bg-[#444444] rounded-[48px] shadow-2xl shrink-0 w-[360px] overflow-hidden pt-4 pb-6 border-4 border-white/5 relative">
-        <div className="px-5 space-y-3">
-          <div className="flex justify-center">
-            <div className={`w-[85%] transition-all ${
-              isPosterActive ? "ring-4 ring-yellow-400 rounded-sm z-20" : ""
-            }`}>
-              <ItemSlot
-                item={layout.poster ? itemMap[layout.poster] : undefined}
-                isActive={isPosterActive}
-                isSelecting={isSelecting}
-                onClick={() => onSlotClick(cartId, "poster")}
-                onClear={() => onClear(cartId, "poster")}
-                poster
-              />
-            </div>
-          </div>
+    <div className="flex flex-col items-center w-[220px]">
+      {/* Poster - floats ABOVE the cart body */}
+      <div className={`w-full transition-all ${isPosterActive ? "ring-4 ring-yellow-400 z-20" : ""}`}>
+        <ItemSlot
+          item={layout.poster ? itemMap[layout.poster] : undefined}
+          isActive={isPosterActive}
+          isSelecting={isSelecting}
+          onClick={() => onSlotClick(cartId, "poster")}
+          onClear={() => onClear(cartId, "poster")}
+          poster
+        />
+      </div>
 
-          <div className="space-y-2">
-            {(["shelf1", "shelf2", "shelf3"] as ShelfKey[]).map((key) => (
-              <ShelfSection
-                key={key}
-                cartId={cartId}
-                shelfKey={key}
-                shelf={layout[key]}
-                activeTarget={activeTarget}
-                isSelecting={isSelecting}
-                itemMap={itemMap}
-                onSlotClick={(c, s, i) => onSlotClick(c, s, i)}
-                onClear={(c, s, i) => onClear(c, s, i)}
-                onLayoutChange={(t) => onLayoutChange(cartId, key, t)}
-                onTagChange={(w, t) => onTagChange(cartId, key, w, t)}
-              />
-            ))}
-          </div>
+      {/* Cart body - only shelves, no poster */}
+      <div className="bg-[#555555] rounded-[24px] shadow-2xl w-full overflow-hidden py-1 border-2 border-white/5">
+        <div className="px-2 space-y-1">
+          {(["shelf1", "shelf2", "shelf3"] as ShelfKey[]).map((key) => (
+            <ShelfSection
+              key={key}
+              cartId={cartId}
+              shelfKey={key}
+              shelf={layout[key]}
+              activeTarget={activeTarget}
+              isSelecting={isSelecting}
+              itemMap={itemMap}
+              onSlotClick={(c, s, i) => onSlotClick(c, s, i)}
+              onClear={(c, s, i) => onClear(c, s, i)}
+              onLayoutChange={(t) => onLayoutChange(cartId, key, t)}
+              onTagChange={(w, t) => onTagChange(cartId, key, w, t)}
+            />
+          ))}
         </div>
       </div>
 
       {/* Cart Handle at bottom */}
-      <div className="w-32 h-14 border-x-[10px] border-b-[10px] border-[#444444] rounded-b-[40px] -mt-1 flex items-end justify-center pb-2">
-        <div className="w-20 h-1 bg-[#444444]/20 rounded-full" />
+      <div className="w-20 h-10 border-x-[8px] border-b-[8px] border-[#555555] rounded-b-[28px] -mt-0.5 flex items-end justify-center pb-1">
+        <div className="w-12 h-0.5 bg-[#555555]/20 rounded-full" />
       </div>
-      
-      <div className="mt-4 flex items-center gap-3">
-        <div className={`w-3 h-3 rounded-full ${cartId === "A" ? "bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]" : "bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.6)]"}`} />
-        <span className="text-sm font-black text-foreground/80 uppercase tracking-widest italic flex items-center gap-2">
+
+      <div className="mt-2 flex items-center gap-2">
+        <div className={`w-2.5 h-2.5 rounded-full ${cartId === "A" ? "bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]" : "bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.6)]"}`} />
+        <span className="text-xs font-black text-foreground/80 uppercase tracking-widest italic flex items-center gap-1.5">
           Cart {cartId}
-          <span className="text-[10px] font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-full not-italic">
+          <span className="text-[10px] font-bold bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full not-italic">
             {filled}/{max}
           </span>
         </span>
