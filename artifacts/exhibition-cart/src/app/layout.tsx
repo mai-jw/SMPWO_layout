@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className="dark">
+    <html lang="ja">
       <body className={`${notoSansJP.variable} ${outfit.variable} font-sans antialiased bg-background text-foreground`}>
         <Providers>
           <Navbar />

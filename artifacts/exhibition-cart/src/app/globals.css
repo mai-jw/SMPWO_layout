@@ -46,29 +46,30 @@
 }
 
 :root {
-  --background: 210 40% 98%; /* Slate 50 */
-  --foreground: 222 47% 11%;
+  /* Beige / Cream Theme */
+  --background: 44 38% 95%; /* #F7F3EB */
+  --foreground: 20 10% 15%; /* #1F1D1B */
   
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 238 84% 67%; /* Indigo 600 */
+  --border: 44 20% 85%;
+  --input: 44 20% 85%;
+  --ring: 238 84% 67%;
 
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --card-border: 214 32% 91%;
+  --card: 44 24% 92%; /* #F1EEE4 */
+  --card-foreground: 20 10% 15%;
+  --card-border: 44 20% 85%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --popover-border: 214 32% 91%;
+  --popover-foreground: 20 10% 15%;
+  --popover-border: 44 20% 85%;
 
-  --primary: 238 84% 67%; /* Indigo 600 */
+  --primary: 238 84% 67%; 
   --primary-foreground: 210 40% 98%;
 
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222 47% 11%;
+  --secondary: 44 20% 90%;
+  --secondary-foreground: 20 10% 15%;
 
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
+  --muted: 44 20% 90%;
+  --muted-foreground: 20 5% 45%;
 
   --accent: 238 84% 67%;
   --accent-foreground: 210 40% 98%;
@@ -76,7 +77,7 @@
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
 
-  --radius: 0.75rem; /* 12px */
+  --radius: 0.75rem; 
 
   --shadow-2xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-xs: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);

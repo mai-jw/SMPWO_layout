@@ -85,106 +85,103 @@ function TagBar({ shelfKey, shelf, onLayoutChange, onTagChange }: TagBarProps) {
     setShowMenu(false);
   };
 
+  const isFreeDist = mode === "free_dist";
+  const label = mode === "lang" 
+    ? (shelf.tag_1.value || shelf.tag_2.value ? `${shelf.tag_1.value}${shelf.tag_2.value ? ` / ${shelf.tag_2.value}` : ""}` : "言語を選択")
+    : mode === "free_dist" ? "無料で差し上げています"
+    : "タグを選択";
+
   const barBg = !canTag
-    ? "bg-zinc-700/60"
+    ? "bg-red-800"  /* still red, just slightly darker to hint it's non-taggable */
     : mode === "free_dist" ? "bg-zinc-900"
     : mode === "lang"      ? "bg-red-600"
-    :                        "bg-red-900/50";
+    :                        "bg-red-700";
 
   return (
-    <div className="relative" ref={containerRef}>
-      <div className={`rounded-t-md flex items-center gap-1 px-1.5 py-1 text-white text-[11px] transition-colors duration-150 ${barBg}`}>
-        {canTag ? (
-          <button
-            onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v); }}
-            className="flex-shrink-0 flex items-center gap-0.5 text-white/70 hover:text-white transition-colors"
-          >
-            <Tag className="w-3 h-3" />
-            <ChevronDown className={`w-2.5 h-2.5 transition-transform ${showMenu ? "rotate-180" : ""}`} />
-          </button>
-        ) : (
-          <span className="text-[10px] text-zinc-500 flex-shrink-0 select-none">冊子類</span>
-        )}
-
-        <div className="flex-1 min-w-0 flex items-center gap-1">
-          {mode === "lang" && canTag ? (
-            <>
-              <select
-                value={shelf.tag_1.value}
-                onChange={(e) => onTagChange("tag_1", { type: "lang", value: (e.target as HTMLSelectElement).value })}
-                onClick={(e) => e.stopPropagation()}
-                className="flex-1 min-w-0 text-[10px] bg-red-700/60 text-white border border-white/10 rounded px-1 py-0 h-[18px] outline-none cursor-pointer"
-              >
-                <option value="">左：―</option>
-                {LANGUAGES.map((l) => (
-                  <option key={l} value={l} className="bg-red-900 text-white">{l}</option>
-                ))}
-              </select>
-              <select
-                value={shelf.tag_2.type === "lang" ? shelf.tag_2.value : ""}
-                onChange={(e) => {
-                  const val = (e.target as HTMLSelectElement).value;
-                  onTagChange("tag_2", val ? { type: "lang", value: val } : { type: "none", value: "" });
-                }}
-                onClick={(e) => e.stopPropagation()}
-                className="flex-1 min-w-0 text-[10px] bg-red-700/60 text-white border border-white/10 rounded px-1 py-0 h-[18px] outline-none cursor-pointer"
-              >
-                <option value="">右：―</option>
-                {LANGUAGES.map((l) => (
-                  <option key={l} value={l} className="bg-red-900 text-white">{l}</option>
-                ))}
-              </select>
-            </>
-          ) : mode === "free_dist" ? (
-            <span className="flex-1 text-center font-bold text-xs tracking-wide">無料で差し上げています</span>
-          ) : canTag ? (
-            <span className="text-[10px] text-white/25 select-none">タグなし</span>
-          ) : null}
+    <div className="relative group/tag" ref={containerRef}>
+      <button
+        onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v); }}
+        className={`w-full flex items-center justify-between px-3 py-1.5 text-white transition-all duration-200 shadow-md ${barBg} ${showMenu ? "brightness-110" : ""}`}
+      >
+        <div className="flex-1 flex justify-center items-center gap-2">
+          <span className="text-[11px] font-black tracking-widest truncate">{label}</span>
         </div>
-
-        <div className="flex gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-          {(["2_cols", "3_cols", "4_cols"] as ShelfLayoutType[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => onLayoutChange(t)}
-              className={`text-[10px] font-bold w-5 text-center py-0.5 rounded transition-colors ${
-                shelf.layout_type === t ? "bg-white/25 text-white" : "text-white/40 hover:text-white hover:bg-white/15"
-              }`}
-            >
-              {t === "2_cols" ? "2" : t === "3_cols" ? "3" : "4"}
-            </button>
-          ))}
-        </div>
-      </div>
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${showMenu ? "rotate-180" : ""}`} />
+      </button>
 
       <AnimatePresence>
-        {showMenu && canTag && (
+        {showMenu && (
           <motion.div
-            initial={{ opacity: 0, y: -4, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.97 }}
-            className="absolute top-full left-0 z-40 bg-white rounded-xl shadow-2xl border border-slate-200 py-1 min-w-[150px] overflow-hidden"
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+            className="absolute top-full left-0 right-0 z-50 mt-1 bg-white rounded-xl shadow-2xl border border-slate-200 p-2 overflow-hidden"
           >
-            <button
-              onClick={() => setMode("none")}
-              className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-slate-50 transition-colors ${mode === "none" ? "text-slate-900 font-bold" : "text-slate-500"}`}
-            >
-              <X className="w-3 h-3 text-slate-400 shrink-0" /> タグなし
-            </button>
-            <button
-              onClick={() => setMode("lang")}
-              className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-red-50 transition-colors ${mode === "lang" ? "text-red-700 font-bold bg-red-50" : "text-slate-600"}`}
-            >
-              <span className="w-3 h-3 rounded-sm bg-red-600 shrink-0 inline-block" /> 言語表示（赤）
-            </button>
-            {canFreeDist && (
-              <button
-                onClick={() => setMode("free_dist")}
-                className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-zinc-50 transition-colors ${mode === "free_dist" ? "text-zinc-900 font-bold bg-zinc-50" : "text-slate-600"}`}
-              >
-                <span className="w-3 h-3 rounded-sm bg-zinc-900 shrink-0 inline-block" /> 無料配布（黒）
+            <div className="grid grid-cols-3 gap-1 mb-3">
+              {(["2_cols", "3_cols", "4_cols"] as ShelfLayoutType[]).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => onLayoutChange(t)}
+                  className={`text-[10px] font-black py-2 rounded-lg transition-all ${
+                    shelf.layout_type === t ? "bg-primary text-white shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                  }`}
+                >
+                  {t === "2_cols" ? "2列" : t === "3_cols" ? "3列" : "4列"}
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-1">
+              <button onClick={() => setMode("none")}
+                className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between rounded-lg transition-colors ${mode === "none" ? "bg-slate-100 text-slate-900 font-bold" : "text-slate-500 hover:bg-slate-50"}`}>
+                <span>タグなし</span>
+                {mode === "none" && <CheckCircle2 className="w-3.5 h-3.5" />}
               </button>
-            )}
+              
+              <button onClick={() => setMode("lang")}
+                className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between rounded-lg transition-colors ${mode === "lang" ? "bg-red-50 text-red-700 font-bold" : "text-slate-600 hover:bg-red-50/50"}`}>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-600" />
+                  <span>言語表示</span>
+                </div>
+                {mode === "lang" && <CheckCircle2 className="w-3.5 h-3.5" />}
+              </button>
+
+              {mode === "lang" && (
+                <div className="px-2 pb-2 pt-1 flex gap-2 animate-in fade-in slide-in-from-top-1">
+                  <select
+                    value={shelf.tag_1.value}
+                    onChange={(e) => onTagChange("tag_1", { type: "lang", value: (e.target as HTMLSelectElement).value })}
+                    className="flex-1 text-[10px] bg-slate-100 border border-slate-200 rounded-md px-1 py-1 outline-none text-slate-700 font-bold"
+                  >
+                    <option value="">（左）</option>
+                    {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                  <select
+                    value={shelf.tag_2.type === "lang" ? shelf.tag_2.value : ""}
+                    onChange={(e) => {
+                      const val = (e.target as HTMLSelectElement).value;
+                      onTagChange("tag_2", val ? { type: "lang", value: val } : { type: "none", value: "" });
+                    }}
+                    className="flex-1 text-[10px] bg-slate-100 border border-slate-200 rounded-md px-1 py-1 outline-none text-slate-700 font-bold"
+                  >
+                    <option value="">（右）</option>
+                    {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {canFreeDist && (
+                <button onClick={() => setMode("free_dist")}
+                  className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between rounded-lg transition-colors ${mode === "free_dist" ? "bg-zinc-100 text-zinc-900 font-bold" : "text-slate-600 hover:bg-zinc-50"}`}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-zinc-900" />
+                    <span>無料配布</span>
+                  </div>
+                  {mode === "free_dist" && <CheckCircle2 className="w-3.5 h-3.5" />}
+                </button>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -203,38 +200,43 @@ interface ItemSlotProps {
 }
 
 function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster }: ItemSlotProps) {
-  const base = poster ? "w-full rounded-lg overflow-hidden" : "rounded-md overflow-hidden";
-  const aspect = poster ? "aspect-[3/2]" : "aspect-square";
-  const bg = item ? "" : isActive ? "bg-zinc-500" : isSelecting ? "bg-zinc-600/80" : "bg-zinc-600";
-  const ring = isActive ? "ring-2 ring-yellow-400 ring-offset-1 ring-offset-zinc-800" : "";
+  const base = poster ? "w-full overflow-hidden" : "overflow-hidden";
+  const aspect = poster ? "aspect-[3.5/5]" : "aspect-[3.5/5]";
+  const bg = item ? "bg-white" : "bg-zinc-200/80";
+  const ring = isActive ? "ring-4 ring-yellow-400 z-10 scale-[1.02]" : "";
+  const border = poster ? "border-[3px] border-blue-600 shadow-lg" : "border border-zinc-400/30 shadow-inner";
 
   return (
     <div
-      className={`relative cursor-pointer transition-all group ${base} ${aspect} ${bg} ${ring}`}
+      className={`relative cursor-pointer transition-all duration-300 group ${base} ${aspect} ${bg} ${ring} ${border}`}
       onClick={onClick}
     >
       {item ? (
-        <>
-          <img src={item.url} alt={item.name} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
+        <div className="w-full h-full p-0.5">
+          <img src={item.url} alt={item.name} className="w-full h-full object-contain" />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
           <button
             onClick={(e) => { e.stopPropagation(); onClear(); }}
-            className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow"
+            className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-20"
           >
-            <X className="w-2.5 h-2.5" />
+            <X className="w-3 h-3" />
           </button>
-          <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 to-transparent px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            <p className="text-white text-[9px] font-medium truncate leading-tight">{item.name}</p>
-          </div>
-        </>
+        </div>
       ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center">
           {isActive ? (
-            <span className="text-yellow-400 text-[9px] font-bold animate-pulse">▼ 画像を選択</span>
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center animate-bounce shadow-md">
+                <ImageIcon className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-yellow-600 text-[10px] font-black uppercase">Selecting...</span>
+            </div>
           ) : (
             <>
-              <ImageIcon className="w-4 h-4 text-zinc-400" />
-              {poster && <span className="text-zinc-400 text-[10px] mt-0.5">ポスター画像</span>}
+              <p className="text-zinc-500 text-[10px] font-black leading-tight mb-2">
+                {poster ? "ポスター画像" : "掲載する出版物\n冊子型など"}
+              </p>
+              <ImageIcon className="w-5 h-5 text-zinc-400/50" />
             </>
           )}
         </div>
@@ -267,7 +269,7 @@ function ShelfSection({
         shelfKey={shelfKey} shelf={shelf}
         onLayoutChange={onLayoutChange} onTagChange={onTagChange}
       />
-      <div className={`bg-zinc-700 rounded-b-md p-2 grid gap-2 ${shelf.layout_type === "4_cols" ? "grid-cols-4" : shelf.layout_type === "3_cols" ? "grid-cols-3" : "grid-cols-2"}`}>
+      <div className={`p-2 grid gap-2 ${shelf.layout_type === "4_cols" ? "grid-cols-4" : shelf.layout_type === "3_cols" ? "grid-cols-3" : "grid-cols-2"}`}>
         {shelf.items.map((itemId, idx) => (
           <ItemSlot
             key={idx}
@@ -302,27 +304,16 @@ function CartPanel({
 }: CartPanelProps) {
   const filled = filledCountV2(layout);
   const max = maxCountV2(layout);
-  const headerGrad = cartId === "A" ? "from-indigo-700 to-indigo-900" : "from-teal-700 to-teal-900";
   const isPosterActive = activeTarget?.cart === cartId && activeTarget.section === "poster";
 
   return (
-    <div className="bg-zinc-800 rounded-2xl shadow-2xl shrink-0 w-[270px] overflow-visible pb-3">
-      <div className={`bg-linear-to-r ${headerGrad} text-white px-4 py-2 rounded-t-2xl flex items-center justify-between`}>
-        <div className="flex items-center gap-1.5">
-          <ShoppingCart className="w-3.5 h-3.5" />
-          <span className="text-sm font-bold tracking-wide">カート{cartId}</span>
-        </div>
-        <span className="text-[11px] bg-white/20 rounded-full px-2 py-0.5 font-semibold">
-          {filled} / {max}
-        </span>
-      </div>
-
-      <div className="px-3 pt-3 space-y-2.5">
-        <div>
-          <div className={`rounded-lg overflow-hidden border-2 transition-all ${
-            isPosterActive ? "border-yellow-400 shadow-lg shadow-yellow-400/30" : "border-white/20"
-          }`}>
-            <div className="bg-white">
+    <div className="flex flex-col items-center">
+      <div className="bg-[#444444] rounded-[48px] shadow-2xl shrink-0 w-[360px] overflow-hidden pt-4 pb-6 border-4 border-white/5 relative">
+        <div className="px-5 space-y-3">
+          <div className="flex justify-center">
+            <div className={`w-[85%] transition-all ${
+              isPosterActive ? "ring-4 ring-yellow-400 rounded-sm z-20" : ""
+            }`}>
               <ItemSlot
                 item={layout.poster ? itemMap[layout.poster] : undefined}
                 isActive={isPosterActive}
@@ -333,31 +324,40 @@ function CartPanel({
               />
             </div>
           </div>
-        </div>
 
-        {(["shelf1", "shelf2", "shelf3"] as ShelfKey[]).map((key) => (
-          <ShelfSection
-            key={key}
-            cartId={cartId}
-            shelfKey={key}
-            shelf={layout[key]}
-            activeTarget={activeTarget}
-            isSelecting={isSelecting}
-            itemMap={itemMap}
-            onSlotClick={(c, s, i) => onSlotClick(c, s, i)}
-            onClear={(c, s, i) => onClear(c, s, i)}
-            onLayoutChange={(t) => onLayoutChange(cartId, key, t)}
-            onTagChange={(w, t) => onTagChange(cartId, key, w, t)}
-          />
-        ))}
-
-        <div className="flex justify-around px-6 pt-1">
-          {[0, 1].map((i) => (
-            <div key={i} className="w-9 h-9 rounded-full bg-zinc-600 border-2 border-zinc-500 shadow-inner flex items-center justify-center">
-              <div className="w-3 h-3 rounded-full bg-zinc-500" />
-            </div>
-          ))}
+          <div className="space-y-2">
+            {(["shelf1", "shelf2", "shelf3"] as ShelfKey[]).map((key) => (
+              <ShelfSection
+                key={key}
+                cartId={cartId}
+                shelfKey={key}
+                shelf={layout[key]}
+                activeTarget={activeTarget}
+                isSelecting={isSelecting}
+                itemMap={itemMap}
+                onSlotClick={(c, s, i) => onSlotClick(c, s, i)}
+                onClear={(c, s, i) => onClear(c, s, i)}
+                onLayoutChange={(t) => onLayoutChange(cartId, key, t)}
+                onTagChange={(w, t) => onTagChange(cartId, key, w, t)}
+              />
+            ))}
+          </div>
         </div>
+      </div>
+
+      {/* Cart Handle at bottom */}
+      <div className="w-32 h-14 border-x-[10px] border-b-[10px] border-[#444444] rounded-b-[40px] -mt-1 flex items-end justify-center pb-2">
+        <div className="w-20 h-1 bg-[#444444]/20 rounded-full" />
+      </div>
+      
+      <div className="mt-4 flex items-center gap-3">
+        <div className={`w-3 h-3 rounded-full ${cartId === "A" ? "bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]" : "bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.6)]"}`} />
+        <span className="text-sm font-black text-foreground/80 uppercase tracking-widest italic flex items-center gap-2">
+          Cart {cartId}
+          <span className="text-[10px] font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-full not-italic">
+            {filled}/{max}
+          </span>
+        </span>
       </div>
     </div>
   );
@@ -594,39 +594,39 @@ export default function CartEditor() {
   })();
 
   return (
-    <div className="flex flex-col h-[calc(100vh-56px)] bg-zinc-900">
-      <div className="shrink-0 bg-zinc-800 border-b border-zinc-700 px-4 py-2 flex flex-wrap items-center gap-2.5">
-        <div className="flex items-center gap-1.5 bg-zinc-700 border border-zinc-600 rounded-lg px-2.5 py-1.5">
-          <CalendarDays className="w-3.5 h-3.5 text-zinc-400" />
+    <div className="flex flex-col h-[calc(100vh-56px)] bg-background">
+      <div className="shrink-0 bg-card border-b border-border px-4 py-2 flex flex-wrap items-center gap-2.5">
+        <div className="flex items-center gap-1.5 bg-background border border-border rounded-lg px-2.5 py-1.5 shadow-xs">
+          <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
           <input type="text" value={period} onChange={(e) => setPeriod((e.target as HTMLInputElement).value)}
             placeholder="例: 2026-05-前半"
-            className="text-sm font-medium text-zinc-100 bg-transparent outline-none w-36 placeholder:text-zinc-500" />
+            className="text-sm font-semibold text-foreground bg-transparent outline-none w-36 placeholder:text-muted-foreground/60" />
         </div>
         {quickPeriods.map(({ val, label }) => (
           <button key={val} onClick={() => setPeriod(val)}
-            className={`text-[11px] px-2 py-1 rounded-md border font-medium transition-colors ${
-              period === val ? "bg-primary text-white border-primary" : "bg-zinc-700 text-zinc-300 border-zinc-600 hover:border-primary/50"
+            className={`text-[11px] px-2 py-1 rounded-md border font-bold transition-all shadow-xs active:scale-95 ${
+              period === val ? "bg-primary text-white border-primary" : "bg-background text-muted-foreground border-border hover:text-foreground hover:border-primary/40"
             }`}>
             {label}
           </button>
         ))}
-        <div className="h-5 w-px bg-zinc-600" />
+        <div className="h-5 w-px bg-border" />
         <div className="relative">
           <button onClick={() => setShowCopyPanel((v) => !v)}
-            className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-zinc-600 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 font-medium transition-colors">
+            className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-muted font-bold text-foreground transition-all shadow-xs active:scale-95">
             <Copy className="w-3.5 h-3.5" />前回コピー<ChevronDown className="w-3 h-3" />
           </button>
           <AnimatePresence>
             {showCopyPanel && (
               <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                className="absolute top-full left-0 mt-1 bg-zinc-800 border border-zinc-600 rounded-xl shadow-2xl p-3 z-30 min-w-[220px]">
-                <p className="text-xs font-semibold text-zinc-400 mb-2">コピー元の期間</p>
+                className="absolute top-full left-0 mt-1 bg-card border border-border rounded-xl shadow-xl p-3 z-30 min-w-[220px]">
+                <p className="text-xs font-bold text-muted-foreground mb-2">コピー元の期間</p>
                 {layouts.length === 0 ? (
-                  <p className="text-xs text-zinc-500">保存済みデータなし</p>
+                  <p className="text-xs text-muted-foreground/60">保存済みデータなし</p>
                 ) : (
                   <>
                     <select value={copySource} onChange={(e) => setCopySource((e.target as HTMLSelectElement).value)}
-                      className="w-full text-sm border border-zinc-600 rounded-lg px-2 py-1.5 bg-zinc-700 text-zinc-200 outline-none mb-2">
+                      className="w-full text-sm border border-border rounded-lg px-2 py-1.5 bg-background text-foreground outline-none mb-2 font-medium">
                       <option value="">選択...</option>
                       {layouts.map((l) => <option key={l.period} value={l.period}>{l.period}</option>)}
                     </select>
@@ -652,34 +652,34 @@ export default function CartEditor() {
           {saveStatus === "saved" ? "保存済み" : saveStatus === "error" ? "エラー" : saveStatus === "saving" ? "保存中…" : "保存"}
         </button>
         {[
-          { key: "png" as const, label: "PNG", icon: <FileImage className="w-3.5 h-3.5" />, cls: "border-green-700 bg-green-900/50 text-green-300 hover:bg-green-800/60" },
-          { key: "pdf" as const, label: "PDF", icon: <Download className="w-3.5 h-3.5" />, cls: "border-blue-700 bg-blue-900/50 text-blue-300 hover:bg-blue-800/60" },
-          { key: "xlsx" as const, label: "Excel", icon: <FileSpreadsheet className="w-3.5 h-3.5" />, cls: "border-amber-700 bg-amber-900/50 text-amber-300 hover:bg-amber-800/60" },
+          { key: "png" as const, label: "PNG", icon: <FileImage className="w-3.5 h-3.5" />, cls: "border-green-400 bg-green-50 text-green-700 hover:bg-green-100 font-bold shadow-xs" },
+          { key: "pdf" as const, label: "PDF", icon: <Download className="w-3.5 h-3.5" />, cls: "border-blue-400 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold shadow-xs" },
+          { key: "xlsx" as const, label: "Excel", icon: <FileSpreadsheet className="w-3.5 h-3.5" />, cls: "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold shadow-xs" },
         ].map(({ key, label, icon, cls }) => (
           <button key={key} disabled={!!exporting}
             onClick={key === "png" ? handleExportPng : key === "pdf" ? handleExportPdf : handleExportXlsx}
-            className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border font-medium disabled:opacity-50 transition-colors ${cls}`}>
+            className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border disabled:opacity-50 transition-all active:scale-95 ${cls}`}>
             {exporting === key ? <div className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" /> : icon}
             {label}
           </button>
         ))}
         <button onClick={handleReset}
-          className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-zinc-600 bg-zinc-700 text-zinc-300 hover:bg-zinc-600 font-medium transition-colors">
+          className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground font-bold transition-all shadow-xs active:scale-95">
           <RotateCcw className="w-3.5 h-3.5" />リセット
         </button>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-52 shrink-0 bg-zinc-800 border-r border-zinc-700 flex flex-col overflow-hidden">
-          <div className="p-3 border-b border-zinc-700">
-            <p className="text-xs font-bold text-zinc-300 mb-2">画像を選択</p>
-            <input type="text" placeholder="検索..." value={searchQuery} onChange={(e) => setSearchQuery((e.target as HTMLInputElement).value)}
-              className="w-full text-xs border border-zinc-600 rounded-lg px-2.5 py-1.5 bg-zinc-700 text-zinc-200 outline-none focus:border-primary/60 mb-2 placeholder:text-zinc-500" />
+        <aside className="w-56 shrink-0 bg-card border-r border-border flex flex-col overflow-hidden">
+          <div className="p-4 border-b border-border">
+            <p className="text-[11px] font-black uppercase tracking-wider text-muted-foreground mb-3 px-1">画像を選択</p>
+            <input type="text" placeholder="名前で検索..." value={searchQuery} onChange={(e) => setSearchQuery((e.target as HTMLInputElement).value)}
+              className="w-full text-xs font-medium border border-border rounded-lg px-3 py-2 bg-background text-foreground outline-none focus:ring-2 focus:ring-primary/20 mb-3 placeholder:text-muted-foreground/50 transition-all" />
             <div className="grid grid-cols-2 gap-1">
               {(Object.entries(FILTER_LABELS) as [SidebarFilter, string][]).map(([key, label]) => (
                 <button key={key} onClick={() => setFilter(key)}
-                  className={`text-[11px] py-1 rounded-md font-semibold transition-colors ${
-                    filter === key ? "bg-primary text-white" : "bg-zinc-700 text-zinc-400 hover:bg-zinc-600"
+                  className={`text-[10px] py-1.5 rounded-lg font-bold transition-all shadow-xs ${
+                    filter === key ? "bg-primary text-white scale-[1.02]" : "bg-background text-muted-foreground hover:text-foreground"
                   }`}>
                   {label}
                 </button>
@@ -687,8 +687,8 @@ export default function CartEditor() {
             </div>
           </div>
           {(sidebarSelected || activeTarget) && (
-            <div className={`mx-2 mt-2 text-[10px] rounded-lg px-2 py-1.5 font-medium ${
-              sidebarSelected ? "bg-primary/20 text-primary border border-primary/30" : "bg-yellow-900/40 text-yellow-300 border border-yellow-700/40"
+            <div className={`mx-3 mt-3 text-[10px] rounded-lg px-3 py-2 font-bold leading-relaxed shadow-sm border ${
+              sidebarSelected ? "bg-primary/5 text-primary border-primary/20" : "bg-amber-50 text-amber-700 border-amber-200"
             }`}>
               {sidebarSelected
                 ? "▶ カートの枠をクリックして配置"
@@ -707,16 +707,16 @@ export default function CartEditor() {
                 const isSel = sidebarSelected?.id === item.id;
                 return (
                   <button key={item.id} onClick={() => handleSidebarClick(item)}
-                    className={`w-full flex items-center gap-2 rounded-lg p-1.5 text-left transition-all border ${
-                      isSel ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-transparent hover:bg-zinc-700 hover:border-zinc-600"
+                    className={`w-full flex items-center gap-3 rounded-xl p-2 text-left transition-all border ${
+                      isSel ? "border-primary bg-primary/5 shadow-sm" : "border-transparent hover:bg-background hover:border-border"
                     }`}>
-                    <img src={item.url} alt={item.name} className="w-9 h-9 object-cover rounded-md shrink-0 bg-zinc-700" />
+                    <img src={item.url} alt={item.name} className="w-10 h-10 object-cover rounded-lg shrink-0 bg-muted shadow-xs" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-medium text-zinc-200 truncate leading-tight">{item.name}</p>
-                      <div className="flex gap-1 mt-0.5 flex-wrap">
-                        {item.category === "poster" && <span className="text-[9px] bg-violet-900/60 text-violet-300 rounded px-1">ポスター</span>}
-                        {item.language === "ja" && <span className="text-[9px] bg-blue-900/60 text-blue-300 rounded px-1">日本語</span>}
-                        {item.language === "en" && <span className="text-[9px] bg-orange-900/60 text-orange-300 rounded px-1">英語</span>}
+                      <p className="text-[11px] font-bold text-foreground truncate leading-tight">{item.name}</p>
+                      <div className="flex gap-1 mt-1 flex-wrap">
+                        {item.category === "poster" && <span className="text-[9px] font-black bg-violet-100 text-violet-700 rounded px-1.5 py-0.5">POSTER</span>}
+                        {item.language === "ja" && <span className="text-[9px] font-black bg-blue-100 text-blue-700 rounded px-1.5 py-0.5">日本語</span>}
+                        {item.language === "en" && <span className="text-[9px] font-black bg-orange-100 text-orange-700 rounded px-1.5 py-0.5">EN</span>}
                       </div>
                     </div>
                     {isSel && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}
@@ -729,12 +729,12 @@ export default function CartEditor() {
         <main className="flex-1 overflow-auto p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-zinc-300">カートレイアウト</h2>
-              <span className="text-xs bg-zinc-700 text-zinc-400 rounded-full px-2 py-0.5 font-semibold">
-                A: {totalA}枠 / B: {totalB}枠
+              <h2 className="text-sm font-black text-foreground tracking-tight">カートレイアウト</h2>
+              <span className="text-[10px] bg-card text-muted-foreground border border-border rounded-full px-2.5 py-1 font-bold shadow-xs">
+                A: {totalA} / B: {totalB}
               </span>
               {period && (
-                <span className="text-xs bg-indigo-900/60 text-indigo-300 border border-indigo-700/50 rounded-full px-2 py-0.5 font-semibold">
+                <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 rounded-full px-2.5 py-1 font-bold shadow-xs">
                   {period}
                 </span>
               )}
@@ -751,7 +751,7 @@ export default function CartEditor() {
               ← 左サイドバーから画像を選ぶか、カートの枠をクリックして配置
             </p>
           )}
-          <div ref={canvasRef} className="flex gap-5 items-start p-4 rounded-2xl bg-zinc-900/50">
+          <div ref={canvasRef} className="flex gap-12 items-start p-10 rounded-[40px] bg-background shadow-inner border border-border/50">
             <CartPanel
               cartId="A" layout={cartA} activeTarget={activeTarget}
               isSelecting={isSelecting} itemMap={itemMap}
