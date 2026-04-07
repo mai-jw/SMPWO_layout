@@ -30,9 +30,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className={`${notoSansJP.variable} ${outfit.variable} font-sans antialiased bg-background text-foreground`}>
+      <body className={`${notoSansJP.variable} ${outfit.variable} font-sans antialiased bg-background text-foreground flex flex-col min-h-screen`}>
         <Providers>
-          <Navbar />
           {children}
         </Providers>
       </body>

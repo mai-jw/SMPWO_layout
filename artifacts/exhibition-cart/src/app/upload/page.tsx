@@ -272,6 +272,10 @@ export default function UploadAdminPage() {
                               >
                                 <option value="general">一般 (General)</option>
                                 <option value="poster">ポスター (Poster)</option>
+                                <option value="booklet">冊子類 (Booklet)</option>
+                                <option value="booklet_doc">冊子サイズ書籍</option>
+                                <option value="document">書籍 (Document)</option>
+                                <option value="pamphlet">パンフレット (Pamphlet)</option>
                               </select>
                             </div>
 

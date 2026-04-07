@@ -303,6 +303,82 @@ interface SelectionSidebarProps {
   onClose: () => void;
 }
 
+/* ═══════════════════════════════════════════════════════
+     LeftGallery — Left sidebar for previewing gallery items
+   ═══════════════════════════════════════════════════════ */
+
+type GalleryFilterType = "all" | "poster" | "booklet" | "booklet_doc" | "document" | "pamphlet";
+
+const GALLERY_FILTER_LABELS: Record<GalleryFilterType, string> = {
+  all: "すべて",
+  poster: "ポスター",
+  booklet: "冊子類",
+  booklet_doc: "冊子サイズ書籍",
+  document: "書籍",
+  pamphlet: "パンフレット",
+};
+
+interface LeftGalleryProps {
+  items: Item[];
+}
+
+function LeftGallery({ items }: LeftGalleryProps) {
+  const [filter, setFilter] = useState<GalleryFilterType>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredItems = items.filter((item) => {
+    // Match exactly or loosely based on existing category tags
+    const matchFilter = filter === "all" || item.category === filter;
+    const matchSearch = !searchQuery || item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchFilter && matchSearch;
+  });
+
+  return (
+    <aside className="w-64 shrink-0 bg-card border-r border-border flex flex-col overflow-hidden">
+      <div className="p-4 border-b border-border">
+        <p className="text-sm font-bold text-foreground">ギャラリー</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">アップロード済みのアイテム</p>
+      </div>
+
+      <div className="p-3 border-b border-border space-y-2">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <input type="text" placeholder="名前で検索..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full text-xs font-medium border border-border rounded-lg pl-8 pr-3 py-2 bg-background text-foreground outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/50 transition-all" />
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {(Object.entries(GALLERY_FILTER_LABELS) as [GalleryFilterType, string][]).map(([key, label]) => (
+            <button key={key} onClick={() => setFilter(key as GalleryFilterType)}
+              className={`text-[9px] px-2 py-1.5 rounded-md font-bold transition-all ${
+                filter === key ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground"
+              }`}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+        {filteredItems.length === 0 ? (
+          <p className="text-[11px] text-muted-foreground text-center py-8">該当するアイテムなし</p>
+        ) : (
+          filteredItems.map((item) => (
+            <div key={item.id} className="w-full flex items-center gap-3 rounded-xl p-2 text-left border border-transparent hover:bg-muted group">
+              <img src={item.url} alt={item.name} className="w-10 h-10 object-cover rounded-lg shrink-0 bg-muted shadow-xs" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold text-foreground truncate leading-tight" title={item.name}>{item.name}</p>
+                <div className="flex gap-1 mt-1 flex-wrap">
+                  {item.category && <span className="text-[8px] font-black bg-zinc-100 text-zinc-700 rounded px-1 py-0.5 uppercase">{item.category === "general" ? "一般" : item.category}</span>}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </aside>
+  );
+}
+
 function SelectionSidebar({
   activeTarget, items, itemMap, cartA, cartB,
   onSelectItem, onLayoutChange, onTagChange, onClose,
@@ -855,8 +931,9 @@ export default function CartEditor() {
         </button>
       </div>
 
-      {/* Main Content: Carts + Side Panel */}
+      {/* Main Content: Left Gallery + Carts + Side Panel */}
       <div className="flex flex-1 overflow-hidden">
+        <LeftGallery items={items} />
         <main className="flex-1 overflow-auto p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
