@@ -647,8 +647,9 @@ export default function CartEditor() {
   const [activeTarget, setActiveTarget] = useState<ActiveTarget>(null);
   const [exporting, setExporting] = useState<"png" | "pdf" | "xlsx" | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [copySource, setCopySource] = useState("");
-  const [showCopyPanel, setShowCopyPanel] = useState(false);
+  const [showNewPanel, setShowNewPanel] = useState(false);
+  const [newMonth, setNewMonth] = useState(() => new Date().getMonth() + 1);
+  const [newHalf, setNewHalf] = useState<"前半" | "後半">(() => new Date().getDate() <= 15 ? "前半" : "後半");
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const { data: items = [], isLoading } = useItems();
@@ -759,13 +760,25 @@ export default function CartEditor() {
     } catch { setSaveStatus("error"); setTimeout(() => setSaveStatus("idle"), 3000); }
   };
 
-  const handleCopyLayout = () => {
-    const src = layouts.find((l) => l.period === copySource);
-    if (!src) return;
-    setCartA(src.cart_a);
-    setCartB(src.cart_b);
-    setShowCopyPanel(false);
-    setCopySource("");
+  const handleCreateNew = () => {
+    const y = new Date().getFullYear();
+    const targetPeriod = `${y}-${String(newMonth).padStart(2, "0")}-${newHalf}`;
+    setPeriod(targetPeriod);
+
+    const existing = layouts.find(l => l.period === targetPeriod);
+    if (existing) {
+      setCartA(existing.cart_a);
+      setCartB(existing.cart_b);
+    } else {
+      if (layouts.length > 0) {
+        setCartA(layouts[0].cart_a);
+        setCartB(layouts[0].cart_b);
+      } else {
+        setCartA(makeInitialCartLayoutV2());
+        setCartB(makeInitialCartLayoutV2());
+      }
+    }
+    setShowNewPanel(false);
   };
 
   const handleExportPng = async () => {
@@ -851,63 +864,65 @@ export default function CartEditor() {
   const totalA = filledCountV2(cartA);
   const totalB = filledCountV2(cartB);
 
-  const quickPeriods = (() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth() + 1;
-    return [
-      [y, m, "前半"], [y, m, "後半"],
-      [y, m === 12 ? 1 : m + 1, "前半"],
-    ].map(([yr, mo, h]) => ({
-      val: `${yr}-${String(mo).padStart(2, "0")}-${h}`,
-      label: `${String(mo).padStart(2, "0")}月${h}`,
-    }));
-  })();
-
   return (
     <div className="flex flex-col h-[calc(100vh-56px)] bg-background">
       {/* Top Toolbar */}
-      <div className="shrink-0 bg-card border-b border-border px-4 py-2 flex flex-wrap items-center gap-2.5">
-        <div className="flex items-center gap-1.5 bg-background border border-border rounded-lg px-2.5 py-1.5 shadow-xs">
-          <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
-          <input type="text" value={period} onChange={(e) => setPeriod((e.target as HTMLInputElement).value)}
-            placeholder="例: 2026-05-前半"
-            className="text-sm font-semibold text-foreground bg-transparent outline-none w-36 placeholder:text-muted-foreground/60" />
+      <div className="shrink-0 bg-white border-b border-border px-4 py-3 flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-4 mr-8 tracking-tight">
+          <img src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/same.gif" alt="SMPWO Logo" className="w-56 h-auto object-contain" />
+          <span className="font-black text-2xl tracking-widest text-foreground mt-0.5">SMPWO LAYOUT</span>
         </div>
-        {quickPeriods.map(({ val, label }) => (
-          <button key={val} onClick={() => setPeriod(val)}
-            className={`text-[11px] px-2 py-1 rounded-md border font-bold transition-all shadow-xs active:scale-95 ${
-              period === val ? "bg-primary text-white border-primary" : "bg-background text-muted-foreground border-border hover:text-foreground hover:border-primary/40"
-            }`}>
-            {label}
-          </button>
-        ))}
-        <div className="h-5 w-px bg-border" />
+        
+        <div className="flex items-center gap-1.5 bg-background border border-border rounded-lg px-2.5 py-1.5 shadow-xs hover:border-primary/40 transition-colors">
+          <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
+          <select 
+            value={period} 
+            onChange={(e) => {
+              const val = e.target.value;
+              setPeriod(val);
+              const existing = layouts.find(l => l.period === val);
+              if (existing) {
+                setCartA(existing.cart_a);
+                setCartB(existing.cart_b);
+              }
+            }}
+            className="text-sm font-semibold text-foreground bg-transparent outline-none w-36 cursor-pointer"
+          >
+            {!layouts.some(l => l.period === period) && (
+              <option value={period}>{period}</option>
+            )}
+            {layouts.map(l => (
+              <option key={l.period} value={l.period}>{l.period}</option>
+            ))}
+          </select>
+        </div>
         <div className="relative">
-          <button onClick={() => setShowCopyPanel((v) => !v)}
+          <button onClick={() => setShowNewPanel((v) => !v)}
             className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-muted font-bold text-foreground transition-all shadow-xs active:scale-95">
-            <Copy className="w-3.5 h-3.5" />前回コピー<ChevronDown className="w-3 h-3" />
+            新規作成<ChevronDown className="w-3 h-3" />
           </button>
           <AnimatePresence>
-            {showCopyPanel && (
+            {showNewPanel && (
               <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                className="absolute top-full left-0 mt-1 bg-card border border-border rounded-xl shadow-xl p-3 z-30 min-w-[220px]">
-                <p className="text-xs font-bold text-muted-foreground mb-2">コピー元の期間</p>
-                {layouts.length === 0 ? (
-                  <p className="text-xs text-muted-foreground/60">保存済みデータなし</p>
-                ) : (
-                  <>
-                    <select value={copySource} onChange={(e) => setCopySource((e.target as HTMLSelectElement).value)}
-                      className="w-full text-sm border border-border rounded-lg px-2 py-1.5 bg-background text-foreground outline-none mb-2 font-medium">
-                      <option value="">選択...</option>
-                      {layouts.map((l) => <option key={l.period} value={l.period}>{l.period}</option>)}
-                    </select>
-                    <button onClick={handleCopyLayout} disabled={!copySource}
-                      className="w-full text-sm bg-primary text-white rounded-lg py-1.5 font-medium hover:bg-primary/90 disabled:opacity-40 transition-colors">
-                      このレイアウトをコピー
-                    </button>
-                  </>
-                )}
+                className="absolute top-full left-0 mt-1 bg-card border border-border rounded-xl shadow-xl p-4 z-30 min-w-[240px] flex flex-col gap-3">
+                <p className="text-xs font-bold text-muted-foreground">新しい展示期間</p>
+                <div className="flex items-center gap-2">
+                  <select value={newMonth} onChange={(e) => setNewMonth(Number(e.target.value))}
+                    className="flex-1 text-sm border border-border rounded-lg px-2 py-1.5 bg-background text-foreground font-medium outline-none">
+                    {Array.from({length: 12}, (_, i) => i + 1).map(m => (
+                      <option key={m} value={m}>{m}月</option>
+                    ))}
+                  </select>
+                  <select value={newHalf} onChange={(e) => setNewHalf(e.target.value as "前半" | "後半")}
+                    className="flex-1 text-sm border border-border rounded-lg px-2 py-1.5 bg-background text-foreground font-medium outline-none">
+                    <option value="前半">前半</option>
+                    <option value="後半">後半</option>
+                  </select>
+                </div>
+                <button onClick={handleCreateNew}
+                  className="w-full text-sm bg-primary text-white rounded-lg py-2 font-bold hover:bg-primary/90 transition-colors">
+                  作成
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -935,10 +950,6 @@ export default function CartEditor() {
             {label}
           </button>
         ))}
-        <button onClick={handleReset}
-          className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground font-bold transition-all shadow-xs active:scale-95">
-          <RotateCcw className="w-3.5 h-3.5" />リセット
-        </button>
       </div>
 
       {/* Main Content: Left Gallery + Carts + Side Panel */}
