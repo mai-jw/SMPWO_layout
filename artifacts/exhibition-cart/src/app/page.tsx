@@ -211,19 +211,20 @@ interface ItemSlotProps {
 function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster, layoutType }: ItemSlotProps) {
   const base = poster ? "w-full overflow-hidden" : "overflow-hidden";
   
-  // Specific Aspect Ratios:
+  // Strict Aspect Ratios:
+  // Poster: 1:1.4
   // Booklet (2-cols): 1:1.4
   // Booklet Doc (2-cols): 1:1.4
   // Document (3-cols): 1:1.5
   // Pamphlet (4-cols): 1:3
-  const aspect = poster ? "aspect-[4/5]" 
+  const aspect = poster ? "aspect-[1/1.4]" 
     : (layoutType === "booklet" || layoutType === "booklet_doc") ? "aspect-[1/1.4]"
     : layoutType === "document" ? "aspect-[1/1.5]"
     : "aspect-[1/3]";
 
-  const bg = item ? "bg-transparent" : "bg-zinc-200/40";
+  const bg = item ? "bg-transparent" : (poster ? "bg-slate-50" : "bg-zinc-200/40");
   const ring = isActive ? "ring-4 ring-yellow-400 z-10 scale-[1.05]" : "";
-  const border = poster ? "border-[3px] border-blue-600 shadow-lg bg-white" : "border-b border-zinc-400/50"; // Bottom-only border for shelves to look like feet
+  const border = poster ? "border-transparent" : "border-b border-zinc-400/50";
 
   return (
     <div
@@ -246,21 +247,24 @@ function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster, layou
           </button>
         </div>
       ) : (
-        <div className="absolute inset-x-0 bottom-1 flex flex-col items-center justify-center p-1 text-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center">
           {isActive ? (
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-6 h-6 rounded-full bg-yellow-400 flex items-center justify-center animate-bounce shadow-md">
-                <ImageIcon className="w-3 h-3 text-white" />
+            <div className="flex flex-col items-center gap-1.5 animate-pulse">
+              <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center shadow-lg">
+                <ImageIcon className="w-4 h-4 text-white" />
               </div>
-              <span className="text-yellow-600 text-[8px] font-black uppercase">SEL...</span>
+              <span className="text-yellow-600 text-[9px] font-black uppercase tracking-tighter">選択中...</span>
             </div>
           ) : (
-            <>
-              <p className="text-zinc-500 text-[7px] font-bold leading-tight mb-1">
-                {poster ? "POSTER" : "PUB."}
-              </p>
-              <ImageIcon className="w-3.5 h-3.5 text-zinc-400/50" />
-            </>
+            <div className="flex flex-col items-center opacity-40 group-hover:opacity-80 transition-opacity">
+              <span className="text-slate-600 text-[11px] font-black mb-1">
+                {poster ? "ポスター画像" : "掲載する出版物"}
+              </span>
+              <span className="text-slate-400 text-[8px] font-black uppercase tracking-widest mb-2">
+                {poster ? "POSTER" : (layoutType === "booklet" || layoutType === "booklet_doc") ? "冊子類の場合" : layoutType === "document" ? "文書の場合" : "パンフレット"}
+              </span>
+              <ImageIcon className="w-5 h-5 text-slate-300" />
+            </div>
           )}
         </div>
       )}
@@ -287,21 +291,40 @@ function ShelfSection({
   cartId, shelfIndex, shelf, activeTarget, isSelecting, itemMap,
   onSlotClick, onClear, onLayoutChange, onTagChange, onDelete,
 }: ShelfSectionProps) {
+  // Precision Snapped Coordinates
+  // Poster ends at 34.3%.
+  // Budget: Tag (2.5%) + Items (15.0%) = 17.5% per row
+  const tops = [
+    { tag: "34.3%", items: "36.8%" }, // Row 1 snaps to poster bottom
+    { tag: "51.8%", items: "54.3%" }, // Row 2 snaps to Row 1 bottom
+    { tag: "69.3%", items: "71.8%" }, // Row 3 snaps to Row 2 bottom
+  ];
+
+  const tagTop = tops[shelfIndex].tag;
+  const itemsTop = tops[shelfIndex].items;
+
   return (
-    <div className="flex flex-col">
-      {/* Tag Bar - directly above each pocket */}
-      <div className="z-30">
+    <>
+      {/* Tag Bar - Precisely snapped to the bottom of the element above it */}
+      <div 
+        className="absolute left-[32%] w-[36%] z-30"
+        style={{ top: tagTop, height: "2.5%" }}
+      >
         <TagBar
           shelfIndex={shelfIndex} shelf={shelf}
           onLayoutChange={onLayoutChange} onTagChange={onTagChange}
         />
       </div>
-      {/* Items Area - fills the pocket area */}
-      <div className={`grid items-end flex-1 z-20 ${
-        shelf.layout_type === "pamphlet" ? "grid-cols-4 gap-1 px-1" : 
-        shelf.layout_type === "document" ? "grid-cols-3 gap-0.5 px-1" : 
-        "grid-cols-2 gap-3 px-3"
-      }`}>
+
+      {/* Items Area - Fills the pocket, publication images are bottom-aligned */}
+      <div 
+        className={`absolute left-[32%] w-[36%] z-20 grid items-end ${
+          shelf.layout_type === "pamphlet" ? "grid-cols-4 gap-1 px-1.5" : 
+          shelf.layout_type === "document" ? "grid-cols-3 gap-0.5 px-1" : 
+          "grid-cols-2 gap-3 px-4"
+        }`}
+        style={{ top: itemsTop, height: "15%" }}
+      >
         {shelf.items.map((itemId, idx) => (
           <ItemSlot
             key={idx}
@@ -314,7 +337,7 @@ function ShelfSection({
           />
         ))}
       </div>
-    </div>
+    </>
   );
 }
 
@@ -354,24 +377,22 @@ function CartPanel({
 
   return (
     <div className="w-[480px]">
-      <div className="relative w-full aspect-1080/1350">
-        {/* Background Image Template */}
-        <img 
-          src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/cart_empty_guid.png" 
-          alt={`Cart ${cartId} Template`}
-          className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-2xl"
-        />
-
-        {/* Poster Overlay — sits in the white frame at the top */}
-        <div
-          className={`absolute transition-all ${
+      {/* 
+        Cart Container Definition 
+        - position: relative
+        - background-image: cart_empty.png
+        - background-size: contain
+        - background-repeat: no-repeat
+      */}
+      <div 
+        className="relative w-full aspect-1080/1350 bg-contain bg-no-repeat bg-center"
+        style={{ backgroundImage: `url('https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/cart_empty.png')` }}
+      >
+        {/* Poster Overlay - Centered at the top, strictly 1:1.4 aspect ratio */}
+        <div 
+          className={`absolute top-[1.6%] left-[35.4%] w-[29.2%] aspect-[1/1.4] transition-all overflow-hidden ${
             isPosterActive ? "ring-4 ring-yellow-400 z-40 shadow-2xl scale-[1.01]" : "z-10"
           }`}
-          style={{
-            top: `${posterTopPct}%`,
-            left: `${(100 - posterWidthPct) / 2}%`,
-            width: `${posterWidthPct}%`,
-          }}
         >
           <ItemSlot
             item={layout.poster ? itemMap[layout.poster] : undefined}
@@ -383,31 +404,23 @@ function CartPanel({
           />
         </div>
 
-        {/* Shelves — 3 fixed rows stacked immediately below the poster */}
-        {layout.shelves.map((shelf, idx) => {
-          const rowTop = shelveStartPct + idx * rowHeightPct;
-          return (
-            <div
-              key={idx}
-              className="absolute left-[32%] w-[36%]"
-              style={{ top: `${rowTop}%`, height: `${rowHeightPct}%` }}
-            >
-              <ShelfSection
-                cartId={cartId}
-                shelfIndex={idx}
-                shelf={shelf}
-                activeTarget={activeTarget}
-                isSelecting={isSelecting}
-                itemMap={itemMap}
-                onSlotClick={(c, s, si, sli) => onSlotClick(c, s as any, si, sli)}
-                onClear={(c, s, si, sli) => onClear(c, s as any, si, sli)}
-                onLayoutChange={(t) => onLayoutChange(cartId, idx, t)}
-                onTagChange={(w, t) => onTagChange(cartId, idx, w, t)}
-                onDelete={() => {}}
-              />
-            </div>
-          );
-        })}
+        {/* Shelves Layout (Fixed 3-row absolute positioning, sticking to the poster's bottom) */}
+        {layout.shelves.map((shelf, idx) => (
+          <ShelfSection
+            key={idx}
+            cartId={cartId}
+            shelfIndex={idx}
+            shelf={shelf}
+            activeTarget={activeTarget}
+            isSelecting={isSelecting}
+            itemMap={itemMap}
+            onSlotClick={(c, s, si, sli) => onSlotClick(c, s as any, si, sli)}
+            onClear={(c, s, si, sli) => onClear(c, s as any, si, sli)}
+            onLayoutChange={(t) => onLayoutChange(cartId, idx, t)}
+            onTagChange={(w, t) => onTagChange(cartId, idx, w, t)}
+            onDelete={() => {}}
+          />
+        ))}
       </div>
     </div>
   );
