@@ -5,8 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingCart, Image as ImageIcon, X, Download, FileSpreadsheet,
   FileImage, Save, Copy, CalendarDays, RotateCcw, CheckCircle2,
-  ChevronDown, Tag, Pencil, ChevronRight, Search, Layers,
+  ChevronDown, Tag, Pencil, ChevronRight, Search, Layers, Upload,
 } from "lucide-react";
+import Link from "next/link";
 import { useItems } from "@/hooks/use-items";
 import { useLayouts, useSaveLayout } from "@/hooks/use-layouts";
 import {
@@ -335,9 +336,18 @@ function LeftGallery({ items }: LeftGalleryProps) {
 
   return (
     <aside className="w-64 shrink-0 bg-card border-r border-border flex flex-col overflow-hidden">
-      <div className="p-4 border-b border-border">
-        <p className="text-sm font-bold text-foreground">ギャラリー</p>
-        <p className="text-[10px] text-muted-foreground mt-0.5">アップロード済みのアイテム</p>
+      <div className="p-4 border-b border-border flex items-center justify-between">
+        <div>
+          <p className="text-sm font-bold text-foreground">ギャラリー</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">アップロード済みのアイテム</p>
+        </div>
+        <Link 
+          href="/upload" 
+          className="p-2 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg transition-colors flex items-center justify-center group"
+          title="画像をアップロード"
+        >
+          <Upload className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" />
+        </Link>
       </div>
 
       <div className="p-3 border-b border-border space-y-2">
