@@ -56,13 +56,13 @@ function TagBar({ shelfIndex, shelf, onLayoutChange, onTagChange }: TagBarProps)
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isRow1 = shelfIndex === 0;
-  const is3or4Cols = shelf.layout_type === "3_cols" || shelf.layout_type === "4_cols";
+  const isDocOrPamphlet = shelf.layout_type === "document" || shelf.layout_type === "pamphlet";
   
   // Rules: 
-  // 1. Language tag (Red): Allowed if Row 1 OR (Row 2+ AND 3/4 columns)
-  const canLangTag = isRow1 || is3or4Cols;
-  // 2. Free Dist tag (Black): Allowed ONLY if 3/4 columns
-  const canFreeDist = is3or4Cols;
+  // 1. Language tag (Red): Allowed if Row 1 OR (Row 2+ AND Document/Pamphlet type)
+  const canLangTag = isRow1 || isDocOrPamphlet;
+  // 2. Free Dist tag (Black): Allowed ONLY if Document/Pamphlet type
+  const canFreeDist = isDocOrPamphlet;
 
   const mode = shelf.tag_1.type;
   const barBg = mode === "free_dist" ? "bg-zinc-900"
@@ -117,8 +117,8 @@ function TagBar({ shelfIndex, shelf, onLayoutChange, onTagChange }: TagBarProps)
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             className="absolute top-full left-0 right-0 z-50 mt-1 bg-white rounded-xl shadow-2xl border border-slate-200 p-2 overflow-hidden"
           >
-            <div className="grid grid-cols-3 gap-1 mb-3">
-              {(["2_cols", "3_cols", "4_cols"] as ShelfLayoutType[]).map((t) => (
+            <div className="grid grid-cols-2 gap-1 mb-3">
+              {(["booklet", "booklet_doc", "document", "pamphlet"] as ShelfLayoutType[]).map((t) => (
                 <button
                   key={t}
                   onClick={() => onLayoutChange(t)}
@@ -126,8 +126,10 @@ function TagBar({ shelfIndex, shelf, onLayoutChange, onTagChange }: TagBarProps)
                     shelf.layout_type === t ? "bg-primary text-white border-primary shadow-sm" : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
                   }`}
                 >
-                  <span>{t === "2_cols" ? "冊子類" : t === "3_cols" ? "文書" : "パンフ"}</span>
-                  <span className="opacity-60 text-[8px]">{t === "2_cols" ? "2列" : t === "3_cols" ? "3列" : "4列"}</span>
+                  <span className="truncate w-full px-1">
+                    {t === "booklet" ? "冊子類" : t === "booklet_doc" ? "冊子サイズ文書" : t === "document" ? "文書 (文庫本)" : "パンフレット"}
+                  </span>
+                  <span className="opacity-60 text-[8px]">{t === "booklet" || t === "booklet_doc" ? "2枚" : t === "document" ? "3枚" : "4枚"}</span>
                 </button>
               ))}
             </div>
@@ -211,11 +213,12 @@ function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster, layou
   
   // Specific Aspect Ratios:
   // Booklet (2-cols): 1:1.4
+  // Booklet Doc (2-cols): 1:1.4
   // Document (3-cols): 1:1.5
   // Pamphlet (4-cols): 1:3
   const aspect = poster ? "aspect-[4/5]" 
-    : layoutType === "2_cols" ? "aspect-[1/1.4]"
-    : layoutType === "3_cols" ? "aspect-[1/1.5]"
+    : (layoutType === "booklet" || layoutType === "booklet_doc") ? "aspect-[1/1.4]"
+    : layoutType === "document" ? "aspect-[1/1.5]"
     : "aspect-[1/3]";
 
   const bg = item ? "bg-transparent" : "bg-zinc-200/40";
@@ -224,15 +227,15 @@ function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster, layou
 
   return (
     <div
-      className={`relative cursor-pointer transition-all duration-300 group flex flex-col justify-end ${base} ${aspect} ${bg} ${ring} ${border}`}
+      className={`relative cursor-pointer transition-all duration-300 group flex flex-col justify-end h-full w-full ${base} ${aspect} ${bg} ${ring} ${border}`}
       onClick={onClick}
     >
       {item ? (
-        <div className="w-full h-full p-0.5 flex flex-col justify-end">
+        <div className="w-full h-full p-0.5 flex flex-col justify-end overflow-hidden">
           <img 
             src={item.url} 
             alt={item.name} 
-            className="w-full h-full object-contain object-bottom drop-shadow-md" 
+            className="w-full h-full object-contain object-bottom drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] transition-transform group-hover:scale-[1.03]" 
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
           <button
@@ -243,20 +246,20 @@ function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster, layou
           </button>
         </div>
       ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center">
+        <div className="absolute inset-x-0 bottom-1 flex flex-col items-center justify-center p-1 text-center">
           {isActive ? (
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center animate-bounce shadow-md">
-                <ImageIcon className="w-4 h-4 text-white" />
+            <div className="flex flex-col items-center gap-1">
+              <div className="w-6 h-6 rounded-full bg-yellow-400 flex items-center justify-center animate-bounce shadow-md">
+                <ImageIcon className="w-3 h-3 text-white" />
               </div>
-              <span className="text-yellow-600 text-[10px] font-black uppercase">Selecting...</span>
+              <span className="text-yellow-600 text-[8px] font-black uppercase">SEL...</span>
             </div>
           ) : (
             <>
-              <p className="text-zinc-500 text-[10px] font-black leading-tight mb-2">
-                {poster ? "ポスター画像" : "掲載する出版物\n冊子型など"}
+              <p className="text-zinc-500 text-[7px] font-bold leading-tight mb-1">
+                {poster ? "POSTER" : "PUB."}
               </p>
-              <ImageIcon className="w-5 h-5 text-zinc-400/50" />
+              <ImageIcon className="w-3.5 h-3.5 text-zinc-400/50" />
             </>
           )}
         </div>
@@ -284,16 +287,28 @@ function ShelfSection({
   cartId, shelfIndex, shelf, activeTarget, isSelecting, itemMap,
   onSlotClick, onClear, onLayoutChange, onTagChange, onDelete,
 }: ShelfSectionProps) {
+  // Fixed positions based on layout rules: 
+  // Row 1: Tag at 30%, Items at 35%
+  // Row 2: Tag at 50%, Items at 55%
+  // Row 3: Tag at 70%, Items at 75%
+  const tagTop = shelfIndex === 0 ? "top-[30.5%]" : shelfIndex === 1 ? "top-[50.5%]" : "top-[70.5%]";
+  const itemsTop = shelfIndex === 0 ? "top-[35.5%]" : shelfIndex === 1 ? "top-[55.5%]" : "top-[75.5%]";
+
   return (
-    <div className="relative group/shelf">
-      <TagBar
-        shelfIndex={shelfIndex} shelf={shelf}
-        onLayoutChange={onLayoutChange} onTagChange={onTagChange}
-      />
-      <div className={`p-1 grid relative items-end ${
-        shelf.layout_type === "4_cols" ? "grid-cols-4 gap-2 px-3" : 
-        shelf.layout_type === "3_cols" ? "grid-cols-3 gap-1.5 px-2" : 
-        "grid-cols-2 gap-1.5 px-4"
+    <>
+      {/* Tag Bar - Absolute position relative to the cart container */}
+      <div className={`absolute ${tagTop} left-[15%] w-[70%] z-20`}>
+        <TagBar
+          shelfIndex={shelfIndex} shelf={shelf}
+          onLayoutChange={onLayoutChange} onTagChange={onTagChange}
+        />
+      </div>
+
+      {/* Items - Absolute position relative to the cart container */}
+      <div className={`absolute ${itemsTop} left-[15%] w-[70%] h-[16%] grid relative items-end z-10 ${
+        shelf.layout_type === "pamphlet" ? "grid-cols-4 gap-1.5 px-2" : 
+        shelf.layout_type === "document" ? "grid-cols-3 gap-1 px-1.5" : 
+        "grid-cols-2 gap-4 px-6"
       }`}>
         {shelf.items.map((itemId, idx) => (
           <ItemSlot
@@ -307,16 +322,7 @@ function ShelfSection({
           />
         ))}
       </div>
-      
-      {/* Delete Row button - appears on hover */}
-      <button 
-        onClick={onDelete}
-        className="absolute -right-6 top-1/2 -translate-y-1/2 p-1 bg-red-100 text-red-500 rounded-full opacity-0 group-hover/shelf:opacity-100 transition-all hover:bg-red-200 shadow-sm z-30"
-        title="この段を削除"
-      >
-        <X className="w-3 h-3" />
-      </button>
-    </div>
+    </>
   );
 }
 
@@ -351,8 +357,8 @@ function CartPanel({
           className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-2xl"
         />
 
-        {/* Poster Overlay - Precisely aligned with the white box in the template */}
-        <div className={`absolute top-[5%] left-[23%] w-[54%] h-[32.4%] transition-all ${isPosterActive ? "ring-4 ring-yellow-400 z-20" : ""}`}>
+        {/* Poster Overlay - Centered and aligned at Top: 5% */}
+        <div className={`absolute top-[5%] left-[15%] w-[70%] transition-all ${isPosterActive ? "ring-4 ring-yellow-400 z-30" : "z-10"}`}>
           <ItemSlot
             item={layout.poster ? itemMap[layout.poster] : undefined}
             isActive={isPosterActive}
@@ -363,38 +369,23 @@ function CartPanel({
           />
         </div>
 
-        {/* Shelves Overlay - Placed in the dark grey body area */}
-        <div className="absolute top-[38%] left-[21.5%] w-[57%] h-[53%] flex flex-col bg-transparent overflow-y-auto custom-scrollbar pt-0.5">
-          <div className="space-y-0.5">
-            {layout.shelves.map((shelf, idx) => (
-              <ShelfSection
-                key={idx}
-                cartId={cartId}
-                shelfIndex={idx}
-                shelf={shelf}
-                activeTarget={activeTarget}
-                isSelecting={isSelecting}
-                itemMap={itemMap}
-                onSlotClick={(c, s, si, sli) => onSlotClick(c, s as any, si, sli)}
-                onClear={(c, s, si, sli) => onClear(c, s as any, si, sli)}
-                onLayoutChange={(t) => onLayoutChange(cartId, idx, t)}
-                onTagChange={(w, t) => onTagChange(cartId, idx, w, t)}
-                onDelete={() => (onClear as any)(cartId, "delete_row", idx)}
-              />
-            ))}
-          </div>
-
-          {/* Add Row Button */}
-          {layout.shelves.length < 3 && (
-            <button 
-              onClick={() => (onSlotClick as any)(cartId, "add_row")}
-              className="w-full mt-1.5 py-2 border-2 border-dashed border-white/20 rounded-xl text-white/40 hover:text-white/60 hover:border-white/40 hover:bg-white/5 transition-all flex items-center justify-center gap-1.5"
-            >
-              <ShoppingCart className="w-3.5 h-3.5" />
-              <span className="text-[10px] font-black uppercase tracking-wider">Add Row</span>
-            </button>
-          )}
-        </div>
+        {/* Shelves Layout (Fixed 3-row positioning) */}
+        {layout.shelves.map((shelf, idx) => (
+          <ShelfSection
+            key={idx}
+            cartId={cartId}
+            shelfIndex={idx}
+            shelf={shelf}
+            activeTarget={activeTarget}
+            isSelecting={isSelecting}
+            itemMap={itemMap}
+            onSlotClick={(c, s, si, sli) => onSlotClick(c, s as any, si, sli)}
+            onClear={(c, s, si, sli) => onClear(c, s as any, si, sli)}
+            onLayoutChange={(t) => onLayoutChange(cartId, idx, t)}
+            onTagChange={(w, t) => onTagChange(cartId, idx, w, t)}
+            onDelete={() => {}}
+          />
+        ))}
       </div>
 
       {/* Cart Label Below the handle */}
@@ -513,24 +504,21 @@ export default function CartEditor() {
     const setter = getSetCart(cart);
     setter((prev) => {
       const shelf = prev.shelves[shelfIdx];
-      const newItems = t === "4_cols"
-        ? [shelf.items[0] ?? null, shelf.items[1] ?? null, shelf.items[2] ?? null, shelf.items[3] ?? null]
-        : t === "3_cols"
-        ? [shelf.items[0] ?? null, shelf.items[1] ?? null, shelf.items[2] ?? null]
-        : [shelf.items[0] ?? null, shelf.items[1] ?? null];
+      const count = t === "pamphlet" ? 4 : t === "document" ? 3 : 2;
+      const newItems = Array(count).fill(null).map((_, i) => shelf.items[i] ?? null);
       
       let tag_1 = shelf.tag_1;
       let tag_2 = shelf.tag_2;
       
       // Validation on layout change
-      const is3or4 = t === "3_cols" || t === "4_cols";
+      const isDocOrPamphlet = t === "document" || t === "pamphlet";
       const isRow1 = shelfIdx === 0;
       
-      if (!isRow1 && !is3or4) {
+      if (!isRow1 && !isDocOrPamphlet) {
         if (tag_1.type === "lang") tag_1 = { type: "none", value: "" };
         if (tag_2.type === "lang") tag_2 = { type: "none", value: "" };
       }
-      if (!is3or4 && tag_1.type === "free_dist") {
+      if (!isDocOrPamphlet && tag_1.type === "free_dist") {
         tag_1 = { type: "none", value: "" };
       }
 
@@ -639,7 +627,7 @@ export default function CartEditor() {
           for (let i = 0; i < maxSlots; i++) {
             addRow(
               "棚", shelfLabel, `スロット${i + 1}`,
-              `${la ? (la.layout_type === "3_cols" ? "3冊" : la.layout_type === "4_cols" ? "4冊" : "2冊") : "—"} / ${lb ? (lb.layout_type === "3_cols" ? "3冊" : lb.layout_type === "4_cols" ? "4冊" : "2冊") : "—"}`,
+              `${la ? (la.layout_type === "document" ? "3冊" : la.layout_type === "pamphlet" ? "4冊" : "2冊") : "—"} / ${lb ? (lb.layout_type === "document" ? "3冊" : lb.layout_type === "pamphlet" ? "4冊" : "2冊") : "—"}`,
               i === 0 ? t1a : "〃", i === 0 ? t2a : "〃",
               getItemName(la?.items[i] ?? null), getItemName(lb?.items[i] ?? null),
             );

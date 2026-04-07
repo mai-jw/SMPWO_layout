@@ -26,7 +26,7 @@ export interface Item {
 }
 
 /* ─── Cart Layout V2 ─── */
-export type ShelfLayoutType = "2_cols" | "3_cols" | "4_cols";
+export type ShelfLayoutType = "booklet" | "booklet_doc" | "document" | "pamphlet";
 export type TagType = "lang" | "free" | "free_dist" | "none";
 export type ShelfKey = "shelf1" | "shelf2" | "shelf3";
 
@@ -44,24 +44,29 @@ export interface ShelfData {
 
 export interface CartLayoutV2 {
   poster: string | null; // item ID
-  shelves: ShelfData[]; // Up to 3 shelves
+  shelves: ShelfData[]; // Fixed to 3 shelves
 }
 
 export const DEFAULT_TAG: TagData = { type: "none", value: "" };
 
-export function makeDefaultShelf(): ShelfData {
+export function makeDefaultShelf(type: ShelfLayoutType = "booklet"): ShelfData {
+  const count = type === "booklet" || type === "booklet_doc" ? 2 : type === "document" ? 3 : 4;
   return {
-    layout_type: "2_cols",
+    layout_type: type,
     tag_1: { type: "none", value: "" },
     tag_2: { type: "none", value: "" },
-    items: [null, null],
+    items: Array(count).fill(null),
   };
 }
 
 export function makeInitialCartLayoutV2(): CartLayoutV2 {
   return {
     poster: null,
-    shelves: [makeDefaultShelf()], // Start with 1 row as default
+    shelves: [
+      makeDefaultShelf("booklet"),
+      makeDefaultShelf("booklet"),
+      makeDefaultShelf("booklet"),
+    ], 
   };
 }
 
@@ -76,7 +81,8 @@ export function filledCountV2(layout: CartLayoutV2): number {
 export function maxCountV2(layout: CartLayoutV2): number {
   let n = 1;
   layout.shelves.forEach((s) => {
-    n += s.layout_type === "4_cols" ? 4 : s.layout_type === "3_cols" ? 3 : 2;
+    const type = s.layout_type;
+    n += type === "booklet" || type === "booklet_doc" ? 2 : type === "document" ? 3 : 4;
   });
   return n;
 }
