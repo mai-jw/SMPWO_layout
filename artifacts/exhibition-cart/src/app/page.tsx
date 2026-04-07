@@ -165,18 +165,18 @@ function ShelfSection({
 }: ShelfSectionProps) {
   /*
    * Stacking Coordinates — shifted down to avoid poster overlap.
-   *   Poster:    1.6% → ~37% (visual bottom including aspect-ratio padding)
+   *   Poster:    5% → ~37% (visual bottom including aspect-ratio padding)
    *   Tag 1:    37.5%  (height 2%)
-   *   Row 1:    39.5%  (height 12%)
-   *   Tag 2:    51.5%
-   *   Row 2:    53.5%
-   *   Tag 3:    65.5%
-   *   Row 3:    67.5%
+   *   Row 1:    39.5%  (height 13.5%)
+   *   Tag 2:    53.0%
+   *   Row 2:    55.0%
+   *   Tag 3:    68.5%
+   *   Row 3:    70.5%
    */
   const tops = [
-    { tag: "37.5%", items: "39.5%", tagH: "2%", itemsH: "12%" },
-    { tag: "51.5%", items: "53.5%", tagH: "2%", itemsH: "12%" },
-    { tag: "65.5%", items: "67.5%", tagH: "2%", itemsH: "12%" },
+    { tag: "37.5%", items: "39.5%", tagH: "2%", itemsH: "13.5%" },
+    { tag: "53.0%", items: "55.0%", tagH: "2%", itemsH: "13.5%" },
+    { tag: "68.5%", items: "70.5%", tagH: "2%", itemsH: "13.5%" },
   ];
 
   const coord = tops[shelfIndex];
@@ -186,7 +186,7 @@ function ShelfSection({
     <>
       {/* Tag Bar */}
       <div 
-        className="absolute left-[32%] w-[36%] z-30"
+        className="absolute left-[34.6%] w-[32%] z-30"
         style={{ top: coord.tag, height: coord.tagH }}
       >
         <TagDisplay
@@ -198,7 +198,7 @@ function ShelfSection({
 
       {/* Items Area */}
       <div 
-        className={`absolute left-[32%] w-[36%] z-20 grid items-end ${
+        className={`absolute left-[33.6%] w-[34%] z-20 grid items-end ${
           shelf.layout_type === "pamphlet" ? "grid-cols-4 gap-0.5 px-0.5" : 
           shelf.layout_type === "document" ? "grid-cols-3 gap-0.5 px-0.5" : 
           "grid-cols-2 gap-1 px-1"
@@ -245,14 +245,14 @@ function CartPanel({
   return (
     <div className="flex flex-col items-center gap-2">
       <h3 className="text-xs font-black text-muted-foreground tracking-widest">CART {cartId}</h3>
-      <div className="w-[360px]">
+      <div className="w-[500px]">
         <div 
           className="relative w-full aspect-1080/1350 bg-contain bg-no-repeat bg-center"
           style={{ backgroundImage: `url('https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/cart_empty.png')` }}
         >
-          {/* Poster — centered on the grey frame at top of cart */}
+          {/* Poster — aligned to the grey frame at top of cart */}
           <div 
-            className={`absolute top-[2.5%] left-[27%] w-[29.2%] aspect-[1/1.4] transition-all overflow-hidden ${
+            className={`absolute top-[5%] left-[36.5%] w-[28.2%] aspect-[1/1.4] transition-all overflow-hidden ${
               isPosterActive ? "ring-2 ring-yellow-400 z-40 shadow-xl scale-[1.01]" : "z-10"
             }`}
           >
@@ -878,7 +878,7 @@ export default function CartEditor() {
             )}
           </div>
 
-          <div ref={canvasRef} className="flex gap-8 items-start justify-center p-4 bg-background">
+          <div ref={canvasRef} className="flex -space-x-[180px] items-start justify-center p-4 bg-background">
             <CartPanel
               cartId="A" layout={cartA} activeTarget={activeTarget}
               isSelecting={false} itemMap={itemMap}
