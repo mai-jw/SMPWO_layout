@@ -117,8 +117,7 @@ function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster, layou
     : layoutType === "document" ? "aspect-[1/1.1]"
     : "aspect-[1/3]";
 
-  const isBunkobonOrPamphlet = layoutType === "document" || layoutType === "pamphlet";
-  const bg = item ? "bg-transparent" : (poster ? "bg-white/80" : (isBunkobonOrPamphlet ? "bg-transparent" : "bg-zinc-200/40"));
+  const bg = item ? "bg-transparent" : (poster ? "bg-white" : "bg-transparent");
   const ring = isActive ? "ring-2 ring-yellow-400 z-10 scale-[1.02]" : "";
 
   return (
@@ -192,9 +191,9 @@ function ShelfSection({
    *   Row 3:    70.5%
    */
   const tops = [
-    { tag: "38.5%", items: "41.0%", tagH: "2%", itemsH: "14.5%" },
-    { tag: "56.5%", items: "59.0%", tagH: "2%", itemsH: "14.5%" },
-    { tag: "74.5%", items: "77.0%", tagH: "2%", itemsH: "14.5%" },
+    { tag: "36.5%", items: "39.0%", tagH: "2%", itemsH: "14.5%" },
+    { tag: "54.9%", items: "57.4%", tagH: "2%", itemsH: "14.5%" },
+    { tag: "72.0%", items: "74.5%", tagH: "2%", itemsH: "14.5%" },
   ];
 
   const coord = tops[shelfIndex];
@@ -264,16 +263,16 @@ function CartPanel({
   const isPosterActive = activeTarget?.cart === cartId && activeTarget.section === "poster";
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-0.5">
       <h3 className="text-xs font-black text-muted-foreground tracking-widest">CART {cartId}</h3>
       <div className="w-[500px]">
         <div 
           className="relative w-full aspect-1080/1350 bg-contain bg-no-repeat bg-center"
-          style={{ backgroundImage: `url('https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/cart_empty.png')` }}
+          style={{ backgroundImage: `url('https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/cart_empty_guid.png')` }}
         >
           {/* Poster — aligned to the grey frame at top of cart */}
           <div 
-            className={`absolute top-[5%] left-[37.1%] w-[27.0%] aspect-[1/1.4] transition-all overflow-hidden ${
+            className={`absolute top-[1.8%] left-[35.6%] w-[29.0%] aspect-[1/1.48] transition-all overflow-hidden ${
               isPosterActive ? "ring-2 ring-yellow-400 z-40 shadow-xl scale-[1.01]" : "z-10"
             }`}
           >
@@ -687,6 +686,22 @@ export default function CartEditor() {
   const [newHalf, setNewHalf] = useState<"前半" | "後半">(() => new Date().getDate() <= 15 ? "前半" : "後半");
 
   const canvasRef = useRef<HTMLDivElement>(null);
+  const newPanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (newPanelRef.current && !newPanelRef.current.contains(event.target as Node)) {
+        setShowNewPanel(false);
+      }
+    }
+    if (showNewPanel) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showNewPanel]);
+
   const { data: items = [], isLoading } = useItems();
   const { data: layouts = [] } = useLayouts();
   const saveLayout = useSaveLayout();
@@ -908,7 +923,7 @@ export default function CartEditor() {
           <span className="font-rounded font-black text-xl tracking-widest text-[#64748b] mt-0.5">SMPWO LAYOUT</span>
         </div>
         
-        <div className="flex items-center gap-1.5 bg-background border border-border rounded-lg px-2.5 py-0.5 shadow-xs hover:border-primary/40 transition-colors">
+        <div className="flex items-center gap-1.5 bg-white border border-border rounded-none px-2.5 py-0.5 shadow-xs hover:border-primary/40 transition-colors">
           <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
           <select 
             value={period} 
@@ -931,9 +946,9 @@ export default function CartEditor() {
             ))}
           </select>
         </div>
-        <div className="relative">
+        <div className="relative" ref={newPanelRef}>
           <button onClick={() => setShowNewPanel((v) => !v)}
-            className="flex items-center gap-1.5 text-sm px-3 py-0.5 rounded-lg border border-border bg-background hover:bg-muted font-bold text-foreground transition-all shadow-xs active:scale-95">
+            className="flex items-center gap-1.5 text-sm px-3 py-0.5 rounded-none border border-border bg-white hover:bg-muted font-bold text-foreground transition-all shadow-xs active:scale-95">
             新規作成<ChevronDown className="w-3 h-3" />
           </button>
           <AnimatePresence>
@@ -964,9 +979,9 @@ export default function CartEditor() {
         </div>
         <div className="flex-1" />
         <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()}
-          className={`flex items-center gap-1.5 text-sm px-3 py-0.5 rounded-lg font-medium transition-all disabled:opacity-60 ${
+          className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-medium transition-all disabled:opacity-60 ${
             saveStatus === "saved" ? "bg-green-600 text-white" :
-            saveStatus === "error" ? "bg-red-600 text-white" : "bg-indigo-600 text-white hover:bg-indigo-500"
+            saveStatus === "error" ? "bg-red-600 text-white" : "bg-blue-600 text-white hover:bg-blue-500"
           }`}>
           {saveStatus === "saved" ? <CheckCircle2 className="w-3.5 h-3.5" /> :
            saveStatus === "saving" ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> :
@@ -980,7 +995,7 @@ export default function CartEditor() {
         ].map(({ key, label, icon, cls }) => (
           <button key={key} disabled={!!exporting}
             onClick={key === "png" ? handleExportPng : key === "pdf" ? handleExportPdf : handleExportXlsx}
-            className={`flex items-center gap-1.5 text-sm px-3 py-0.5 rounded-lg border disabled:opacity-50 transition-all active:scale-95 ${cls}`}>
+            className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md border disabled:opacity-50 transition-all active:scale-95 ${cls}`}>
             {exporting === key ? <div className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" /> : icon}
             {label}
           </button>
@@ -1011,52 +1026,50 @@ export default function CartEditor() {
             )}
           </div>
 
-          <div ref={canvasRef} className="flex -space-x-[180px] items-start justify-center p-4 bg-background">
-            <CartPanel
-              cartId="A" layout={cartA} activeTarget={activeTarget}
-              isSelecting={false} itemMap={itemMap}
-              onSlotClick={handleSlotClick} onClear={handleClear}
-              onTagClick={handleTagClick}
-            />
-            <CartPanel
-              cartId="B" layout={cartB} activeTarget={activeTarget}
-              isSelecting={false} itemMap={itemMap}
-              onSlotClick={handleSlotClick} onClear={handleClear}
-              onTagClick={handleTagClick}
-            />
+          <div className="w-full overflow-x-auto pb-4 pt-2 flex justify-center">
+            <motion.div layout className="m-auto shrink-0">
+              <div ref={canvasRef as any} className="flex -space-x-[180px] items-start p-4 bg-background shrink-0 -mx-[175px]">
+                <CartPanel
+                  cartId="A" layout={cartA} activeTarget={activeTarget}
+                  isSelecting={false} itemMap={itemMap}
+                  onSlotClick={handleSlotClick} onClear={handleClear}
+                  onTagClick={handleTagClick}
+                />
+                <CartPanel
+                  cartId="B" layout={cartB} activeTarget={activeTarget}
+                  isSelecting={false} itemMap={itemMap}
+                  onSlotClick={handleSlotClick} onClear={handleClear}
+                  onTagClick={handleTagClick}
+                />
+              </div>
+            </motion.div>
           </div>
         </main>
 
         {/* Right Side Panel — Context switches based on activeTarget */}
-        <AnimatePresence mode="wait">
-          {activeTarget ? (
+        <AnimatePresence>
+          {activeTarget && (
             <motion.div
               key={`${activeTarget.cart}-${activeTarget.section}-${(activeTarget as any).shelfIndex ?? ""}-${(activeTarget as any).slotIndex ?? ""}`}
-              initial={{ x: 20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 20, opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              className="z-50 shrink-0 border-l border-border bg-card shadow-2xl flex flex-col overflow-hidden"
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 288, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
             >
-              <SelectionSidebar
-                activeTarget={activeTarget}
+              <div className="w-72 h-[calc(100vh-56px)] shrink-0 flex flex-col">
+                <SelectionSidebar
+                  activeTarget={activeTarget}
                 items={items}
                 itemMap={itemMap}
                 cartA={cartA}
                 cartB={cartB}
                 onSelectItem={handleSelectItem}
                 onLayoutChange={handleLayoutChange}
-                onTagChange={handleTagChange}
-                onClose={() => setActiveTarget(null)}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="guide"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <GuidePanel />
+                  onTagChange={handleTagChange}
+                  onClose={() => setActiveTarget(null)}
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
