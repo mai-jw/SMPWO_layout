@@ -922,10 +922,19 @@ export default function CartEditor() {
   return (
     <div className="flex flex-col h-[calc(100vh-56px)] bg-background">
       {/* Top Toolbar */}
-      <div className="shrink-0 bg-white border-b border-border px-4 py-1.5 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-3 mr-6 tracking-tight">
-          <img src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/same.gif" alt="SMPWO Logo" className="w-32 h-12 object-contain" />
-          <span className="font-rounded font-black text-xl tracking-widest text-[#64748b] mt-0.5">SMPWO LAYOUT</span>
+      <div className="shrink-0 bg-white px-4 py-1.5 flex items-center gap-3 relative z-30">
+        {/* Absolute border to stay on top of scaled logo */}
+        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-border z-50 pointer-events-none" />
+        
+        <div className="flex items-center gap-3 mr-6 tracking-tight h-10 relative">
+          <div className="w-12 h-10 flex items-center justify-center relative mx-4">
+            <img 
+              src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/same.gif" 
+              alt="SMPWO Logo" 
+              className="w-full h-full object-contain scale-[2.3] transform-gpu" 
+            />
+          </div>
+          <span className="font-rounded font-black text-xl tracking-widest text-[#64748b] mt-0.5 relative z-10">SMPWO LAYOUT</span>
         </div>
         
         <div className="flex items-center gap-1.5 bg-white border border-border rounded-none px-2.5 py-0.5 shadow-xs hover:border-primary/40 transition-colors">
@@ -985,8 +994,8 @@ export default function CartEditor() {
         <div className="flex-1" />
         <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()}
           className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-medium transition-all disabled:opacity-60 ${
-            saveStatus === "saved" ? "bg-emerald-600 text-white" :
-            saveStatus === "error" ? "bg-red-600 text-white" : "bg-emerald-700 text-white hover:bg-emerald-600"
+            saveStatus === "saved" ? "bg-blue-600 text-white" :
+            saveStatus === "error" ? "bg-red-600 text-white" : "bg-blue-800 text-white hover:bg-blue-700 shadow-sm"
           }`}>
           {saveStatus === "saved" ? <CheckCircle2 className="w-3.5 h-3.5" /> :
            saveStatus === "saving" ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> :
@@ -994,9 +1003,9 @@ export default function CartEditor() {
           {saveStatus === "saved" ? "保存済み" : saveStatus === "error" ? "エラー" : saveStatus === "saving" ? "保存中…" : "保存"}
         </button>
         {[
-          { key: "png" as const, label: "PNG", icon: <FileImage className="w-3.5 h-3.5" />, cls: "border-green-400 bg-green-50 text-green-700 hover:bg-green-100 font-bold shadow-xs" },
-          { key: "pdf" as const, label: "PDF", icon: <Download className="w-3.5 h-3.5" />, cls: "border-blue-400 bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold shadow-xs" },
-          { key: "xlsx" as const, label: "Excel", icon: <FileSpreadsheet className="w-3.5 h-3.5" />, cls: "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold shadow-xs" },
+          { key: "png" as const, label: "PNG", icon: <FileImage className="w-3.5 h-3.5" />, cls: "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold shadow-xs" },
+          { key: "pdf" as const, label: "PDF", icon: <Download className="w-3.5 h-3.5" />, cls: "border-red-400 bg-red-50 text-red-700 hover:bg-red-100 font-bold shadow-xs" },
+          { key: "xlsx" as const, label: "Excel", icon: <FileSpreadsheet className="w-3.5 h-3.5" />, cls: "border-green-400 bg-green-50 text-green-700 hover:bg-green-100 font-bold shadow-xs" },
         ].map(({ key, label, icon, cls }) => (
           <button key={key} disabled={!!exporting}
             onClick={key === "png" ? handleExportPng : key === "pdf" ? handleExportPdf : handleExportXlsx}
