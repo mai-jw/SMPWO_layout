@@ -332,10 +332,10 @@ type GalleryFilterType = "all" | "poster" | "booklet" | "booklet_doc" | "documen
 const GALLERY_FILTER_LABELS: Record<GalleryFilterType, string> = {
   all: "すべて",
   poster: "ポスター",
-  booklet: "冊子類",
+  booklet: "冊子/雑誌類",
   booklet_doc: "冊子サイズ書籍",
   document: "文庫本サイズ書籍",
-  pamphlet: "パンフレット",
+  pamphlet: "パンフレット/招待状類",
 };
 
 interface LeftGalleryProps {
@@ -354,15 +354,18 @@ function LeftGallery({ items }: LeftGalleryProps) {
   });
 
   return (
-    <aside className="w-64 shrink-0 bg-card border-r border-border flex flex-col overflow-hidden">
+    <aside className="w-64 shrink-0 bg-white border-r border-border flex flex-col overflow-hidden">
       <div className="p-4 border-b border-border flex items-center justify-between">
-        <div>
-          <p className="text-sm font-bold text-foreground">ギャラリー</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">アップロード済みのアイテム</p>
+        <div className="flex items-center gap-3">
+          <ImageIcon className="w-8 h-8 text-foreground" />
+          <div>
+            <p className="text-sm font-bold text-foreground">画像データ</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">アップロード済みのアイテム</p>
+          </div>
         </div>
         <Link 
           href="/upload" 
-          className="p-2 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-lg transition-colors flex items-center justify-center group"
+          className="p-2 bg-sky-50 text-sky-600 hover:bg-sky-600 hover:text-white rounded-lg transition-all flex items-center justify-center group border border-sky-100"
           title="画像をアップロード"
         >
           <Upload className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" />
@@ -371,15 +374,17 @@ function LeftGallery({ items }: LeftGalleryProps) {
 
       <div className="p-3 border-b border-border space-y-2">
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
           <input type="text" placeholder="名前で検索..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs font-medium border border-border rounded-lg pl-8 pr-3 py-2 bg-background text-foreground outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/50 transition-all" />
+            className="w-full text-xs font-medium border border-border rounded-lg pl-8 pr-3 py-2 bg-slate-50 text-foreground outline-none focus:border-sky-400 placeholder:text-slate-400 transition-all" />
         </div>
         <div className="flex flex-wrap gap-1">
           {(Object.entries(GALLERY_FILTER_LABELS) as [GalleryFilterType, string][]).map(([key, label]) => (
             <button key={key} onClick={() => setFilter(key as GalleryFilterType)}
-              className={`text-[9px] px-2 py-1.5 rounded-md font-bold transition-all ${
-                filter === key ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground"
+              className={`text-[9px] px-2.5 py-1.5 rounded-lg font-bold transition-all border ${
+                filter === key 
+                  ? "bg-sky-500 text-white border-sky-600 shadow-sm" 
+                  : "bg-sky-50/50 text-sky-700 border-sky-100 hover:bg-sky-100/80"
               }`}>
               {label}
             </button>
@@ -917,9 +922,9 @@ export default function CartEditor() {
   return (
     <div className="flex flex-col h-[calc(100vh-56px)] bg-background">
       {/* Top Toolbar */}
-      <div className="shrink-0 bg-white border-b border-border px-4 py-0.5 flex flex-wrap items-center gap-3">
+      <div className="shrink-0 bg-white border-b border-border px-4 py-1.5 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-3 mr-6 tracking-tight">
-          <img src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/same.gif" alt="SMPWO Logo" className="w-16 h-auto object-contain -my-1" />
+          <img src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/same.gif" alt="SMPWO Logo" className="w-32 h-12 object-contain" />
           <span className="font-rounded font-black text-xl tracking-widest text-[#64748b] mt-0.5">SMPWO LAYOUT</span>
         </div>
         
@@ -980,8 +985,8 @@ export default function CartEditor() {
         <div className="flex-1" />
         <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()}
           className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-medium transition-all disabled:opacity-60 ${
-            saveStatus === "saved" ? "bg-green-600 text-white" :
-            saveStatus === "error" ? "bg-red-600 text-white" : "bg-blue-600 text-white hover:bg-blue-500"
+            saveStatus === "saved" ? "bg-emerald-600 text-white" :
+            saveStatus === "error" ? "bg-red-600 text-white" : "bg-emerald-700 text-white hover:bg-emerald-600"
           }`}>
           {saveStatus === "saved" ? <CheckCircle2 className="w-3.5 h-3.5" /> :
            saveStatus === "saving" ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> :
