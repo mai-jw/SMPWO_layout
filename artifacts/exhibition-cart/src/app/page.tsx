@@ -867,13 +867,13 @@ export default function CartEditor() {
   return (
     <div className="flex flex-col h-[calc(100vh-56px)] bg-background">
       {/* Top Toolbar */}
-      <div className="shrink-0 bg-white border-b border-border px-4 py-3 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-4 mr-8 tracking-tight">
-          <img src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/same.gif" alt="SMPWO Logo" className="w-56 h-auto object-contain" />
-          <span className="font-black text-2xl tracking-widest text-foreground mt-0.5">SMPWO LAYOUT</span>
+      <div className="shrink-0 bg-white border-b border-border px-4 py-0.5 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-3 mr-6 tracking-tight">
+          <img src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/same.gif" alt="SMPWO Logo" className="w-24 h-auto object-contain -my-2" />
+          <span className="font-black text-lg tracking-widest text-foreground mt-0.5">SMPWO LAYOUT</span>
         </div>
         
-        <div className="flex items-center gap-1.5 bg-background border border-border rounded-lg px-2.5 py-1.5 shadow-xs hover:border-primary/40 transition-colors">
+        <div className="flex items-center gap-1.5 bg-background border border-border rounded-lg px-2.5 py-0.5 shadow-xs hover:border-primary/40 transition-colors">
           <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
           <select 
             value={period} 
@@ -898,7 +898,7 @@ export default function CartEditor() {
         </div>
         <div className="relative">
           <button onClick={() => setShowNewPanel((v) => !v)}
-            className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-muted font-bold text-foreground transition-all shadow-xs active:scale-95">
+            className="flex items-center gap-1.5 text-sm px-3 py-0.5 rounded-lg border border-border bg-background hover:bg-muted font-bold text-foreground transition-all shadow-xs active:scale-95">
             新規作成<ChevronDown className="w-3 h-3" />
           </button>
           <AnimatePresence>
@@ -929,7 +929,7 @@ export default function CartEditor() {
         </div>
         <div className="flex-1" />
         <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()}
-          className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg font-medium transition-all disabled:opacity-60 ${
+          className={`flex items-center gap-1.5 text-sm px-3 py-0.5 rounded-lg font-medium transition-all disabled:opacity-60 ${
             saveStatus === "saved" ? "bg-green-600 text-white" :
             saveStatus === "error" ? "bg-red-600 text-white" : "bg-indigo-600 text-white hover:bg-indigo-500"
           }`}>
@@ -945,7 +945,7 @@ export default function CartEditor() {
         ].map(({ key, label, icon, cls }) => (
           <button key={key} disabled={!!exporting}
             onClick={key === "png" ? handleExportPng : key === "pdf" ? handleExportPdf : handleExportXlsx}
-            className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border disabled:opacity-50 transition-all active:scale-95 ${cls}`}>
+            className={`flex items-center gap-1.5 text-sm px-3 py-0.5 rounded-lg border disabled:opacity-50 transition-all active:scale-95 ${cls}`}>
             {exporting === key ? <div className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" /> : icon}
             {label}
           </button>
