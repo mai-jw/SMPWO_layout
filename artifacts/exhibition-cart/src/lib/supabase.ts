@@ -26,7 +26,7 @@ export interface Item {
 }
 
 /* ─── Cart Layout V2 ─── */
-export type ShelfLayoutType = "booklet" | "booklet_doc" | "document" | "pamphlet";
+export type ShelfLayoutType = "booklet" | "booklet_doc" | "document" | "pamphlet" | "none";
 export type TagType = "lang" | "free" | "free_dist" | "none";
 export type ShelfKey = "shelf1" | "shelf2" | "shelf3";
 
@@ -49,8 +49,8 @@ export interface CartLayoutV2 {
 
 export const DEFAULT_TAG: TagData = { type: "none", value: "" };
 
-export function makeDefaultShelf(type: ShelfLayoutType = "booklet"): ShelfData {
-  const count = type === "booklet" || type === "booklet_doc" ? 2 : type === "document" ? 3 : 4;
+export function makeDefaultShelf(type: ShelfLayoutType = "none"): ShelfData {
+  const count = type === "booklet" || type === "booklet_doc" ? 2 : type === "document" ? 3 : type === "pamphlet" ? 4 : 0;
   return {
     layout_type: type,
     tag_1: { type: "none", value: "" },
@@ -63,9 +63,9 @@ export function makeInitialCartLayoutV2(): CartLayoutV2 {
   return {
     poster: null,
     shelves: [
-      makeDefaultShelf("booklet"),
-      makeDefaultShelf("booklet"),
-      makeDefaultShelf("booklet"),
+      makeDefaultShelf("none"),
+      makeDefaultShelf("none"),
+      makeDefaultShelf("none"),
     ], 
   };
 }
@@ -82,7 +82,7 @@ export function maxCountV2(layout: CartLayoutV2): number {
   let n = 1;
   layout.shelves.forEach((s) => {
     const type = s.layout_type;
-    n += type === "booklet" || type === "booklet_doc" ? 2 : type === "document" ? 3 : 4;
+    n += type === "booklet" || type === "booklet_doc" ? 2 : type === "document" ? 3 : type === "pamphlet" ? 4 : 0;
   });
   return n;
 }

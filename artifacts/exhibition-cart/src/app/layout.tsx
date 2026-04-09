@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Noto_Sans_JP, Outfit } from "next/font/google";
+import { Noto_Sans_JP, Outfit, M_PLUS_Rounded_1c } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Navbar } from "@/components/layout/Navbar";
@@ -18,6 +18,13 @@ const outfit = Outfit({
   display: "swap",
 });
 
+const rounded = M_PLUS_Rounded_1c({
+  subsets: ["latin"],
+  weight: ["700", "800", "900"],
+  variable: "--font-rounded",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "展示カート作成ツール",
   description: "展示カートのレイアウトを編集・管理するツール",
@@ -30,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className={`${notoSansJP.variable} ${outfit.variable} font-sans antialiased bg-background text-foreground flex flex-col min-h-screen`}>
+      <body className={`${notoSansJP.variable} ${outfit.variable} ${rounded.variable} font-sans antialiased bg-background text-foreground flex flex-col min-h-screen`}>
         <Providers>
           {children}
         </Providers>

@@ -48,20 +48,39 @@ const LANGUAGES = [
 
 interface TagDisplayProps {
   shelf: ShelfData;
+  shelfIndex: number;
   isActive: boolean;
   onClick: () => void;
 }
 
-function TagDisplay({ shelf, isActive, onClick }: TagDisplayProps) {
+function TagDisplay({ shelf, shelfIndex, isActive, onClick }: TagDisplayProps) {
   const mode = shelf.tag_1.type;
   const barBg = mode === "free_dist" ? "bg-zinc-900"
     : mode === "lang"      ? "bg-red-600"
     :                        "bg-red-500";
 
-  const label = mode === "lang" 
-    ? (shelf.tag_1.value || shelf.tag_2.value ? `${shelf.tag_1.value}${shelf.tag_2.value ? ` / ${shelf.tag_2.value}` : ""}` : "タグを選択")
-    : mode === "free_dist" ? "無料で差し上げています"
-    : "タグを選択";
+  const renderContent = () => {
+    if (mode === "free_dist") {
+      return <span className="text-[10px] font-black tracking-widest truncate uppercase">無料で差し上げています</span>;
+    }
+    if (mode === "lang" && (shelf.tag_1.value || shelf.tag_2.value)) {
+      return (
+        <div className="flex gap-1.5 h-full items-center">
+          {shelf.tag_1.value && (
+            <div className="bg-white/20 px-1.5 py-0.5 rounded shadow-inner border border-white/10">
+              <span className="text-[9px] font-black tracking-tight">{shelf.tag_1.value}</span>
+            </div>
+          )}
+          {shelf.tag_2.value && (
+            <div className="bg-white/20 px-1.5 py-0.5 rounded shadow-inner border border-white/10">
+              <span className="text-[9px] font-black tracking-tight">{shelf.tag_2.value}</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+    return <span className="text-[10px] font-black tracking-widest truncate uppercase">{shelfIndex + 1}段目を選択</span>;
+  };
 
   return (
     <button
@@ -70,10 +89,10 @@ function TagDisplay({ shelf, isActive, onClick }: TagDisplayProps) {
         isActive ? "ring-2 ring-yellow-400 brightness-110" : "hover:brightness-110"
       }`}
     >
-      <div className="flex-1 flex justify-center items-center gap-1">
-        <span className="text-[10px] font-black tracking-widest truncate">{label}</span>
+      <div className="flex-1 flex justify-center items-center gap-1 overflow-hidden">
+        {renderContent()}
       </div>
-      <ChevronDown className="w-3 h-3 shrink-0" />
+      <ChevronDown className="w-3 h-3 shrink-0 opacity-60" />
     </button>
   );
 }
@@ -95,10 +114,11 @@ interface ItemSlotProps {
 function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster, layoutType }: ItemSlotProps) {
   const aspect = poster ? "aspect-[1/1.4]" 
     : (layoutType === "booklet" || layoutType === "booklet_doc") ? "aspect-[1/1.4]"
-    : layoutType === "document" ? "aspect-[1/1.5]"
+    : layoutType === "document" ? "aspect-[1/1.1]"
     : "aspect-[1/3]";
 
-  const bg = item ? "bg-transparent" : (poster ? "bg-white/80" : "bg-zinc-200/40");
+  const isBunkobonOrPamphlet = layoutType === "document" || layoutType === "pamphlet";
+  const bg = item ? "bg-transparent" : (poster ? "bg-white/80" : (isBunkobonOrPamphlet ? "bg-transparent" : "bg-zinc-200/40"));
   const ring = isActive ? "ring-2 ring-yellow-400 z-10 scale-[1.02]" : "";
 
   return (
@@ -132,9 +152,6 @@ function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster, layou
             </div>
           ) : (
             <div className="flex flex-col items-center opacity-30 group-hover:opacity-60 transition-opacity">
-              <span className="text-slate-500 text-[9px] font-bold mb-0.5">
-                {poster ? "ポスター画像" : "掲載する出版物"}
-              </span>
               <ImageIcon className="w-4 h-4 text-slate-400" />
             </div>
           )}
@@ -175,9 +192,9 @@ function ShelfSection({
    *   Row 3:    70.5%
    */
   const tops = [
-    { tag: "37.5%", items: "39.5%", tagH: "2%", itemsH: "13.5%" },
-    { tag: "53.0%", items: "55.0%", tagH: "2%", itemsH: "13.5%" },
-    { tag: "68.5%", items: "70.5%", tagH: "2%", itemsH: "13.5%" },
+    { tag: "38.5%", items: "41.0%", tagH: "2%", itemsH: "14.5%" },
+    { tag: "56.5%", items: "59.0%", tagH: "2%", itemsH: "14.5%" },
+    { tag: "74.5%", items: "77.0%", tagH: "2%", itemsH: "14.5%" },
   ];
 
   const coord = tops[shelfIndex];
@@ -187,37 +204,40 @@ function ShelfSection({
     <>
       {/* Tag Bar */}
       <div 
-        className="absolute left-[34.6%] w-[32%] z-30"
+        className="absolute left-[35.6%] w-[30%] z-30"
         style={{ top: coord.tag, height: coord.tagH }}
       >
         <TagDisplay
           shelf={shelf}
+          shelfIndex={shelfIndex}
           isActive={isTagActive}
           onClick={() => onTagClick(cartId, shelfIndex)}
         />
       </div>
 
-      {/* Items Area */}
-      <div 
-        className={`absolute left-[33.6%] w-[34%] z-20 grid items-end ${
-          shelf.layout_type === "pamphlet" ? "grid-cols-4 gap-0.5 px-0.5" : 
-          shelf.layout_type === "document" ? "grid-cols-3 gap-0.5 px-0.5" : 
-          "grid-cols-2 gap-1 px-1"
-        }`}
-        style={{ top: coord.items, height: coord.itemsH }}
-      >
-        {shelf.items.map((itemId, idx) => (
-          <ItemSlot
-            key={idx}
-            item={itemId ? itemMap[itemId] : undefined}
-            layoutType={shelf.layout_type}
-            isActive={activeTarget?.cart === cartId && activeTarget.section === "shelf" && (activeTarget as any).shelfIndex === shelfIndex && (activeTarget as any).slotIndex === idx}
-            isSelecting={isSelecting}
-            onClick={() => onSlotClick(cartId, "shelf", shelfIndex, idx)}
-            onClear={() => onClear(cartId, "shelf", shelfIndex, idx)}
-          />
-        ))}
-      </div>
+      {/* Items Area - Only show if layout is set */}
+      {shelf.layout_type !== "none" && (
+        <div 
+          className={`absolute left-[35.6%] w-[30%] z-20 grid items-end ${
+            shelf.layout_type === "pamphlet" ? "grid-cols-4 gap-0.5 px-0.5" : 
+            shelf.layout_type === "document" ? "grid-cols-3 gap-0.5 px-0.5" : 
+            "grid-cols-2 gap-1 px-1"
+          }`}
+          style={{ top: coord.items, height: coord.itemsH }}
+        >
+          {shelf.items.map((itemId, idx) => (
+            <ItemSlot
+              key={idx}
+              item={itemId ? itemMap[itemId] : undefined}
+              layoutType={shelf.layout_type}
+              isActive={activeTarget?.cart === cartId && activeTarget.section === "shelf" && (activeTarget as any).shelfIndex === shelfIndex && (activeTarget as any).slotIndex === idx}
+              isSelecting={isSelecting}
+              onClick={() => onSlotClick(cartId, "shelf", shelfIndex, idx)}
+              onClear={() => onClear(cartId, "shelf", shelfIndex, idx)}
+            />
+          ))}
+        </div>
+      )}
     </>
   );
 }
@@ -253,7 +273,7 @@ function CartPanel({
         >
           {/* Poster — aligned to the grey frame at top of cart */}
           <div 
-            className={`absolute top-[5%] left-[36.5%] w-[28.2%] aspect-[1/1.4] transition-all overflow-hidden ${
+            className={`absolute top-[5%] left-[37.1%] w-[27.0%] aspect-[1/1.4] transition-all overflow-hidden ${
               isPosterActive ? "ring-2 ring-yellow-400 z-40 shadow-xl scale-[1.01]" : "z-10"
             }`}
           >
@@ -315,7 +335,7 @@ const GALLERY_FILTER_LABELS: Record<GalleryFilterType, string> = {
   poster: "ポスター",
   booklet: "冊子類",
   booklet_doc: "冊子サイズ書籍",
-  document: "書籍",
+  document: "文庫本サイズ書籍",
   pamphlet: "パンフレット",
 };
 
@@ -430,7 +450,7 @@ function SelectionSidebar({
         <div className="p-4 border-b border-border flex items-center justify-between">
           <div>
             <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">CART {activeTarget.cart} — {shelfIdx + 1}段目</p>
-            <p className="text-sm font-bold text-foreground mt-0.5">タグ・レイアウト設定</p>
+            <p className="text-sm font-bold text-foreground mt-0.5">設定</p>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-muted transition-colors">
             <X className="w-4 h-4 text-muted-foreground" />
@@ -451,7 +471,7 @@ function SelectionSidebar({
                   }`}
                 >
                   <span className="truncate w-full px-1 text-center">
-                    {t === "booklet" ? "冊子類" : t === "booklet_doc" ? "冊子サイズ文書" : t === "document" ? "文書 (文庫本)" : "パンフレット"}
+                    {t === "booklet" ? "冊子類" : t === "booklet_doc" ? "冊子サイズ書籍" : t === "document" ? "文庫本サイズ書籍" : "パンフレット"}
                   </span>
                   <span className="opacity-60 text-[9px]">{t === "booklet" || t === "booklet_doc" ? "2スロット" : t === "document" ? "3スロット" : "4スロット"}</span>
                 </button>
@@ -470,6 +490,20 @@ function SelectionSidebar({
                 <span>タグなし</span>
                 {mode === "none" && <CheckCircle2 className="w-4 h-4 text-primary" />}
               </button>
+
+              {/* For Bunkobon, Free distribution comes BEFORE language display */}
+              {shelf.layout_type === "document" && canFreeDist && (
+                <button onClick={() => setMode("free_dist")}
+                  className={`w-full text-left px-3 py-2.5 text-xs flex items-center justify-between rounded-lg transition-colors border ${
+                    mode === "free_dist" ? "bg-zinc-100 text-zinc-900 font-bold border-zinc-300" : "text-muted-foreground border-transparent hover:bg-zinc-50"
+                  }`}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-zinc-900" />
+                    <span>無料で差し上げています</span>
+                  </div>
+                  {mode === "free_dist" && <CheckCircle2 className="w-4 h-4" />}
+                </button>
+              )}
               
               <button 
                 disabled={!canLangTag}
@@ -499,7 +533,7 @@ function SelectionSidebar({
                     </select>
                   </div>
                   <div>
-                    <label className="text-[9px] font-bold text-muted-foreground mb-1 block">右タグ（任意）</label>
+                    <label className="text-[9px] font-bold text-muted-foreground mb-1 block">右タグ</label>
                     <select
                       value={shelf.tag_2.type === "lang" ? shelf.tag_2.value : ""}
                       onChange={(e) => {
@@ -515,7 +549,8 @@ function SelectionSidebar({
                 </div>
               )}
 
-              {canFreeDist && (
+              {/* For non-Bunkobon, Free distribution comes AFTER language display */}
+              {shelf.layout_type !== "document" && canFreeDist && (
                 <button onClick={() => setMode("free_dist")}
                   className={`w-full text-left px-3 py-2.5 text-xs flex items-center justify-between rounded-lg transition-colors border ${
                     mode === "free_dist" ? "bg-zinc-100 text-zinc-900 font-bold border-zinc-300" : "text-muted-foreground border-transparent hover:bg-zinc-50"
@@ -869,8 +904,8 @@ export default function CartEditor() {
       {/* Top Toolbar */}
       <div className="shrink-0 bg-white border-b border-border px-4 py-0.5 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-3 mr-6 tracking-tight">
-          <img src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/same.gif" alt="SMPWO Logo" className="w-24 h-auto object-contain -my-2" />
-          <span className="font-black text-lg tracking-widest text-foreground mt-0.5">SMPWO LAYOUT</span>
+          <img src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/same.gif" alt="SMPWO Logo" className="w-16 h-auto object-contain -my-1" />
+          <span className="font-rounded font-black text-xl tracking-widest text-[#64748b] mt-0.5">SMPWO LAYOUT</span>
         </div>
         
         <div className="flex items-center gap-1.5 bg-background border border-border rounded-lg px-2.5 py-0.5 shadow-xs hover:border-primary/40 transition-colors">
