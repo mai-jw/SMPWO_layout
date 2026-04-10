@@ -27,11 +27,19 @@ function hydrateLayout(raw: unknown): CartLayoutV2 {
   const def = makeInitialCartLayoutV2();
   if (!raw || typeof raw !== "object") return def;
   const r = raw as Record<string, unknown>;
+  
+  // Support both new array format and legacy separate fields
+  const shelves = Array.isArray(r.shelves) 
+    ? r.shelves.map((s: unknown) => hydrateShelf(s))
+    : [
+        hydrateShelf(r.shelf1),
+        hydrateShelf(r.shelf2),
+        hydrateShelf(r.shelf3),
+      ];
+
   return {
     poster: typeof r.poster === "string" ? r.poster : null,
-    shelf1: hydrateShelf(r.shelf1),
-    shelf2: hydrateShelf(r.shelf2),
-    shelf3: hydrateShelf(r.shelf3),
+    shelves: shelves as ShelfData[],
   };
 }
 

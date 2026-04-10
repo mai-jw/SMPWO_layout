@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Noto_Sans_JP, Outfit, M_PLUS_Rounded_1c } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
-import { Navbar } from "@/components/layout/Navbar";
 
 const notoSansJP = Noto_Sans_JP({
   subsets: ["latin"],
@@ -30,25 +29,8 @@ export const metadata: Metadata = {
   description: "展示カートのレイアウトを編集・管理するツール",
 };
 
-import { UIProvider, useUI } from "@/context/ui-context";
-import { UploadSlidePanel } from "@/components/UploadSlidePanel";
-import { AnimatePresence } from "framer-motion";
-
-function GlobalUI({ children }: { children: React.ReactNode }) {
-  const { isUploadPanelOpen, closeUploadPanel } = useUI();
-  
-  return (
-    <>
-      <Navbar />
-      {children}
-      <AnimatePresence>
-        {isUploadPanelOpen && (
-          <UploadSlidePanel onClose={closeUploadPanel} />
-        )}
-      </AnimatePresence>
-    </>
-  );
-}
+import { UIProvider } from "@/context/ui-context";
+import { GlobalUI } from "@/components/layout/GlobalUI";
 
 export default function RootLayout({
   children,
