@@ -4,14 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GalleryVerticalEnd, UploadCloud, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
+import { useUI } from "@/context/ui-context";
 
 export function Navbar() {
   const pathname = usePathname();
+  const { openUploadPanel } = useUI();
 
   const navItems = [
     { href: "/", label: "カート編集", icon: ShoppingCart },
     { href: "/gallery", label: "ギャラリー", icon: GalleryVerticalEnd },
-    { href: "/upload", label: "アップロード", icon: UploadCloud },
   ];
 
   return (
@@ -51,6 +52,13 @@ export function Navbar() {
               </Link>
             );
           })}
+          <button
+            onClick={openUploadPanel}
+            className="px-4 py-2 text-sm font-medium transition-colors rounded-lg flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          >
+            <UploadCloud className="w-4 h-4" />
+            アップロード
+          </button>
         </nav>
       </div>
     </header>

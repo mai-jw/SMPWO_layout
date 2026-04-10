@@ -10,6 +10,7 @@ import {
 import Link from "next/link";
 import { useItems } from "@/hooks/use-items";
 import { useLayouts, useSaveLayout } from "@/hooks/use-layouts";
+import { useUI } from "@/context/ui-context";
 import {
   type Item, type ShelfKey, type ShelfData, type CartLayoutV2,
   type TagData, type ShelfLayoutType,
@@ -340,9 +341,10 @@ const GALLERY_FILTER_LABELS: Record<GalleryFilterType, string> = {
 
 interface LeftGalleryProps {
   items: Item[];
+  onOpenUpload: () => void;
 }
 
-function LeftGallery({ items }: LeftGalleryProps) {
+function LeftGallery({ items, onOpenUpload }: LeftGalleryProps) {
   const [filter, setFilter] = useState<GalleryFilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -363,13 +365,13 @@ function LeftGallery({ items }: LeftGalleryProps) {
             <p className="text-[10px] text-muted-foreground mt-0.5">アップロード済みのアイテム</p>
           </div>
         </div>
-        <Link 
-          href="/upload" 
+        <button 
+          onClick={onOpenUpload}
           className="p-2 bg-sky-50 text-sky-600 hover:bg-sky-600 hover:text-white rounded-lg transition-all flex items-center justify-center group border border-sky-100"
           title="画像をアップロード"
         >
           <Upload className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" />
-        </Link>
+        </button>
       </div>
 
       <div className="p-3 border-b border-border space-y-2">
@@ -684,6 +686,7 @@ export default function CartEditor() {
   const [cartA, setCartA] = useState<CartLayoutV2>(makeInitialCartLayoutV2);
   const [cartB, setCartB] = useState<CartLayoutV2>(makeInitialCartLayoutV2);
   const [activeTarget, setActiveTarget] = useState<ActiveTarget>(null);
+  const { openUploadPanel } = useUI();
   const [exporting, setExporting] = useState<"png" | "pdf" | "xlsx" | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [showNewPanel, setShowNewPanel] = useState(false);
@@ -805,8 +808,16 @@ export default function CartEditor() {
     setActiveTarget(null);
   };
 
+  const isExistingPeriod = useMemo(() => layouts.some(l => l.period === period), [layouts, period]);
+
   const handleSave = async () => {
     if (!period.trim()) return;
+
+    if (isExistingPeriod) {
+      const ok = window.confirm(`「${period}」の上書き保存をします。\n過去のデータに上書きされ、元に戻せなくなりますがよろしいですか？`);
+      if (!ok) return;
+    }
+
     setSaveStatus("saving");
     try {
       await saveLayout.mutateAsync({ period, cart_a: cartA, cart_b: cartB });
@@ -818,20 +829,22 @@ export default function CartEditor() {
   const handleCreateNew = () => {
     const y = new Date().getFullYear();
     const targetPeriod = `${y}-${String(newMonth).padStart(2, "0")}-${newHalf}`;
-    setPeriod(targetPeriod);
+    
+    // Safety check (should also be disabled in UI)
+    if (layouts.some(l => l.period === targetPeriod)) {
+      alert(`「${targetPeriod}」は既に存在します。既存データを開いて編集してください。`);
+      return;
+    }
 
-    const existing = layouts.find(l => l.period === targetPeriod);
-    if (existing) {
-      setCartA(existing.cart_a);
-      setCartB(existing.cart_b);
+    setPeriod(targetPeriod);
+    
+    // Copy from the first layout or use empty
+    if (layouts.length > 0) {
+      setCartA(layouts[0].cart_a);
+      setCartB(layouts[0].cart_b);
     } else {
-      if (layouts.length > 0) {
-        setCartA(layouts[0].cart_a);
-        setCartB(layouts[0].cart_b);
-      } else {
-        setCartA(makeInitialCartLayoutV2());
-        setCartB(makeInitialCartLayoutV2());
-      }
+      setCartA(makeInitialCartLayoutV2());
+      setCartB(makeInitialCartLayoutV2());
     }
     setShowNewPanel(false);
   };
@@ -983,10 +996,15 @@ export default function CartEditor() {
                     <option value="後半">後半</option>
                   </select>
                 </div>
-                <button onClick={handleCreateNew}
-                  className="w-full text-sm bg-primary text-white rounded-lg py-2 font-bold hover:bg-primary/90 transition-colors">
+                <button 
+                  onClick={handleCreateNew}
+                  disabled={layouts.some(l => l.period === `${new Date().getFullYear()}-${String(newMonth).padStart(2, "0")}-${newHalf}`)}
+                  className="w-full text-sm bg-primary text-white rounded-lg py-2 font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   作成
                 </button>
+                {layouts.some(l => l.period === `${new Date().getFullYear()}-${String(newMonth).padStart(2, "0")}-${newHalf}`) && (
+                  <p className="text-[10px] text-red-500 font-bold text-center">※この期間は既に作成済みです</p>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -1000,7 +1018,7 @@ export default function CartEditor() {
           {saveStatus === "saved" ? <CheckCircle2 className="w-3.5 h-3.5" /> :
            saveStatus === "saving" ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> :
            <Save className="w-3.5 h-3.5" />}
-          {saveStatus === "saved" ? "保存済み" : saveStatus === "error" ? "エラー" : saveStatus === "saving" ? "保存中…" : "保存"}
+          {saveStatus === "saved" ? "保存済み" : saveStatus === "error" ? "エラー" : saveStatus === "saving" ? "保存中…" : (isExistingPeriod ? "上書き保存" : "保存")}
         </button>
         {[
           { key: "png" as const, label: "PNG", icon: <FileImage className="w-3.5 h-3.5" />, cls: "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold shadow-xs" },
@@ -1018,7 +1036,7 @@ export default function CartEditor() {
 
       {/* Main Content: Left Gallery + Carts + Side Panel */}
       <div className="flex flex-1 overflow-hidden">
-        <LeftGallery items={items} />
+        <LeftGallery items={items} onOpenUpload={openUploadPanel} />
         <main className="flex-1 overflow-auto p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
