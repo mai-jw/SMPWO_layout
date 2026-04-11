@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = (process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "") as string;
-const supabaseAnonKey = (process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "") as string;
+const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || "") as string;
+const supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "") as string;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn("[Supabase] 環境変数が設定されていません。VITE_SUPABASE_URL と VITE_SUPABASE_ANON_KEY を設定してください。");
@@ -100,10 +100,30 @@ export interface LayoutRecord {
 /* ─── Detect helpers ─── */
 export function detectCategoryAndLanguage(filename: string): { category: string; language: string } {
   const lower = filename.toLowerCase();
-  let category = "general";
+  
+  // Default values
+  let category = "booklet";
+  let language = "ja";
+
+  // Category detection
   if (lower.includes("_poster")) category = "poster";
-  let language = "other";
-  if (lower.includes("_jp")) language = "ja";
-  else if (lower.includes("_en")) language = "en";
+  else if (lower.includes("_mag")) category = "magazine";
+  else if (lower.includes("_book_doc")) category = "booklet_doc";
+  else if (lower.includes("_book")) category = "document";
+  else if (lower.includes("_pamphlet")) category = "pamphlet";
+  else if (lower.includes("_invit")) category = "invitation";
+
+  // Language detection
+  if (lower.includes("_en")) language = "en";
+  else if (lower.includes("_zh_s")) language = "zh_hans";
+  else if (lower.includes("_zh_t")) language = "zh_hant";
+  else if (lower.includes("_ko")) language = "ko";
+  else if (lower.includes("_vi")) language = "vi";
+  else if (lower.includes("_tl")) language = "tl";
+  else if (lower.includes("_th")) language = "th";
+  else if (lower.includes("_id")) language = "id";
+  else if (lower.includes("_es")) language = "es";
+  else if (lower.includes("_foreign")) language = "foreign";
+
   return { category, language };
 }

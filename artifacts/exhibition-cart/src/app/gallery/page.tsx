@@ -33,19 +33,22 @@ export default function ItemsListPage() {
   };
 
   const getLanguageLabel = (lang: string) => {
-    switch (lang) {
-      case "ja": return "日本語";
-      case "en": return "English";
-      default: return "その他";
-    }
+    const labels: Record<string, string> = {
+      ja: "日本語", foreign: "外国語", en: "英語",
+      zh_hans: "中国語（簡体字）", zh_hant: "中国語（繁体字）",
+      ko: "韓国語", vi: "ベトナム語", tl: "タガログ語",
+      th: "タイ語", id: "インドネシア語", es: "スペイン語"
+    };
+    return labels[lang] || lang;
   };
 
   const getCategoryLabel = (cat: string) => {
-    switch (cat) {
-      case "poster": return "ポスター";
-      case "general": return "一般";
-      default: return cat;
-    }
+    const labels: Record<string, string> = {
+      poster: "ポスター", booklet: "冊子", magazine: "雑誌",
+      booklet_doc: "冊子サイズ書籍", document: "文庫本サイズ書籍",
+      pamphlet: "パンフレット", invitation: "招待状"
+    };
+    return labels[cat] || cat;
   };
 
   return (
@@ -81,7 +84,12 @@ export default function ItemsListPage() {
                 >
                   <option value="all">全カテゴリ</option>
                   <option value="poster">ポスター</option>
-                  <option value="general">一般</option>
+                  <option value="booklet">冊子</option>
+                  <option value="magazine">雑誌</option>
+                  <option value="booklet_doc">冊子サイズ書籍</option>
+                  <option value="document">文庫本サイズ書籍</option>
+                  <option value="pamphlet">パンフレット</option>
+                  <option value="invitation">招待状</option>
                 </select>
                 <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               </div>
@@ -94,8 +102,16 @@ export default function ItemsListPage() {
                 >
                   <option value="all">全言語</option>
                   <option value="ja">日本語</option>
-                  <option value="en">English</option>
-                  <option value="other">その他</option>
+                  <option value="foreign">外国語</option>
+                  <option value="en">英語</option>
+                  <option value="zh_hans">中国語（簡体字）</option>
+                  <option value="zh_hant">中国語（繁体字）</option>
+                  <option value="ko">韓国語</option>
+                  <option value="vi">ベトナム語</option>
+                  <option value="tl">タガログ語</option>
+                  <option value="th">タイ語</option>
+                  <option value="id">インドネシア語</option>
+                  <option value="es">スペイン語</option>
                 </select>
               </div>
             </div>

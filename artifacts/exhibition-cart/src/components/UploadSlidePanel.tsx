@@ -13,7 +13,8 @@ import {
   AlertCircle, 
   Loader2,
   FileImage,
-  Tag
+  Tag,
+  Pencil
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -182,10 +183,11 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
               
               {/* Dropzone Column */}
               <div className="md:col-span-2 space-y-4">
+                {/* Upload Zone */}
                 <div
                   {...getRootProps()}
                   className={`
-                    relative overflow-hidden group flex flex-col items-center justify-center w-full h-[280px] rounded-3xl border-2 border-dashed transition-all duration-300 cursor-pointer bg-white
+                    relative overflow-hidden group flex flex-col items-center justify-center w-full h-[320px] rounded-3xl border-2 border-dashed transition-all duration-300 cursor-pointer bg-white
                     ${isDragActive ? "border-primary bg-primary/5 scale-[1.02] shadow-xl" : "border-slate-300 hover:border-primary/50 hover:bg-slate-50 shadow-sm hover:shadow-md"}
                   `}
                 >
@@ -197,15 +199,6 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
                   <p className="mt-2 text-sm text-slate-500 text-center px-6">
                     またはクリックして選択<br/>
                     <span className="text-xs opacity-70 mt-2 block">(JPG, PNG, WEBP, GIF)</span>
-                  </p>
-                </div>
-                
-                <div className="bg-sky-50 rounded-2xl p-4 border border-sky-100">
-                  <h4 className="text-xs font-bold text-sky-800 flex items-center gap-1.5 mb-2">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> ヒント
-                  </h4>
-                  <p className="text-[11px] text-sky-700 leading-relaxed font-medium">
-                    ファイル名に <code className="bg-white/50 px-1 py-0.5 rounded text-sky-900 border border-sky-200">_poster</code> や <code className="bg-white/50 px-1 py-0.5 rounded text-sky-900 border border-sky-200">_jp</code> を含めると自動的にカテゴリ・言語が設定されます。
                   </p>
                 </div>
               </div>
@@ -273,17 +266,21 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
 
                           {/* Details */}
                           <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                            <div className="flex justify-between items-start gap-2">
-                              <input
-                                type="text"
-                                value={file.name}
-                                onChange={(e) => updateFileMeta(file.id, "name", e.target.value)}
-                                disabled={file.status !== "idle" && file.status !== "error"}
-                                className="font-bold text-xs text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-primary focus:outline-none w-full truncate transition-colors"
-                              />
+                            <div className="flex justify-between items-center gap-2 group/name relative">
+                              <div className="flex-1 flex items-center gap-1.5 min-w-0">
+                                <Pencil className="w-3 h-3 text-slate-400 shrink-0" />
+                                <input
+                                  type="text"
+                                  value={file.name}
+                                  onChange={(e) => updateFileMeta(file.id, "name", e.target.value)}
+                                  disabled={file.status !== "idle" && file.status !== "error"}
+                                  className="font-bold text-xs text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-primary focus:outline-none w-full truncate transition-colors"
+                                  placeholder="名前を入力..."
+                                />
+                              </div>
                               {file.status === "idle" && (
-                                <button onClick={() => removeFile(file.id)} className="text-slate-400 hover:text-red-500 p-1 rounded-md">
-                                  <X className="w-3.5 h-3.5" />
+                                <button onClick={() => removeFile(file.id)} className="text-slate-400 hover:text-red-500 p-1 rounded-md shrink-0">
+                                  <X className="w-4 h-4" />
                                 </button>
                               )}
                             </div>
@@ -295,12 +292,13 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
                                 disabled={file.status !== "idle" && file.status !== "error"}
                                 className="text-[10px] bg-slate-100 border-none rounded-md px-1.5 py-1 text-slate-700 font-bold focus:ring-2 focus:ring-primary/20 outline-none"
                               >
-                                <option value="general">一般</option>
                                 <option value="poster">ポスター</option>
-                                <option value="booklet">冊子/雑誌類</option>
+                                <option value="booklet">冊子</option>
+                                <option value="magazine">雑誌</option>
                                 <option value="booklet_doc">冊子サイズ書籍</option>
-                                <option value="document">書籍</option>
-                                <option value="pamphlet">パンフレット/招待状類</option>
+                                <option value="document">文庫本サイズ書籍</option>
+                                <option value="pamphlet">パンフレット</option>
+                                <option value="invitation">招待状</option>
                               </select>
 
                               <select
@@ -310,8 +308,16 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
                                 className="text-[10px] bg-slate-100 border-none rounded-md px-1.5 py-1 text-slate-700 font-bold focus:ring-2 focus:ring-primary/20 outline-none"
                               >
                                 <option value="ja">日本語</option>
-                                <option value="en">English</option>
-                                <option value="other">その他</option>
+                                <option value="foreign">外国語</option>
+                                <option value="en">英語</option>
+                                <option value="zh_hans">中国語（簡体字）</option>
+                                <option value="zh_hant">中国語（繁体字）</option>
+                                <option value="ko">韓国語</option>
+                                <option value="vi">ベトナム語</option>
+                                <option value="tl">タガログ語</option>
+                                <option value="th">タイ語</option>
+                                <option value="id">インドネシア語</option>
+                                <option value="es">スペイン語</option>
                               </select>
                             </div>
 

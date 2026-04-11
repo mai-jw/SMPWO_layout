@@ -131,3 +131,28 @@ export function useDeleteItem() {
     },
   });
 }
+
+// PATCH /items (Update name)
+export function useUpdateItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { data, error } = await supabase
+        .from("items")
+        .update({ name })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to update item: ${error.message}`);
+      }
+
+      return data as Item;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ITEMS_QUERY_KEY });
+    },
+  });
+}
