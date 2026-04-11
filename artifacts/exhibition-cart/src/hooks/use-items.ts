@@ -132,15 +132,20 @@ export function useDeleteItem() {
   });
 }
 
-// PATCH /items (Update name)
+// PATCH /items (Update metadata)
 export function useUpdateItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+    mutationFn: async ({ id, name, category, language }: { id: string; name?: string; category?: string; language?: string }) => {
+      const updates: any = {};
+      if (name !== undefined) updates.name = name;
+      if (category !== undefined) updates.category = category;
+      if (language !== undefined) updates.language = language;
+
       const { data, error } = await supabase
         .from("items")
-        .update({ name })
+        .update(updates)
         .eq("id", id)
         .select()
         .single();

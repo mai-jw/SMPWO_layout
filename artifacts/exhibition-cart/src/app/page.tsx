@@ -6,10 +6,10 @@ import {
   ShoppingCart, Image as ImageIcon, X, Download, FileSpreadsheet,
   FileImage, Save, Copy, CalendarDays, RotateCcw, CheckCircle2,
   ChevronDown, Tag, Pencil, ChevronRight, Search, Layers, Upload,
-  Check,
+  Check, Trash2, Library, Settings,
 } from "lucide-react";
 import Link from "next/link";
-import { useItems, useUpdateItem } from "@/hooks/use-items";
+import { useItems, useUpdateItem, useDeleteItem } from "@/hooks/use-items";
 import { useLayouts, useSaveLayout } from "@/hooks/use-layouts";
 import { useUI } from "@/context/ui-context";
 import {
@@ -406,7 +406,11 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editLanguage, setEditLanguage] = useState("");
+  
   const updateMutation = useUpdateItem();
+  const deleteMutation = useDeleteItem();
 
   const filteredItems = items.filter((item) => {
     const matchCat = filter === "all" || item.category === filter;
@@ -423,6 +427,8 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
     e.stopPropagation();
     setEditingId(item.id!);
     setEditValue(item.name);
+    setEditCategory(item.category);
+    setEditLanguage(item.language);
   };
 
   const handleSaveEdit = async (id: string) => {
@@ -431,11 +437,32 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
       return;
     }
     try {
-      await updateMutation.mutateAsync({ id, name: editValue });
+      await updateMutation.mutateAsync({ 
+        id, 
+        name: editValue,
+        category: editCategory,
+        language: editLanguage,
+      });
     } catch (err) {
-      console.error("Failed to update name:", err);
+      console.error("Failed to update item:", err);
     }
     setEditingId(null);
+  };
+
+  const handleDeleteItem = async (e: React.MouseEvent, item: Item) => {
+    e.stopPropagation();
+    console.log("Delete button clicked for item:", item.id);
+    
+    if (!window.confirm("削除してもよろしいですか？")) return;
+    
+    try {
+      console.log("Proceeding with deletion...");
+      await deleteMutation.mutateAsync(item);
+      setEditingId(null);
+    } catch (err) {
+      console.error("Failed to delete item:", err);
+      alert("削除に失敗しました。詳細なエラー内容はコンソールを確認してください。");
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, id: string) => {
@@ -453,7 +480,6 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
           <ImageIcon className="w-9 h-9 text-foreground" />
           <div>
             <p className="text-base font-black text-foreground">画像データ</p>
-            <p className="text-xs text-muted-foreground mt-0.5">アップロード済みのアイテム</p>
           </div>
         </div>
         <button 
@@ -471,10 +497,10 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
           <input type="text" placeholder="名前で検索..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full text-sm font-medium border border-border rounded-lg pl-9 pr-3 py-2.5 bg-slate-50 text-foreground outline-none focus:border-sky-400 placeholder:text-slate-400 transition-all" />
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1">
           {(Object.entries(GALLERY_FILTER_LABELS) as [GalleryFilterType, string][]).map(([key, label]) => (
             <button key={key} onClick={() => setFilter(key as GalleryFilterType)}
-              className={`text-sm px-3 py-2 rounded-lg font-bold transition-all border ${
+              className={`text-[11px] px-2 py-1.5 rounded-lg font-bold transition-all border ${
                 filter === key 
                   ? "bg-sky-500 text-white border-sky-600 shadow-sm" 
                   : "bg-sky-50/50 text-sky-700 border-sky-100 hover:bg-sky-100/80"
@@ -507,40 +533,84 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
           filteredItems.map((item) => (
             <div key={item.id} className="w-full flex items-center gap-3 rounded-xl p-2.5 text-left border border-transparent hover:bg-muted group">
               <img src={item.url} alt={item.name} className="w-14 h-14 object-cover rounded-lg shrink-0 bg-muted shadow-sm" />
-              <div className="min-w-0 flex-1 relative pr-8">
+              <div className="min-w-0 flex-1 relative pr-8 text-xs font-black">
                 {editingId === item.id ? (
-                  <div className="flex items-center gap-1">
+                  <div className="relative space-y-2 bg-slate-50 p-2 rounded-lg border border-sky-100 mb-2">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setEditingId(null); }} 
+                      className="absolute -top-1.5 -right-1.5 p-1 bg-white border border-slate-200 text-slate-400 hover:text-red-500 rounded-full shadow-sm transition-all z-10"
+                      title="キャンセル"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                    
                     <input
                       autoFocus
-                      className="text-base font-black text-foreground bg-white border border-sky-400 rounded px-1 w-full outline-none"
+                      className="text-xs font-black text-foreground bg-white border border-sky-400 rounded px-2 py-1.5 w-full outline-none"
                       value={editValue}
                       onChange={(e) => setEditValue(e.target.value)}
-                      onBlur={() => handleSaveEdit(item.id!)}
-                      onKeyDown={(e) => handleKeyDown(e, item.id!)}
                       onClick={(e) => e.stopPropagation()}
                     />
-                    <button onClick={(e) => { e.stopPropagation(); handleSaveEdit(item.id!); }} className="p-1 text-sky-600">
-                      <Check className="w-4 h-4" />
-                    </button>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <select 
+                        value={editCategory} 
+                        onChange={(e) => setEditCategory(e.target.value)}
+                        className="text-[10px] font-black border border-slate-200 rounded px-1 py-1 bg-white outline-none focus:border-sky-400"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {Object.entries(GALLERY_FILTER_LABELS).filter(([k]) => k !== "all").map(([k, v]) => (
+                          <option key={k} value={k}>{v}</option>
+                        ))}
+                      </select>
+                      <select 
+                        value={editLanguage} 
+                        onChange={(e) => setEditLanguage(e.target.value)}
+                        className="text-[10px] font-black border border-slate-200 rounded px-1 py-1 bg-white outline-none focus:border-sky-400"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {LANG_FILTER_OPTIONS.filter(o => o.key !== "all" && o.key !== "foreign").map(o => (
+                          <option key={o.key} value={o.key}>{o.label}</option>
+                        ))}
+                        <option value="other">その他外国語</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center justify-between pt-1">
+                      <button 
+                        onClick={(e) => handleDeleteItem(e, item)}
+                        className="p-1.5 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 relative z-20"
+                        title="削除"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleSaveEdit(item.id!); }} 
+                        className="p-1.5 bg-sky-600 text-white rounded-lg flex items-center justify-center shadow-sm hover:bg-sky-700 transition-colors px-4 relative z-20"
+                        title="保存"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <>
-                    <p className="text-base font-black text-foreground truncate leading-tight" title={item.name}>{item.name}</p>
+                    <p className="text-xs font-black text-foreground truncate leading-tight mb-1" title={item.name}>{item.name}</p>
                     <button 
                       onClick={(e) => handleStartEdit(e, item)}
-                      className="absolute right-0 top-0 p-1 text-slate-300 hover:text-sky-500 opacity-0 group-hover:opacity-100 transition-all"
+                      className="absolute right-0 top-0 p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-full opacity-60 group-hover:opacity-100 transition-all"
+                      title="編集"
                     >
-                      <Pencil className="w-3.5 h-3.5" />
+                      <Pencil className="w-4 h-4" />
                     </button>
                   </>
                 )}
-                <div className="flex gap-1.5 mt-1.5 flex-wrap">
-                  {item.category && (
-                    <span className="text-xs font-black bg-zinc-100 text-zinc-700 rounded px-1.5 py-0.5 uppercase">
+                
+                {editingId !== item.id && item.category && (
+                  <div className="flex gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-black bg-zinc-100 text-zinc-700 rounded px-1.5 py-0.5 uppercase">
                       {GALLERY_FILTER_LABELS[item.category as GalleryFilterType] || item.category}
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           ))
@@ -559,22 +629,21 @@ interface SelectionSidebarProps {
   onSelectItem: (item: Item) => void;
   onLayoutChange: (cart: CartId, shelfIdx: number, type: ShelfLayoutType) => void;
   onTagChange: (cart: CartId, shelfIdx: number, which: "tag_1" | "tag_2", tag: TagData) => void;
+  onShelfClick: (cartId: CartId, shelfIdx: number) => void;
   onClose: () => void;
 }
 
 function SelectionSidebar({
   activeTarget, items, itemMap, cartA, cartB,
-  onSelectItem, onLayoutChange, onTagChange, onClose,
+  onSelectItem, onLayoutChange, onTagChange, onShelfClick, onClose,
 }: SelectionSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<SidebarFilter>("all");
 
-  if (!activeTarget) return null;
-
-  const cart = activeTarget.cart === "A" ? cartA : cartB;
-  const isPoster = activeTarget.section === "poster";
-  const shelfIdx = (activeTarget as any).shelfIndex as number;
-  const shelf = cart.shelves[shelfIdx];
+  const cart = activeTarget ? (activeTarget.cart === "A" ? cartA : cartB) : null;
+  const isPoster = activeTarget?.section === "poster";
+  const shelfIdx = activeTarget ? (activeTarget as any).shelfIndex : 0;
+  const shelf = cart?.shelves[shelfIdx] ?? null;
 
   const renderShelfSettings = () => {
     if (!shelf) return null;
@@ -610,13 +679,13 @@ function SelectionSidebar({
                 key={t}
                 onClick={() => onLayoutChange(activeTarget.cart, shelfIdx, t)}
                 className={`text-[10px] font-bold py-3 rounded-xl transition-all border flex flex-col items-center gap-1 ${
-                  shelf.layout_type === t ? "bg-primary text-white border-primary shadow-md" : "bg-background text-muted-foreground border-border hover:bg-muted"
+                  shelf.layout_type === t ? "bg-rose-100 text-rose-900 border-rose-300 shadow-sm" : "bg-background text-muted-foreground border-border hover:bg-muted"
                 }`}
               >
                 <span className="truncate w-full px-1 text-center font-black text-xs leading-tight">
                   {t === "booklet" ? "冊子/雑誌" : t === "booklet_doc" ? "冊子サイズ書籍" : t === "document" ? "文庫本サイズ書籍" : "パンフレット/招待状"}
                 </span>
-                <span className="opacity-70 text-[10px] font-black uppercase tracking-tighter">{t === "booklet" || t === "booklet_doc" ? "2 Slots" : t === "document" ? "3 Slots" : "4 Slots"}</span>
+                <span className="opacity-70 text-[10px] font-black uppercase tracking-tighter">{t === "booklet" || t === "booklet_doc" ? "2 スロット" : t === "document" ? "3 スロット" : "4 スロット"}</span>
               </button>
             ))}
           </div>
@@ -629,38 +698,38 @@ function SelectionSidebar({
           </p>
           <div className="space-y-2">
             <button onClick={() => setMode("none")}
-              className={`w-full text-left px-4 py-3.5 text-base flex items-center justify-between rounded-xl transition-all border ${
+              className={`w-full text-left px-4 py-3 text-xs flex items-center justify-between rounded-xl transition-all border ${
                 mode === "none" ? "bg-white text-foreground font-black border-slate-300 shadow-sm" : "bg-slate-50 text-muted-foreground border-transparent hover:bg-slate-100"
               }`}>
               <span>タグなし</span>
-              {mode === "none" && <CheckCircle2 className="w-5 h-5 text-primary" />}
+              {mode === "none" && <CheckCircle2 className="w-4 h-4 text-primary" />}
             </button>
 
             {shelf.layout_type === "document" && canFreeDist && (
               <button onClick={() => setMode("free_dist")}
-                className={`w-full text-left px-4 py-3.5 text-base flex items-center justify-between rounded-xl transition-all border ${
+                className={`w-full text-left px-4 py-3 text-xs flex items-center justify-between rounded-xl transition-all border ${
                   mode === "free_dist" ? "bg-zinc-900 text-white font-black border-zinc-950 shadow-md scale-[1.02]" : "bg-zinc-50 text-zinc-500 border-transparent hover:bg-zinc-100"
                 }`}>
                 <div className="flex items-center gap-2">
-                  <div className="w-3.5 h-3.5 rounded-full bg-current" />
+                  <div className="w-3 h-3 rounded-full bg-current" />
                   <span>無料で差し上げています</span>
                 </div>
-                {mode === "free_dist" && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
+                {mode === "free_dist" && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
               </button>
             )}
             
             <button 
               disabled={!canLangTag}
               onClick={() => setMode("lang")}
-              className={`w-full text-left px-4 py-3.5 text-base flex items-center justify-between rounded-xl transition-all border ${
+              className={`w-full text-left px-4 py-3 text-xs flex items-center justify-between rounded-xl transition-all border ${
                 !canLangTag ? "opacity-30 cursor-not-allowed border-transparent" :
                 mode === "lang" ? "bg-red-600 text-white font-black border-red-700 shadow-md scale-[1.02]" : "bg-red-50 text-red-700/60 border-transparent hover:bg-red-50/80"
               }`}>
               <div className="flex items-center gap-2">
-                <div className={`w-3.5 h-3.5 rounded-full ${canLangTag ? "bg-red-400" : "bg-slate-300"}`} />
+                <div className={`w-3 h-3 rounded-full ${canLangTag ? "bg-red-400" : "bg-slate-300"}`} />
                 <span>言語表示</span>
               </div>
-              {mode === "lang" && <CheckCircle2 className="w-5 h-5 text-white" />}
+              {mode === "lang" && <CheckCircle2 className="w-4 h-4 text-white" />}
             </button>
 
             {mode === "lang" && (
@@ -695,14 +764,14 @@ function SelectionSidebar({
 
             {shelf.layout_type !== "document" && canFreeDist && (
               <button onClick={() => setMode("free_dist")}
-                className={`w-full text-left px-4 py-3.5 text-base flex items-center justify-between rounded-xl transition-all border ${
+                className={`w-full text-left px-4 py-3 text-xs flex items-center justify-between rounded-xl transition-all border ${
                   mode === "free_dist" ? "bg-zinc-900 text-white font-black border-zinc-950 shadow-md scale-[1.02]" : "bg-zinc-50 text-zinc-500 border-transparent hover:bg-zinc-100"
                 }`}>
                 <div className="flex items-center gap-2">
-                  <div className="w-3.5 h-3.5 rounded-full bg-current" />
+                  <div className="w-3 h-3 rounded-full bg-current" />
                   <span>無料で差し上げています</span>
                 </div>
-                {mode === "free_dist" && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
+                {mode === "free_dist" && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
               </button>
             )}
           </div>
@@ -711,114 +780,136 @@ function SelectionSidebar({
     );
   };
 
-  if (activeTarget.section === "tag") {
-    return (
-      <aside className="w-80 shrink-0 bg-card border-l border-border flex flex-col overflow-hidden">
-        <div className="p-4 border-b border-border flex items-center justify-between bg-white sticky top-0 z-20">
+  return (
+    <aside className="w-full shrink-0 bg-card border-l border-border flex flex-col overflow-hidden h-full">
+      {/* 1. Shelf Navigation (Fixed/Always on top) */}
+      <div className="px-5 py-3 bg-[#f2f1eb] border-b border-border z-30 shadow-sm transition-colors text-left uppercase">
+        <p className="text-sm font-black uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-2">
+          <Settings className="w-4 h-4" /> 設定
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          {(["A", "B"] as CartId[]).map((cartId) => (
+            <div key={cartId} className="space-y-2">
+              <div className="flex items-center gap-2 px-1 text-slate-400">
+                <Library className="w-3.5 h-3.5" />
+                <span className="text-sm font-black uppercase tracking-wider text-slate-400">CART {cartId}</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                {[0, 1, 2].map((idx) => {
+                  const isActive = activeTarget?.cart === cartId && 
+                                  activeTarget?.section === "tag" && 
+                                  (activeTarget as any).shelfIndex === idx;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => onShelfClick(cartId, idx)}
+                      className={`
+                        text-[11px] font-black py-1.5 rounded-lg transition-all border flex flex-col items-center justify-center gap-0.5 w-[85%] self-center
+                        ${isActive 
+                          ? "bg-amber-100 text-amber-900 border-amber-300 shadow-none scale-[1.02]" 
+                          : "bg-white text-slate-600 border-slate-200 hover:border-amber-300/50 hover:bg-slate-50"
+                        }
+                      `}
+                    >
+                      <span>{idx + 1}段目</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 2. Header (Sticky) - Only visible when an item is selected */}
+      {activeTarget && (
+        <div className="py-1 px-3 border-b border-border flex items-center justify-between bg-white sticky top-0 z-20 shadow-sm">
           <div>
-            <p className="text-sm font-black uppercase tracking-wider text-muted-foreground leading-none">CART {activeTarget.cart} — {shelfIdx + 1}段目</p>
-            <p className="text-xl font-black text-foreground mt-1.5">段の設定</p>
+            <p className="text-sm font-black uppercase tracking-wider text-muted-foreground leading-none">
+              {activeTarget.section === "tag" ? `CART ${activeTarget.cart} — ${shelfIdx + 1}段目` : (panelSub || "")}
+            </p>
+            {activeTarget.section !== "tag" && (
+              <p className="text-xl font-black text-foreground mt-1.5">
+                {panelTitle || ""}
+              </p>
+            )}
           </div>
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-muted transition-all group">
             <X className="w-6 h-6 text-muted-foreground group-hover:rotate-90 transition-transform" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-5">
-          {renderShelfSettings()}
-          <div className="bg-sky-50 rounded-2xl p-4 border border-sky-100">
-            <p className="text-xs font-black text-sky-700 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" /> 出版物を配置するには？
-            </p>
-            <p className="text-[10px] font-bold text-sky-600/80 mt-1 leading-relaxed">
-              カート上の空いているスロットをクリックすると、画像ライブラリが表示されます。
-            </p>
-          </div>
-        </div>
-      </aside>
-    );
-  }
+      )}
 
-  // Item selection panel
-  const targetCategories = isPoster ? ["poster"] 
-    : shelf?.layout_type === "booklet" ? ["booklet", "magazine"]
-    : shelf?.layout_type === "pamphlet" ? ["pamphlet", "invitation"]
-    : shelf?.layout_type ? [shelf.layout_type]
-    : ["all"];
-
-  const filteredItems = items.filter((item) => {
-    if (!targetCategories.includes("all") && !targetCategories.includes(item.category)) return false;
-    const isForeign = !EXPLICIT_LANG_KEYS.includes(item.language) && item.language !== "all";
-    const matchLang = filter === "all" || (filter === "ja" && item.language === "ja") || (filter === "foreign" ? isForeign : item.language === filter);
-    const matchSearch = !searchQuery || item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchLang && matchSearch;
-  });
-
-  const panelTitle = isPoster ? "ポスターを選択" : `出版物を選択`;
-  const panelSub = isPoster 
-    ? `CART ${activeTarget.cart}` 
-    : `CART ${activeTarget.cart} — ${shelfIdx + 1}段目 スロット${((activeTarget as any).slotIndex ?? 0) + 1}`;
-
-  return (
-    <aside className="w-80 shrink-0 bg-card border-l border-border flex flex-col overflow-hidden">
-      <div className="p-4 border-b border-border flex items-center justify-between bg-white sticky top-0 z-20">
-        <div>
-          <p className="text-sm font-black uppercase tracking-wider text-muted-foreground leading-none">{panelSub}</p>
-          <p className="text-xl font-black text-foreground mt-1.5">{panelTitle}</p>
-        </div>
-        <button onClick={onClose} className="p-2 rounded-xl hover:bg-muted transition-all group">
-          <X className="w-6 h-6 text-muted-foreground group-hover:rotate-90 transition-transform" />
-        </button>
-      </div>
-
+      {/* 3. Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-5">
-          {!isPoster && renderShelfSettings()}
-
-          {/* Search & Filter */}
-          <div className="space-y-3">
-            <p className="text-[11px] font-black uppercase tracking-wider text-muted-foreground mb-1">画像ライブラリ検索</p>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <input type="text" placeholder="名前で検索..." value={searchQuery} onChange={(e) => setSearchQuery((e.target as HTMLInputElement).value)}
-                className="w-full text-sm font-bold border border-border rounded-xl pl-10 pr-4 py-3 bg-background text-foreground outline-none focus:ring-4 focus:ring-primary/10 placeholder:text-muted-foreground/50 transition-all shadow-sm" />
+        {!activeTarget ? (
+          <div className="p-6 text-center space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto text-slate-300">
+              <Pencil className="w-8 h-8" />
             </div>
-            {!isPoster && (
-              <div className="grid grid-cols-4 gap-1.5">
-                {(Object.entries(FILTER_LABELS) as [SidebarFilter, string][]).map(([key, label]) => (
-                  <button key={key} onClick={() => setFilter(key)}
-                    className={`text-[10px] py-2.5 rounded-lg font-black transition-all ${
-                      filter === key ? "bg-primary text-white shadow-md" : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="flex flex-col items-center">
+              <p className="text-base font-black text-slate-700 w-full">編集箇所を選択してください</p>
+              <p className="text-[11px] font-bold text-slate-400 mt-1 leading-relaxed w-full text-left bg-slate-50 p-3 rounded-lg border border-slate-100 mt-3">
+                まず段の設定をおこなってください。<br />
+                各スロットの画像を選択してください。
+              </p>
+            </div>
           </div>
-        </div>
-
-        {/* Item List */}
-        <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5">
-          {filteredItems.length === 0 ? (
-            <p className="text-base font-medium text-muted-foreground text-center py-10">該当する画像なし</p>
-          ) : (
-            filteredItems.map((item) => (
-              <button key={item.id} onClick={() => onSelectItem(item)}
-                className="w-full flex items-center gap-4 rounded-2xl p-3 text-left transition-all border border-transparent hover:bg-muted/80 group">
-                <img src={item.url} alt={item.name} className="w-14 h-14 object-cover rounded-xl shrink-0 bg-muted shadow-sm" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-base font-black text-foreground truncate leading-tight group-hover:text-primary transition-colors">{item.name}</p>
-                  <div className="flex gap-1.5 mt-2 flex-wrap">
-                    {item.category === "poster" && <span className="text-[10px] font-black bg-violet-100 text-violet-700 rounded px-1.5 py-0.5 tracking-tighter">POSTER</span>}
-                    {item.language === "ja" && <span className="text-[10px] font-black bg-blue-100 text-blue-700 rounded px-1.5 py-0.5 tracking-tighter">日本語</span>}
-                    {item.language === "en" && <span className="text-[10px] font-black bg-orange-100 text-orange-700 rounded px-1.5 py-0.5 tracking-tighter">EN</span>}
-                  </div>
+        ) : activeTarget.section === "tag" ? (
+          <div className="p-5 space-y-6">
+            {renderShelfSettings()}
+          </div>
+        ) : (
+          <div className="flex flex-col h-full">
+            <div className="p-5 pb-0">
+              {!isPoster && renderShelfSettings()}
+              {/* Search & Filter */}
+              <div className="space-y-3 mb-5">
+                <p className="text-[11px] font-black uppercase tracking-wider text-muted-foreground mb-1">画像ライブラリ検索</p>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <input type="text" placeholder="名前で検索..." value={searchQuery} onChange={(e) => setSearchQuery((e.target as HTMLInputElement).value)}
+                    className="w-full text-sm font-bold border border-border rounded-xl pl-10 pr-4 py-3 bg-background text-foreground outline-none focus:ring-4 focus:ring-primary/10 placeholder:text-muted-foreground/50 transition-all shadow-sm" />
                 </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-              </button>
-            ))
-          )}
-        </div>
+                {!isPoster && (
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {(Object.entries(FILTER_LABELS) as [SidebarFilter, string][]).map(([key, label]) => (
+                      <button key={key} onClick={() => setFilter(key)}
+                        className={`text-[10px] py-2.5 rounded-lg font-black transition-all ${
+                          filter === key ? "bg-primary text-white shadow-md" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        }`}>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Item List */}
+            <div className="flex-1 p-2.5 space-y-1.5">
+              {filteredItems.length === 0 ? (
+                <p className="text-base font-medium text-muted-foreground text-center py-10">該当する画像なし</p>
+              ) : (
+                filteredItems.map((item) => (
+                  <button key={item.id} onClick={() => onSelectItem(item)}
+                    className="w-full flex items-center gap-4 rounded-2xl p-3 text-left transition-all border border-transparent hover:bg-muted/80 group">
+                    <img src={item.url} alt={item.name} className="w-14 h-14 object-cover rounded-xl shrink-0 bg-muted shadow-sm" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-base font-black text-foreground truncate leading-tight group-hover:text-primary transition-colors">{item.name}</p>
+                      <div className="flex gap-1.5 mt-2 flex-wrap">
+                        {item.category === "poster" && <span className="text-[10px] font-black bg-violet-100 text-violet-700 rounded px-1.5 py-0.5 tracking-tighter">POSTER</span>}
+                        {item.language === "ja" && <span className="text-[10px] font-black bg-blue-100 text-blue-700 rounded px-1.5 py-0.5 tracking-tighter">日本語</span>}
+                        {item.language === "en" && <span className="text-[10px] font-black bg-orange-100 text-orange-700 rounded px-1.5 py-0.5 tracking-tighter">EN</span>}
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );
@@ -868,7 +959,7 @@ export default function CartEditor() {
   const newPanelRef = useRef<HTMLDivElement>(null);
 
   // Resizable Sidebar State
-  const [galleryWidth, setGalleryWidth] = useState(256); // w-64 = 256px
+  const [galleryWidth, setGalleryWidth] = useState(320); // Initial 320px
   const [isResizing, setIsResizing] = useState(false);
 
   const startResizing = useCallback(() => {
@@ -881,8 +972,8 @@ export default function CartEditor() {
 
   const resize = useCallback((e: MouseEvent) => {
     if (isResizing) {
-      // Minimum width is 256px as per user request
-      const newWidth = Math.max(256, e.clientX);
+      // Minimum width is 320px as per user request
+      const newWidth = Math.max(320, e.clientX);
       setGalleryWidth(prev => {
         // Only update if difference is meaningful to prevent excessive re-renders
         if (Math.abs(prev - newWidth) > 1) return newWidth;
@@ -1250,7 +1341,11 @@ export default function CartEditor() {
 
       {/* Main Content: Left Gallery + Carts + Side Panel */}
       <div className="flex flex-1 overflow-hidden relative">
-        <LeftGallery items={items} onOpenUpload={openUploadPanel} width={galleryWidth} />
+        <LeftGallery 
+          items={items} 
+          onOpenUpload={openUploadPanel} 
+          width={galleryWidth} 
+        />
         
         {/* Resize Handle */}
         <div 
@@ -1302,33 +1397,23 @@ export default function CartEditor() {
           </div>
         </main>
 
-        {/* Right Side Panel — Context switches based on activeTarget */}
-        <AnimatePresence>
-          {activeTarget && (
-            <motion.div
-              key={`${activeTarget.cart}-${activeTarget.section}-${(activeTarget as any).shelfIndex ?? ""}-${(activeTarget as any).slotIndex ?? ""}`}
-              className="z-50 shrink-0 border-l border-border bg-card shadow-2xl flex flex-col overflow-hidden"
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 288, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            >
-              <div className="w-72 h-[calc(100vh-56px)] shrink-0 flex flex-col">
-                <SelectionSidebar
-                  activeTarget={activeTarget}
-                items={items}
-                itemMap={itemMap}
-                cartA={cartA}
-                cartB={cartB}
-                onSelectItem={handleSelectItem}
-                onLayoutChange={handleLayoutChange}
-                  onTagChange={handleTagChange}
-                  onClose={() => setActiveTarget(null)}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Right Side Panel — Now permanently visible with fixed navigation at the top */}
+        <div className="z-50 shrink-0 border-l border-border bg-card shadow-lg flex flex-col overflow-hidden">
+          <div className="w-72 h-[calc(100vh-56px)] shrink-0 flex flex-col">
+            <SelectionSidebar
+              activeTarget={activeTarget}
+              items={items}
+              itemMap={itemMap}
+              cartA={cartA}
+              cartB={cartB}
+              onSelectItem={handleSelectItem}
+              onLayoutChange={handleLayoutChange}
+              onTagChange={handleTagChange}
+              onShelfClick={handleTagClick}
+              onClose={() => setActiveTarget(null)}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
