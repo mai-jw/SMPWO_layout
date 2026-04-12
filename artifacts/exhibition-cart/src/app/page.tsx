@@ -645,6 +645,18 @@ function SelectionSidebar({
   const shelfIdx = activeTarget ? (activeTarget as any).shelfIndex : 0;
   const shelf = cart?.shelves[shelfIdx] ?? null;
 
+  const panelTitle = activeTarget ? (
+    activeTarget.section === "poster" ? "ポスター選択" :
+    activeTarget.section === "item" ? `${activeTarget.shelfIndex + 1}段目 - スロット${activeTarget.itemIndex + 1} 選択` : ""
+  ) : "";
+  const panelSub = activeTarget ? `CART ${activeTarget.cart}` : "";
+
+  const filteredItems = items.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = filter === "all" || item.category === filter;
+    return matchesSearch && matchesFilter;
+  });
+
   const renderShelfSettings = () => {
     if (!shelf) return null;
     const isRow1 = shelfIdx === 0;
@@ -1360,14 +1372,6 @@ export default function CartEditor() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-black text-foreground tracking-tight">カートレイアウト</h2>
-              <span className="text-[10px] bg-card text-muted-foreground border border-border rounded-full px-2.5 py-1 font-bold shadow-xs">
-                A: {totalA} / B: {totalB}
-              </span>
-              {period && (
-                <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 rounded-full px-2.5 py-1 font-bold shadow-xs">
-                  {period}
-                </span>
-              )}
             </div>
             {activeTarget && (
               <button onClick={() => setActiveTarget(null)}
