@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useItems, useDeleteItem } from "@/hooks/use-items";
 import type { Item } from "@/lib/supabase";
-import { Badge } from "@/components/ui/ui-badge";
+import { Badge } from "@/components/ui/badge";
 import { Search, Loader2, Image as ImageIcon, Trash2, Filter, AlertCircle, Pencil, X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
