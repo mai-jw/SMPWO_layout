@@ -1,6 +1,5 @@
 {
   "buildCommand": "pnpm run build",
   "installCommand": "pnpm install",
-  "framework": "nextjs",
-  "outputDirectory": "artifacts/exhibition-cart/.next"
+  "framework": "nextjs"
 }
