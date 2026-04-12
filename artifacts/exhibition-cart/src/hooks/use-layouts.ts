@@ -84,6 +84,20 @@ export function useSaveLayout() {
   });
 }
 
+export function useDeleteLayout() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (period: string): Promise<void> => {
+      const { error } = await supabase
+        .from(LAYOUTS_TABLE)
+        .delete()
+        .eq("period", period);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: LAYOUTS_QUERY_KEY }),
+  });
+}
+
 export function useLocationsConfig() {
   return useQuery({
     queryKey: LOCATIONS_QUERY_KEY,

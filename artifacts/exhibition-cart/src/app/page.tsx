@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useItems, useUpdateItem, useDeleteItem } from "@/hooks/use-items";
-import { useLayouts, useSaveLayout, useLocationsConfig, useSaveLocationsConfig, DEFAULT_LOCATIONS } from "@/hooks/use-layouts";
+import { useLayouts, useSaveLayout, useDeleteLayout, useLocationsConfig, useSaveLocationsConfig, DEFAULT_LOCATIONS } from "@/hooks/use-layouts";
 import { useUI } from "@/context/ui-context";
 import { 
   CART_IMAGE_URL, SHELF_COORDINATES, POSTER_PLACEMENT,
@@ -33,7 +33,6 @@ type ActiveTarget =
   | { cart: CartId; section: "tag"; shelfIndex: number }
   | null;
 type SidebarFilter = "all" | "poster" | "ja" | "foreign";
-
 const LANGUAGES = [
   "日本語", "外国語", "英語",
   "中国語（簡体字）", "中国語（繁体字）",
@@ -41,6 +40,12 @@ const LANGUAGES = [
   "タイ語", "インドネシア語", "スペイン語",
   "その他",
 ];
+
+const getTagLabel = (tag: TagData | undefined) => {
+  if (!tag || tag.type === "none") return "";
+  if (tag.type === "free_dist") return "無料配布";
+  return tag.value || "";
+};
 
 /* ═══════════════════════════════════════════════════════
      TagDisplay — Display-only tag bar on cart (no menus)
@@ -405,6 +410,9 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
 
   const handleDeleteItem = async (e: React.MouseEvent, item: Item) => {
     e.stopPropagation();
+    const ok = window.confirm(`「${item.name}」を削除します。\n選択肢を削除すると、登録データからも削除されます。よろしいでしょうか？`);
+    if (!ok) return;
+    
     try {
       await deleteMutation.mutateAsync(item);
       setEditingId(null);
@@ -543,39 +551,21 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
                         </select>
                       )}
                     </div>
-                    <div className="flex items-center justify-between pt-1">
-                      {deleteConfirmId === item.id ? (
-                        <div className="flex items-center gap-1 w-full bg-red-50 p-1 rounded-md border border-red-100 mt-1">
-                          <span className="text-[10px] text-red-600 font-bold px-1 whitespace-nowrap">削除しますか？</span>
-                          <div className="flex ml-auto gap-1">
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(null); }}
-                              className="text-[10px] px-2 py-1 bg-white text-slate-500 rounded border border-slate-200 transition-colors hover:bg-slate-50"
-                            >取消</button>
-                            <button 
-                              onClick={(e) => handleDeleteItem(e, item)}
-                              className="text-[10px] px-2 py-1 bg-red-500 text-white rounded shadow-sm font-bold transition-colors hover:bg-red-600"
-                            >はい</button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(item.id!); }}
-                            className="p-1.5 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 relative z-20"
-                            title="削除"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handleSaveEdit(item.id!); }} 
-                            className="p-1.5 bg-sky-600 text-white rounded-lg flex items-center justify-center shadow-sm hover:bg-sky-700 transition-colors px-4 relative z-20"
-                            title="保存"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
+                    <div className="flex items-center justify-end pt-1 gap-2">
+                      <button 
+                        onClick={(e) => handleDeleteItem(e, item)}
+                        className="p-1.5 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 relative z-20"
+                        title="削除"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleSaveEdit(item.id!); }} 
+                        className="p-1.5 bg-sky-600 text-white rounded-lg flex items-center justify-center shadow-sm hover:bg-sky-700 transition-colors px-4 relative z-20"
+                        title="保存"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -1062,6 +1052,7 @@ export default function CartEditor() {
   const { data: items = [], isLoading } = useItems();
   const { data: layouts = [] } = useLayouts();
   const saveLayout = useSaveLayout();
+  const deleteLayout = useDeleteLayout();
 
   const itemMap = useMemo(() => {
     return Object.fromEntries(items.filter((i) => i.id).map((i) => [i.id!, i]));
@@ -1180,6 +1171,22 @@ export default function CartEditor() {
       setTimeout(() => setSaveStatus("idle"), 3000); 
     }
   };
+  
+  const handleDeleteLayout = async () => {
+    if (!period.trim() || !isExistingPeriod) return;
+    const ok = window.confirm(`チェックしたレイアウト「${formatPeriodDisplay(period)}」を削除します。\n選択肢を削除すると、登録データからも削除されます。よろしいでしょうか？`);
+    if (!ok) return;
+    
+    try {
+      await deleteLayout.mutateAsync(period);
+      alert("レイアウトを削除しました。");
+      handleReset();
+      setPeriod(""); // Clear selection
+    } catch (err: any) {
+      console.error("[Delete Error] Failed to delete layout:", err);
+      alert(`削除に失敗しました: ${err.message || "不明なエラー"}`);
+    }
+  };
 
   const handleCreateNew = () => {
     const y = new Date().getFullYear();
@@ -1216,11 +1223,13 @@ export default function CartEditor() {
         if (!blob) return;
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        const cleanName = formatPeriodDisplay(period).replace(/\s/g, "_");
+        const cleanName = formatPeriodDisplay(period).replace(/[\s\(\)]/g, "_");
         a.download = `cart_${cleanName}.png`;
         a.href = url;
         a.click();
-        URL.revokeObjectURL(url);
+        
+        // Use a delay for revocation to ensure browser has time to initiate the actual OS write
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
         alert("PNG画像をダウンロードフォルダに保存しました。");
       }, "image/png");
     } finally { setExporting(null); }
@@ -1245,54 +1254,152 @@ export default function CartEditor() {
       const imgW = pW - 24;
       const imgH = Math.min(imgW / ratio, pH - 20);
       pdf.addImage(imgData, "PNG", 12, 15, imgW, imgH);
-      const safePeriod = period.replace(/::/g, "_").replace(/[:\-]/g, "");
-      pdf.save(`CartLayout_${safePeriod}.pdf`);
+      
+      const blob = pdf.output("blob");
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const cleanName = formatPeriodDisplay(period).replace(/[\s\(\)]/g, "_");
+      a.download = `cart_${cleanName}.pdf`;
+      a.href = url;
+      a.click();
+      
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       alert("PDFドキュメントをダウンロードフォルダに保存しました。");
     } finally { setExporting(null); }
   };
 
   const handleExportXlsx = async () => {
+    if (!canvasRef.current) return;
     setExporting("xlsx");
     try {
-      const XLSX = await import("xlsx");
-      const wb = XLSX.utils.book_new();
-      const headers = ["区分", "段", "スロット", "レイアウト", "タグ1", "タグ2", "カートA — 画像名", "", "カートB — 画像名"];
-      const rows: (string | number)[][] = [headers];
-      const addRow = (区分: string, 段: string, スロット: string, レイアウト: string, タグ1: string, タグ2: string, a: string, b: string) => {
-        rows.push([区分, 段, スロット, レイアウト, タグ1, タグ2, a, "", b]);
-      };
-      const getItemName = (id: string | null) => (id && itemMap[id] ? itemMap[id].name : id ? "（削除済）" : "（未配置）");
-      addRow("ポスター", "—", "—", "—", "—", "—", getItemName(cartA.poster), getItemName(cartB.poster));
+      const html2canvas = (await import("html2canvas")).default;
+      const ExcelJS = (await import("exceljs")).default;
       
+      // 1. Capture Main Cart Layout Image
+      const cartCanvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      const cartImgBase64 = cartCanvas.toDataURL("image/png");
+
+      // 2. Create and Capture Detail Report Image (Off-screen)
+      const reportDiv = document.createElement("div");
+      reportDiv.style.position = "absolute";
+      reportDiv.style.left = "-9999px";
+      reportDiv.style.top = "0";
+      reportDiv.style.width = "1000px";
+      reportDiv.style.background = "#ffffff";
+      reportDiv.style.padding = "40px";
+      reportDiv.style.fontFamily = "sans-serif";
+      
+      const getItemName = (id: string | null) => (id && itemMap[id] ? itemMap[id].name : id ? "（削除済）" : "（未配置）");
+      
+      let reportHtml = `
+        <div style="margin-bottom: 30px; border-bottom: 2px solid #1b618d; padding-bottom: 10px;">
+          <h1 style="margin: 0; color: #1b618d; font-size: 24px;">展示カート配置レポート</h1>
+          <p style="margin: 5px 0 0 0; color: #64748b; font-size: 14px;">期間: ${formatPeriodDisplay(period)} | 作成日: ${new Date().toLocaleDateString("ja-JP")}</p>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <thead>
+            <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">区分</th>
+              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">場所</th>
+              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">タグ1</th>
+              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">タグ2</th>
+              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">カートA</th>
+              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">カートB</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">ポスター</td>
+              <td style="padding: 10px; border: 1px solid #e2e8f0;">—</td>
+              <td style="padding: 10px; border: 1px solid #e2e8f0;">—</td>
+              <td style="padding: 10px; border: 1px solid #e2e8f0;">—</td>
+              <td style="padding: 10px; border: 1px solid #e2e8f0;">${getItemName(cartA.poster)}</td>
+              <td style="padding: 10px; border: 1px solid #e2e8f0;">${getItemName(cartB.poster)}</td>
+            </tr>
+      `;
+
       const maxRows = Math.max(cartA.shelves.length, cartB.shelves.length);
       for (let idx = 0; idx < maxRows; idx++) {
-        const la = cartA.shelves[idx]; 
+        const la = cartA.shelves[idx];
         const lb = cartB.shelves[idx];
-        
         const shelfLabel = ["上段", "中段", "下段"][idx] || `${idx + 1}段目`;
+        const t1a = la ? getTagLabel(la.tag_1) || "なし" : "—";
+        const t1b = lb ? getTagLabel(lb.tag_1) || "なし" : "—";
+        const t2a = la ? getTagLabel(la.tag_2) || "なし" : "—";
+        const t2b = lb ? getTagLabel(lb.tag_2) || "なし" : "—";
         
-        if (la || lb) {
-          const t1a = la ? getTagLabel(la.tag_1) || "なし" : "—";
-          const t1b = lb ? getTagLabel(lb.tag_1) || "なし" : "—";
-          const t2a = la ? getTagLabel(la.tag_2) || "なし" : "—";
-          const t2b = lb ? getTagLabel(lb.tag_2) || "なし" : "—";
-          
-          const maxSlots = Math.max(la?.items.length || 0, lb?.items.length || 0);
-          for (let i = 0; i < maxSlots; i++) {
-            addRow(
-              "棚", shelfLabel, `スロット${i + 1}`,
-              `${la ? (la.layout_type === "document" ? "3冊" : la.layout_type === "pamphlet" ? "4冊" : "2冊") : "—"} / ${lb ? (lb.layout_type === "document" ? "3冊" : lb.layout_type === "pamphlet" ? "4冊" : "2冊") : "—"}`,
-              i === 0 ? t1a : "〃", i === 0 ? t2a : "〃",
-              getItemName(la?.items[i] ?? null), getItemName(lb?.items[i] ?? null),
-            );
-          }
+        reportHtml += `
+          <tr style="background: #f1f5f9;">
+            <td style="padding: 8px 10px; border: 1px solid #e2e8f0; font-weight: bold;" rowspan="${Math.max(la?.items.length || 0, lb?.items.length || 0)}">棚 (${shelfLabel})</td>
+            <td style="padding: 8px 10px; border: 1px solid #e2e8f0; font-size: 11px;">スロット1</td>
+            <td style="padding: 8px 10px; border: 1px solid #e2e8f0;">${t1a} / ${t1b}</td>
+            <td style="padding: 8px 10px; border: 1px solid #e2e8f0;">${t2a} / ${t2b}</td>
+            <td style="padding: 8px 10px; border: 1px solid #e2e8f0;">${getItemName(la?.items[0] ?? null)}</td>
+            <td style="padding: 8px 10px; border: 1px solid #e2e8f0;">${getItemName(lb?.items[0] ?? null)}</td>
+          </tr>
+        `;
+        
+        const slots = Math.max(la?.items.length || 0, lb?.items.length || 0);
+        for (let i = 1; i < slots; i++) {
+          reportHtml += `
+            <tr>
+              <td style="padding: 6px 10px; border: 1px solid #e2e8f0; font-size: 11px; color: #64748b;">スロット${i+1}</td>
+              <td style="padding: 6px 10px; border: 1px solid #e2e8f0; color: #94a3b8; font-size: 10px;">〃</td>
+              <td style="padding: 6px 10px; border: 1px solid #e2e8f0; color: #94a3b8; font-size: 10px;">〃</td>
+              <td style="padding: 6px 10px; border: 1px solid #e2e8f0;">${getItemName(la?.items[i] ?? null)}</td>
+              <td style="padding: 6px 10px; border: 1px solid #e2e8f0;">${getItemName(lb?.items[i] ?? null)}</td>
+            </tr>
+          `;
         }
       }
-      const ws = XLSX.utils.aoa_to_sheet(rows);
-      ws["!cols"] = [8, 6, 8, 12, 10, 10, 28, 2, 28].map((w) => ({ wch: w }));
-      XLSX.utils.book_append_sheet(wb, ws, `配置リスト_${formatPeriodDisplay(period)}`.substring(0, 31)); // Excel Sheet names can't exceed 31 chars
-      XLSX.writeFile(wb, `CartLayout_${formatPeriodDisplay(period).replace(/\s/g, "_")}.xlsx`);
-      alert("Excelファイルをダウンロードフォルダに保存しました。");
+
+      reportHtml += `</tbody></table>`;
+      reportDiv.innerHTML = reportHtml;
+      document.body.appendChild(reportDiv);
+      
+      const reportCanvas = await html2canvas(reportDiv, { scale: 2, backgroundColor: "#ffffff" });
+      const reportImgBase64 = reportCanvas.toDataURL("image/png");
+      document.body.removeChild(reportDiv);
+
+      // 3. Construct Excel Workbook
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("配置レポート");
+
+      // Add Cart layout image
+      const cartImageId = workbook.addImage({
+        base64: cartImgBase64,
+        extension: "png",
+      });
+      worksheet.addImage(cartImageId, {
+        tl: { col: 1, row: 1 },
+        ext: { width: 800, height: 400 }
+      });
+
+      // Add Data Report image below
+      const reportImageId = workbook.addImage({
+        base64: reportImgBase64,
+        extension: "png",
+      });
+      worksheet.addImage(reportImageId, {
+        tl: { col: 1, row: 22 }, // Start well below the first image
+        ext: { width: 900, height: reportCanvas.height * (900/reportCanvas.width) }
+      });
+
+      // 4. Generate and Download
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const cleanName = formatPeriodDisplay(period).replace(/[\s\(\)]/g, "_");
+      a.download = `report_${cleanName}.xlsx`;
+      a.href = url;
+      a.click();
+      
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      alert("Excelビジュアルレポートをダウンロードフォルダに保存しました。");
+    } catch (err: any) {
+      console.error("[Excel Export Error]", err);
+      alert("Excel書き出し中にエラーが発生しました。");
     } finally { setExporting(null); }
   };
 
@@ -1509,6 +1616,16 @@ export default function CartEditor() {
            <Save className="w-3.5 h-3.5" />}
           {saveStatus === "saved" ? "保存済み" : saveStatus === "error" ? "エラー" : saveStatus === "saving" ? "保存中…" : (isExistingPeriod ? "上書き保存" : "保存")}
         </button>
+
+        {isExistingPeriod && (
+          <button 
+            onClick={(e) => { e.stopPropagation(); handleDeleteLayout(); }}
+            className="flex items-center justify-center text-red-500 hover:bg-red-50 w-8 h-8 rounded-md transition-all border border-slate-200 hover:border-red-200 relative z-50 ml-1 shadow-sm active:scale-90"
+            title="この期間のデータを完全に削除"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
         {[
           { key: "png" as const, label: "PNG", icon: <FileImage className="w-3.5 h-3.5" />, cls: "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold shadow-xs" },
           { key: "pdf" as const, label: "PDF", icon: <Download className="w-3.5 h-3.5" />, cls: "border-red-400 bg-red-50 text-red-700 hover:bg-red-100 font-bold shadow-xs" },
