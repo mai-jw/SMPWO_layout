@@ -30,6 +30,7 @@ export interface UploadItemPayload {
   category: string;
   language: string;
   customName?: string;
+  poster_type?: string;
 }
 
 export function useUploadItem() {
@@ -75,6 +76,7 @@ export function useUploadItem() {
             url: publicUrlData.publicUrl,
             category,
             language,
+            poster_type,
           },
         ])
         .select()
@@ -137,11 +139,12 @@ export function useUpdateItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, name, category, language }: { id: string; name?: string; category?: string; language?: string }) => {
+    mutationFn: async ({ id, name, category, language, poster_type }: { id: string; name?: string; category?: string; language?: string; poster_type?: string }) => {
       const updates: any = {};
       if (name !== undefined) updates.name = name;
       if (category !== undefined) updates.category = category;
       if (language !== undefined) updates.language = language;
+      if (poster_type !== undefined) updates.poster_type = poster_type;
 
       const { data, error } = await supabase
         .from("items")

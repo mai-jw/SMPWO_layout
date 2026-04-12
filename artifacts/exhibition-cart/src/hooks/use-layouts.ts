@@ -10,6 +10,12 @@ import {
 } from "@/lib/supabase";
 
 export const LAYOUTS_QUERY_KEY = ["supabase-layouts"];
+export const LOCATIONS_QUERY_KEY = ["supabase-locations"];
+export const CONFIG_LOCATIONS_ID = "CONFIG__LOCATIONS";
+
+export const DEFAULT_LOCATIONS = [
+  "梅田A", "梅田GG", "N広場", "N道頓堀", "N北東", "築港", "天保山", "天王寺駅南東", "天王寺駅北西", "ハルカス"
+];
 
 function hydrateShelf(raw: unknown): ShelfData {
   const def = makeDefaultShelf();
@@ -50,6 +56,7 @@ export function useLayouts() {
       const { data, error } = await supabase
         .from(LAYOUTS_TABLE)
         .select("*")
+        .neq("period", CONFIG_LOCATIONS_ID)
         .order("created_at", { ascending: false });
       if (error) throw new Error(error.message);
       return (data ?? []).map((row) => ({
@@ -74,5 +81,52 @@ export function useSaveLayout() {
       return data as LayoutRecord;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: LAYOUTS_QUERY_KEY }),
+  });
+}
+
+export function useLocationsConfig() {
+  return useQuery({
+    queryKey: LOCATIONS_QUERY_KEY,
+    queryFn: async (): Promise<string[]> => {
+      const { data, error } = await supabase
+        .from(LAYOUTS_TABLE)
+        .select("*")
+        .eq("period", CONFIG_LOCATIONS_ID)
+        .maybeSingle();
+      
+      if (error) throw new Error(error.message);
+      
+      if (data && data.cart_a && typeof data.cart_a.posterType === "string" && data.cart_a.posterType.length > 0) {
+        try {
+          const parsed = JSON.parse(data.cart_a.posterType);
+          if (Array.isArray(parsed)) return parsed as string[];
+        } catch(e) {
+          console.warn("Failed to parse locations config, returning default", e);
+        }
+      }
+      return DEFAULT_LOCATIONS;
+    },
+  });
+}
+
+export function useSaveLocationsConfig() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (locations: string[]): Promise<void> => {
+      const dummyCart = makeInitialCartLayoutV2();
+      dummyCart.posterType = JSON.stringify(locations);
+      
+      const { error } = await supabase
+        .from(LAYOUTS_TABLE)
+        .upsert({ 
+          period: CONFIG_LOCATIONS_ID, 
+          cart_a: dummyCart, 
+          cart_b: makeInitialCartLayoutV2(), 
+          updated_at: new Date().toISOString() 
+        }, { onConflict: "period" });
+        
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: LOCATIONS_QUERY_KEY }),
   });
 }

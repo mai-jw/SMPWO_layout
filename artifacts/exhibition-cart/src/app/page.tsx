@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useItems, useUpdateItem, useDeleteItem } from "@/hooks/use-items";
-import { useLayouts, useSaveLayout } from "@/hooks/use-layouts";
+import { useLayouts, useSaveLayout, useLocationsConfig, useSaveLocationsConfig } from "@/hooks/use-layouts";
 import { useUI } from "@/context/ui-context";
 import {
   type Item, type ShelfKey, type ShelfData, type CartLayoutV2,
@@ -299,7 +299,7 @@ function CartPanel({
 
   return (
     <div className="flex flex-col items-center gap-0.5">
-      <h3 className="text-xs font-black text-muted-foreground tracking-widest">CART {cartId}</h3>
+      <h3 className="text-xs font-black text-muted-foreground tracking-widest">カート{cartId}</h3>
       <div className="w-[500px]">
         <div 
           className="relative w-full aspect-1080/1350 bg-contain bg-no-repeat bg-center"
@@ -405,9 +405,11 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
   
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [editCategory, setEditCategory] = useState("");
   const [editLanguage, setEditLanguage] = useState("");
+  const [editPosterType, setEditPosterType] = useState("");
   
   const updateMutation = useUpdateItem();
   const deleteMutation = useDeleteItem();
@@ -429,6 +431,7 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
     setEditValue(item.name);
     setEditCategory(item.category);
     setEditLanguage(item.language);
+    setEditPosterType(item.poster_type || "");
   };
 
   const handleSaveEdit = async (id: string) => {
@@ -442,6 +445,7 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
         name: editValue,
         category: editCategory,
         language: editLanguage,
+        poster_type: editCategory === "poster" ? editPosterType : undefined,
       });
     } catch (err) {
       console.error("Failed to update item:", err);
@@ -451,14 +455,10 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
 
   const handleDeleteItem = async (e: React.MouseEvent, item: Item) => {
     e.stopPropagation();
-    console.log("Delete button clicked for item:", item.id);
-    
-    if (!window.confirm("削除してもよろしいですか？")) return;
-    
     try {
-      console.log("Proceeding with deletion...");
       await deleteMutation.mutateAsync(item);
       setEditingId(null);
+      setDeleteConfirmId(null);
     } catch (err) {
       console.error("Failed to delete item:", err);
       alert("削除に失敗しました。詳細なエラー内容はコンソールを確認してください。");
@@ -573,22 +573,53 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
                         ))}
                         <option value="other">その他外国語</option>
                       </select>
+                      {editCategory === "poster" && (
+                        <select 
+                          value={editPosterType} 
+                          onChange={(e) => setEditPosterType(e.target.value)}
+                          className="col-span-2 text-[10px] font-black border border-amber-200 rounded px-1 py-1 bg-amber-50 text-amber-800 outline-none focus:border-amber-400"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <option value="">ポスタータイプ未設定</option>
+                          <option value="マグポス">マグポス</option>
+                          <option value="コルトン">コルトン</option>
+                          <option value="その他">その他</option>
+                        </select>
+                      )}
                     </div>
                     <div className="flex items-center justify-between pt-1">
-                      <button 
-                        onClick={(e) => handleDeleteItem(e, item)}
-                        className="p-1.5 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 relative z-20"
-                        title="削除"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleSaveEdit(item.id!); }} 
-                        className="p-1.5 bg-sky-600 text-white rounded-lg flex items-center justify-center shadow-sm hover:bg-sky-700 transition-colors px-4 relative z-20"
-                        title="保存"
-                      >
-                        <Check className="w-4 h-4" />
-                      </button>
+                      {deleteConfirmId === item.id ? (
+                        <div className="flex items-center gap-1 w-full bg-red-50 p-1 rounded-md border border-red-100 mt-1">
+                          <span className="text-[10px] text-red-600 font-bold px-1 whitespace-nowrap">削除しますか？</span>
+                          <div className="flex ml-auto gap-1">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(null); }}
+                              className="text-[10px] px-2 py-1 bg-white text-slate-500 rounded border border-slate-200 transition-colors hover:bg-slate-50"
+                            >取消</button>
+                            <button 
+                              onClick={(e) => handleDeleteItem(e, item)}
+                              className="text-[10px] px-2 py-1 bg-red-500 text-white rounded shadow-sm font-bold transition-colors hover:bg-red-600"
+                            >はい</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(item.id!); }}
+                            className="p-1.5 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 relative z-20"
+                            title="削除"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleSaveEdit(item.id!); }} 
+                            className="p-1.5 bg-sky-600 text-white rounded-lg flex items-center justify-center shadow-sm hover:bg-sky-700 transition-colors px-4 relative z-20"
+                            title="保存"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -647,12 +678,26 @@ function SelectionSidebar({
 
   const panelTitle = activeTarget ? (
     activeTarget.section === "poster" ? "ポスター選択" :
-    activeTarget.section === "item" ? `${activeTarget.shelfIndex + 1}段目 - スロット${activeTarget.itemIndex + 1} 選択` : ""
+    activeTarget.section === "shelf" ? `${["上段","中段","下段"][(activeTarget as any).shelfIndex]} - スロット${(activeTarget as any).slotIndex + 1} 選択` : ""
   ) : "";
-  const panelSub = activeTarget ? `CART ${activeTarget.cart}` : "";
+  const panelSub = activeTarget ? `カート${activeTarget.cart}` : "";
+
+  const LAYOUT_TO_CATEGORIES: Record<string, string[]> = {
+    booklet: ["booklet", "magazine"],
+    booklet_doc: ["booklet_doc"],
+    document: ["document"],
+    pamphlet: ["pamphlet", "invitation"],
+  };
 
   const filteredItems = items.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    if (activeTarget?.section === "shelf" && shelf) {
+      const allowedCategories = LAYOUT_TO_CATEGORIES[shelf.layout_type] || [];
+      return matchesSearch && allowedCategories.includes(item.category);
+    }
+    if (activeTarget?.section === "poster") {
+      return matchesSearch && item.category === "poster";
+    }
     const matchesFilter = filter === "all" || item.category === filter;
     return matchesSearch && matchesFilter;
   });
@@ -666,6 +711,7 @@ function SelectionSidebar({
     const mode = shelf.tag_1.type;
 
     const setMode = (newMode: "none" | "lang" | "free_dist") => {
+      if (!activeTarget) return;
       if (newMode === "none") {
         onTagChange(activeTarget.cart, shelfIdx, "tag_1", { type: "none", value: "" });
         onTagChange(activeTarget.cart, shelfIdx, "tag_2", { type: "none", value: "" });
@@ -804,7 +850,7 @@ function SelectionSidebar({
             <div key={cartId} className="space-y-2">
               <div className="flex items-center gap-2 px-1 text-slate-400">
                 <Library className="w-3.5 h-3.5" />
-                <span className="text-sm font-black uppercase tracking-wider text-slate-400">CART {cartId}</span>
+                <span className="text-sm font-black tracking-wider text-slate-400">カート{cartId}</span>
               </div>
               <div className="flex flex-col gap-2">
                 {[0, 1, 2].map((idx) => {
@@ -823,7 +869,7 @@ function SelectionSidebar({
                         }
                       `}
                     >
-                      <span>{idx + 1}段目</span>
+                      <span>{["上段","中段","下段"][idx]}</span>
                     </button>
                   );
                 })}
@@ -838,7 +884,7 @@ function SelectionSidebar({
         <div className="py-1 px-3 border-b border-border flex items-center justify-between bg-white sticky top-0 z-20 shadow-sm">
           <div>
             <p className="text-sm font-black uppercase tracking-wider text-muted-foreground leading-none">
-              {activeTarget.section === "tag" ? `CART ${activeTarget.cart} — ${shelfIdx + 1}段目` : (panelSub || "")}
+              {activeTarget.section === "tag" ? `カート${activeTarget.cart} — ${["上段","中段","下段"][shelfIdx]}` : (panelSub || "")}
             </p>
             {activeTarget.section !== "tag" && (
               <p className="text-xl font-black text-foreground mt-1.5">
@@ -873,33 +919,21 @@ function SelectionSidebar({
           </div>
         ) : (
           <div className="flex flex-col h-full">
-            <div className="p-5 pb-0">
-              {!isPoster && renderShelfSettings()}
-              {/* Search & Filter */}
-              <div className="space-y-3 mb-5">
-                <p className="text-[11px] font-black uppercase tracking-wider text-muted-foreground mb-1">画像ライブラリ検索</p>
+            <div className="p-4 pb-0">
+              <div className="space-y-3 mb-3">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <input type="text" placeholder="名前で検索..." value={searchQuery} onChange={(e) => setSearchQuery((e.target as HTMLInputElement).value)}
                     className="w-full text-sm font-bold border border-border rounded-xl pl-10 pr-4 py-3 bg-background text-foreground outline-none focus:ring-4 focus:ring-primary/10 placeholder:text-muted-foreground/50 transition-all shadow-sm" />
                 </div>
-                {!isPoster && (
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {(Object.entries(FILTER_LABELS) as [SidebarFilter, string][]).map(([key, label]) => (
-                      <button key={key} onClick={() => setFilter(key)}
-                        className={`text-[10px] py-2.5 rounded-lg font-black transition-all ${
-                          filter === key ? "bg-primary text-white shadow-md" : "bg-muted text-muted-foreground hover:bg-muted/80"
-                        }`}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
+                {activeTarget.section === "shelf" && shelf && (
+                  <p className="text-[10px] font-bold text-muted-foreground bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
+                    {shelf.layout_type === "booklet" ? "冊子・雑誌" : shelf.layout_type === "booklet_doc" ? "冊子サイズ書籍" : shelf.layout_type === "document" ? "文庫本サイズ書籍" : "パンフレット・招待状"} の画像を表示中
+                  </p>
                 )}
               </div>
             </div>
-
-            {/* Item List */}
-            <div className="flex-1 p-2.5 space-y-1.5">
+            <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5">
               {filteredItems.length === 0 ? (
                 <p className="text-base font-medium text-muted-foreground text-center py-10">該当する画像なし</p>
               ) : (
@@ -966,6 +1000,26 @@ export default function CartEditor() {
   const [showNewPanel, setShowNewPanel] = useState(false);
   const [newMonth, setNewMonth] = useState(() => new Date().getMonth() + 1);
   const [newHalf, setNewHalf] = useState<"前半" | "後半">(() => new Date().getDate() <= 15 ? "前半" : "後半");
+  const [newLocations, setNewLocations] = useState<string[]>(["すべて"]);
+  const [notes, setNotes] = useState("外国語の出版物は、奉仕者が好きな位置に変更できます。\n自分の得意な言語や地点の特色を考えて、自由に動かしてください。");
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [isEditingLocations, setIsEditingLocations] = useState(false);
+  const [locationEditInput, setLocationEditInput] = useState("");
+
+  const { data: locationsConfig = ["梅田A", "梅田GG", "N広場", "N道頓堀", "N北東", "築港", "天保山", "天王寺駅南東", "天王寺駅北西", "ハルカス"] } = useLocationsConfig();
+  const saveLocationsConfig = useSaveLocationsConfig();
+  const [editingLocList, setEditingLocList] = useState<string[]>([]);
+  
+  useEffect(() => {
+    setEditingLocList(locationsConfig);
+  }, [locationsConfig]);
+
+  const formatPeriodDisplay = useCallback((p: string) => {
+    if (!p) return "";
+    const [datePart, locPart] = p.split("::");
+    if (locPart) return `${datePart} (${locPart})`;
+    return `${datePart} (すべて)`;
+  }, []);
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const newPanelRef = useRef<HTMLDivElement>(null);
@@ -1076,7 +1130,7 @@ export default function CartEditor() {
   const handleClear = useCallback((cart: CartId, section: "poster" | "shelf", shelfIdx?: number, slotIdx?: number) => {
     const setter = getSetCart(cart);
     if (section === "poster") {
-      setter((prev) => ({ ...prev, poster: null }));
+      setter((prev) => ({ ...prev, poster: null, posterType: "" }));
     } else {
       setter((prev) => ({
         ...prev,
@@ -1131,7 +1185,7 @@ export default function CartEditor() {
     if (!period.trim()) return;
 
     if (isExistingPeriod) {
-      const ok = window.confirm(`「${period}」の上書き保存をします。\n過去のデータに上書きされ、元に戻せなくなりますがよろしいですか？`);
+      const ok = window.confirm(`「${formatPeriodDisplay(period)}」の上書き保存をします。\n過去のデータに上書きされ、元に戻せなくなりますがよろしいですか？`);
       if (!ok) return;
     }
 
@@ -1145,11 +1199,12 @@ export default function CartEditor() {
 
   const handleCreateNew = () => {
     const y = new Date().getFullYear();
-    const targetPeriod = `${y}-${String(newMonth).padStart(2, "0")}-${newHalf}`;
+    const locStr = newLocations.length === 0 || newLocations.includes("すべて") ? "" : `::${newLocations.join(",")}`;
+    const targetPeriod = `${y}-${String(newMonth).padStart(2, "0")}-${newHalf}${locStr}`;
     
-    // Safety check (should also be disabled in UI)
+    // Safety check
     if (layouts.some(l => l.period === targetPeriod)) {
-      alert(`「${targetPeriod}」は既に存在します。既存データを開いて編集してください。`);
+      alert(`「${formatPeriodDisplay(targetPeriod)}」は既に存在します。既存データを開いて編集してください。`);
       return;
     }
 
@@ -1171,9 +1226,9 @@ export default function CartEditor() {
     setExporting("png");
     try {
       const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(canvasRef.current, { scale: 2.5, useCORS: true, backgroundColor: "#f8f8f8" });
+      const canvas = await html2canvas(canvasRef.current, { scale: 2.5, useCORS: true, backgroundColor: "#ffffff" });
       const a = document.createElement("a");
-      a.download = `展示カート_${period}.png`;
+      a.download = `展示カート_${formatPeriodDisplay(period)}.png`;
       a.href = (canvas as HTMLCanvasElement).toDataURL("image/png");
       a.click();
     } finally { setExporting(null); }
@@ -1185,20 +1240,20 @@ export default function CartEditor() {
     try {
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
-      const canvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: "#f8f8f8" });
+      const canvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
       const imgData = (canvas as HTMLCanvasElement).toDataURL("image/png");
       const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
       const pW = pdf.internal.pageSize.getWidth();
       const pH = pdf.internal.pageSize.getHeight();
       pdf.setFontSize(11); pdf.setFont("helvetica", "bold");
-      pdf.text(`展示カートレイアウト — ${period}`, 12, 10);
+      pdf.text(`展示カートレイアウト — ${formatPeriodDisplay(period)}`, 12, 10);
       pdf.setFontSize(8); pdf.setFont("helvetica", "normal");
       pdf.text(new Date().toLocaleDateString("ja-JP"), pW - 12, 10, { align: "right" });
       const ratio = (canvas as HTMLCanvasElement).width / (canvas as HTMLCanvasElement).height;
       const imgW = pW - 24;
       const imgH = Math.min(imgW / ratio, pH - 20);
       pdf.addImage(imgData, "PNG", 12, 15, imgW, imgH);
-      pdf.save(`展示カート_${period}.pdf`);
+      pdf.save(`展示カート_${formatPeriodDisplay(period)}.pdf`);
     } finally { setExporting(null); }
   };
 
@@ -1220,7 +1275,7 @@ export default function CartEditor() {
         const la = cartA.shelves[idx]; 
         const lb = cartB.shelves[idx];
         
-        const shelfLabel = `${idx + 1}段目`;
+        const shelfLabel = ["上段", "中段", "下段"][idx] || `${idx + 1}段目`;
         
         if (la || lb) {
           const t1a = la ? getTagLabel(la.tag_1) || "なし" : "—";
@@ -1241,8 +1296,8 @@ export default function CartEditor() {
       }
       const ws = XLSX.utils.aoa_to_sheet(rows);
       ws["!cols"] = [8, 6, 8, 12, 10, 10, 28, 2, 28].map((w) => ({ wch: w }));
-      XLSX.utils.book_append_sheet(wb, ws, `配置リスト_${period}`);
-      XLSX.writeFile(wb, `展示カート_${period}.xlsx`);
+      XLSX.utils.book_append_sheet(wb, ws, `配置リスト_${formatPeriodDisplay(period)}`.substring(0, 31)); // Excel Sheet names can't exceed 31 chars
+      XLSX.writeFile(wb, `展示カート_${formatPeriodDisplay(period)}.xlsx`);
     } finally { setExporting(null); }
   };
 
@@ -1250,7 +1305,63 @@ export default function CartEditor() {
   const totalB = filledCountV2(cartB);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-56px)] bg-background">
+    <>
+      <AnimatePresence>
+        {isEditingLocations && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsEditingLocations(false)} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[80vh] overflow-hidden">
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                <h3 className="font-bold text-slate-800 flex items-center gap-2"><Settings className="w-4 h-4 text-primary" /> 地点の編集</h3>
+                <button onClick={() => setIsEditingLocations(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2 min-h-[50px]">
+                <div className="space-y-1">
+                  {editingLocList.map((loc, i) => (
+                    <div key={loc} className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-lg group border border-transparent">
+                      <div className="flex flex-col gap-0.5 opacity-30 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => {
+                          if (i === 0) return;
+                          setEditingLocList(prev => { const n = [...prev]; [n[i-1], n[i]] = [n[i], n[i-1]]; return n; });
+                        }} className="p-0.5 hover:bg-slate-200 rounded disabled:opacity-30" disabled={i === 0}><ChevronDown className="w-3 h-3 rotate-180" /></button>
+                        <button onClick={() => {
+                          if (i === editingLocList.length - 1) return;
+                          setEditingLocList(prev => { const n = [...prev]; [n[i+1], n[i]] = [n[i], n[i+1]]; return n; });
+                        }} className="p-0.5 hover:bg-slate-200 rounded disabled:opacity-30" disabled={i === editingLocList.length - 1}><ChevronDown className="w-3 h-3" /></button>
+                      </div>
+                      <span className="flex-1 text-sm font-bold truncate">{loc}</span>
+                      <button onClick={() => setEditingLocList(prev => prev.filter(l => l !== loc))} className="p-1.5 text-slate-400 hover:text-red-500 rounded-md hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  ))}
+                  {editingLocList.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-4">地点がありません</p>
+                  )}
+                </div>
+              </div>
+              <div className="p-3 border-t border-slate-100 bg-slate-50 flex gap-2">
+                <input value={locationEditInput} onChange={e => setLocationEditInput(e.target.value)} onKeyDown={e => {
+                  if (e.key === "Enter" && locationEditInput.trim()) {
+                    if (!editingLocList.includes(locationEditInput.trim())) setEditingLocList(prev => [...prev, locationEditInput.trim()]);
+                    setLocationEditInput("");
+                  }
+                }} placeholder="新しい地点名" className="flex-1 text-sm px-3 py-2 border border-slate-200 rounded-lg outline-none focus:border-primary" />
+                <button onClick={() => {
+                  if (locationEditInput.trim() && !editingLocList.includes(locationEditInput.trim())) {
+                    setEditingLocList(prev => [...prev, locationEditInput.trim()]);
+                    setLocationEditInput("");
+                  }
+                }} className="bg-slate-800 text-white px-3 text-sm font-bold rounded-lg hover:bg-slate-700">追加</button>
+              </div>
+              <div className="p-4 bg-white border-t border-slate-100 flex justify-end gap-2">
+                <button onClick={() => setIsEditingLocations(false)} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200">キャンセル</button>
+                <button onClick={() => { saveLocationsConfig.mutate(editingLocList); setIsEditingLocations(false); }} className="px-5 py-2 text-sm font-bold text-white bg-primary rounded-xl hover:bg-primary/90 flex items-center gap-1.5"><Save className="w-4 h-4"/>保存</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex flex-col h-[calc(100vh-56px)] bg-background">
       {/* Top Toolbar */}
       <div className="shrink-0 bg-white px-4 py-1.5 flex items-center gap-3 relative z-30">
         {/* Absolute border to stay on top of scaled logo */}
@@ -1280,13 +1391,13 @@ export default function CartEditor() {
                 setCartB(existing.cart_b);
               }
             }}
-            className="text-sm font-semibold text-foreground bg-transparent outline-none w-36 cursor-pointer"
+            className="text-sm font-semibold text-foreground bg-transparent outline-none w-56 cursor-pointer"
           >
             {!layouts.some(l => l.period === period) && (
-              <option value={period}>{period}</option>
+              <option value={period}>{formatPeriodDisplay(period)}</option>
             )}
             {layouts.map(l => (
-              <option key={l.period} value={l.period}>{l.period}</option>
+              <option key={l.period} value={l.period}>{formatPeriodDisplay(l.period)}</option>
             ))}
           </select>
         </div>
@@ -1299,7 +1410,7 @@ export default function CartEditor() {
             {showNewPanel && (
               <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
                 className="absolute top-full left-0 mt-1 bg-card border border-border rounded-xl shadow-xl p-4 z-30 min-w-[240px] flex flex-col gap-3">
-                <p className="text-xs font-bold text-muted-foreground">新しい展示期間</p>
+                <p className="text-xs font-bold text-muted-foreground">期間</p>
                 <div className="flex items-center gap-2">
                   <select value={newMonth} onChange={(e) => setNewMonth(Number(e.target.value))}
                     className="flex-1 text-sm border border-border rounded-lg px-2 py-1.5 bg-background text-foreground font-medium outline-none">
@@ -1313,15 +1424,81 @@ export default function CartEditor() {
                     <option value="後半">後半</option>
                   </select>
                 </div>
-                <button 
-                  onClick={handleCreateNew}
-                  disabled={layouts.some(l => l.period === `${new Date().getFullYear()}-${String(newMonth).padStart(2, "0")}-${newHalf}`)}
-                  className="w-full text-sm bg-primary text-white rounded-lg py-2 font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                  作成
-                </button>
-                {layouts.some(l => l.period === `${new Date().getFullYear()}-${String(newMonth).padStart(2, "0")}-${newHalf}`) && (
-                  <p className="text-[10px] text-red-500 font-bold text-center">※この期間は既に作成済みです</p>
-                )}
+                {/* Location Selection */}
+                <div className="flex flex-col gap-1.5 border-t border-border mt-1 pt-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-bold text-muted-foreground">地点を選択</p>
+                      {newLocations.length > 0 && !newLocations.includes("すべて") && (
+                        <button
+                          onClick={() => setNewLocations([])}
+                          className="text-[10px] text-slate-400 hover:text-red-500 border border-slate-200 hover:border-red-200 bg-white px-1.5 py-0.5 rounded transition-all"
+                        >すべて解除</button>
+                      )}
+                    </div>
+                    <button 
+                      onClick={() => setIsEditingLocations(true)}
+                      className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-md hover:bg-muted"
+                      title="地点リストを編集"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 max-h-[160px] overflow-y-auto px-1 py-1">
+                    <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={newLocations.includes("すべて")}
+                        onChange={() => {
+                          setNewLocations(["すべて"]);
+                        }}
+                        className="rounded border-slate-300 text-primary focus:ring-primary/20 cursor-pointer"
+                      />
+                      すべて
+                    </label>
+                    {locationsConfig.map(loc => (
+                      <label key={loc} className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={!newLocations.includes("すべて") && newLocations.includes(loc)}
+                          onChange={() => {
+                            setNewLocations(prev => {
+                              const filtered = prev.filter(l => l !== "すべて");
+                              if (filtered.includes(loc)) {
+                                const res = filtered.filter(l => l !== loc);
+                                return res.length === 0 ? ["すべて"] : res;
+                              }
+                              return [...filtered, loc];
+                            });
+                          }}
+                          className="rounded border-slate-300 text-primary focus:ring-primary/20 cursor-pointer"
+                        />
+                        <span className="truncate">{loc}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {(() => {
+                  const locStr = newLocations.includes("すべて") ? "" : `::${newLocations.join(",")}`;
+                  const targetPeriodFromState = `${new Date().getFullYear()}-${String(newMonth).padStart(2, "0")}-${newHalf}${locStr}`;
+                  const isTargetExists = layouts.some(l => l.period === targetPeriodFromState);
+
+                  return (
+                    <div className="flex flex-col gap-2 mt-2">
+                      <button 
+                        onClick={handleCreateNew}
+                        disabled={isTargetExists}
+                        className="w-full text-sm bg-primary text-white rounded-lg py-2 font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        作成
+                      </button>
+                      {isTargetExists && (
+                        <p className="text-[10px] text-red-500 font-bold text-center">※この組み合わせは既に存在します</p>
+                      )}
+                    </div>
+                  );
+                })()}
               </motion.div>
             )}
           </AnimatePresence>
@@ -1383,19 +1560,115 @@ export default function CartEditor() {
 
           <div className="w-full overflow-x-auto pb-4 pt-2 flex justify-center">
             <motion.div layout className="m-auto shrink-0">
-              <div ref={canvasRef as any} className="flex -space-x-[180px] items-start p-4 bg-background shrink-0 -mx-[175px]">
-                <CartPanel
-                  cartId="A" layout={cartA} activeTarget={activeTarget}
-                  isSelecting={false} itemMap={itemMap}
-                  onSlotClick={handleSlotClick} onClear={handleClear}
-                  onTagClick={handleTagClick}
-                />
-                <CartPanel
-                  cartId="B" layout={cartB} activeTarget={activeTarget}
-                  isSelecting={false} itemMap={itemMap}
-                  onSlotClick={handleSlotClick} onClear={handleClear}
-                  onTagClick={handleTagClick}
-                />
+              <div ref={canvasRef as any} className="flex flex-col items-center p-4 bg-background shrink-0">
+                <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
+                  <CartPanel
+                    cartId="A" layout={cartA} activeTarget={activeTarget}
+                    isSelecting={false} itemMap={itemMap}
+                    onSlotClick={handleSlotClick} onClear={handleClear}
+                    onTagClick={handleTagClick}
+                  />
+                  <CartPanel
+                    cartId="B" layout={cartB} activeTarget={activeTarget}
+                    isSelecting={false} itemMap={itemMap}
+                    onSlotClick={handleSlotClick} onClear={handleClear}
+                    onTagClick={handleTagClick}
+                  />
+                </div>
+
+                {/* Summary Table */}
+                <div className="w-full mt-6 flex gap-8 justify-center text-xs">
+                  {([{ id: "A" as CartId, layout: cartA, setCart: setCartA }, { id: "B" as CartId, layout: cartB, setCart: setCartB }]).map(({ id, layout, setCart }) => {
+                    const SHELF_LABELS = ["上段", "中段", "下段"];
+                    const posterItem = layout.poster ? itemMap[layout.poster] : null;
+                    return (
+                      <div key={id} className="flex-1 max-w-[400px]">
+                        <p className="text-center font-black text-sm mb-2 text-foreground">カート{id}</p>
+                        <table className="w-full border-collapse text-[11px]">
+                          <tbody>
+                            {/* Poster */}
+                            <tr className="border-t border-slate-300">
+                              <td className="py-1.5 pr-2 font-bold text-slate-500 align-top whitespace-nowrap">ポスター</td>
+                              <td className="py-1.5">
+                                <div className="font-bold text-foreground">{posterItem?.name || "—"}</div>
+                                <div className="flex gap-3 mt-0.5">
+                                  <span className="text-red-600 font-bold">{posterItem?.language === "ja" ? "日本語" : posterItem?.language === "en" ? "英語" : posterItem?.language || ""}</span>
+                                  <span className="text-slate-500">({posterItem?.poster_type || layout.posterType || "未設定"})</span>
+                                </div>
+                              </td>
+                            </tr>
+                            {/* Shelves */}
+                            {layout.shelves.map((shelf, sIdx) => {
+                              const shelfItems = shelf.items.map(itemId => itemId ? itemMap[itemId] : null);
+                              const hasItems = shelfItems.some(i => i !== null);
+                              const layoutLabel = shelf.layout_type === "booklet" ? "冊冊" : shelf.layout_type === "booklet_doc" ? "冊冊" : shelf.layout_type === "document" ? "冊冊" : shelf.layout_type === "pamphlet" ? "冊冊" : "";
+                              return (
+                                <tr key={sIdx} className="border-t border-slate-300">
+                                  <td className="py-1.5 pr-2 font-bold text-slate-500 align-top whitespace-nowrap">{SHELF_LABELS[sIdx]}</td>
+                                  <td className="py-1.5">
+                                    {shelf.layout_type === "none" ? (
+                                      <span className="text-slate-300">—</span>
+                                    ) : (
+                                      <>
+                                        <div className="font-bold text-foreground">
+                                          {Array.from(new Set(shelfItems.map((item) => item?.name).filter(Boolean))).join("、") || "—"}
+                                        </div>
+                                        <div className="flex gap-3 mt-0.5 flex-wrap">
+                                          {shelf.tag_1.type === "lang" && shelf.tag_1.value && (
+                                            <span className="text-red-600 font-bold">{shelf.tag_1.value}</span>
+                                          )}
+                                          {shelf.tag_2.type === "lang" && shelf.tag_2.value && (
+                                            <span className="text-red-600 font-bold">{shelf.tag_2.value}</span>
+                                          )}
+                                          {shelf.tag_1.type === "free_dist" && (
+                                            <span className="text-zinc-600 font-bold">無料で差し上げています</span>
+                                          )}
+                                        </div>
+                                      </>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Supplementary Notes */}
+                <div className="w-full mt-4 max-w-[820px] mx-auto">
+                  {isEditingNotes ? (
+                    <div className="relative">
+                      <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        rows={3}
+                        autoFocus
+                        className="w-full text-xs text-foreground bg-white border border-slate-200 rounded-lg outline-none resize-none leading-relaxed font-medium p-3 focus:ring-2 focus:ring-primary/20"
+                        placeholder="補足事項を入力..."
+                      />
+                      <button
+                        onClick={() => setIsEditingNotes(false)}
+                        className="absolute top-2 right-2 text-[10px] font-bold bg-primary text-white px-2 py-0.5 rounded hover:bg-primary/90 transition-colors"
+                      >
+                        完了
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative group">
+                      <p className="text-xs text-foreground leading-relaxed font-medium whitespace-pre-wrap">{notes}</p>
+                      <button
+                        onClick={() => setIsEditingNotes(true)}
+                        className="absolute -top-1 -right-1 p-1 rounded-md bg-white border border-slate-200 text-slate-400 hover:text-primary hover:border-primary/40 opacity-0 group-hover:opacity-100 transition-all shadow-sm"
+                        title="補足事項を編集"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
           </div>
@@ -1420,5 +1693,6 @@ export default function CartEditor() {
         </div>
       </div>
     </div>
+    </>
   );
 }

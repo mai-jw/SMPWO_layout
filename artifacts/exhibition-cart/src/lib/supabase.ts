@@ -22,6 +22,7 @@ export interface Item {
   url: string;
   category: string;
   language: string;
+  poster_type?: string;
   created_at?: string;
 }
 
@@ -44,6 +45,7 @@ export interface ShelfData {
 
 export interface CartLayoutV2 {
   poster: string | null; // item ID
+  posterType: string; // "マグポス" | "コルトン" | "その他" | ""
   shelves: ShelfData[]; // Fixed to 3 shelves
 }
 
@@ -62,6 +64,7 @@ export function makeDefaultShelf(type: ShelfLayoutType = "none"): ShelfData {
 export function makeInitialCartLayoutV2(): CartLayoutV2 {
   return {
     poster: null,
+    posterType: "",
     shelves: [
       makeDefaultShelf("none"),
       makeDefaultShelf("none"),

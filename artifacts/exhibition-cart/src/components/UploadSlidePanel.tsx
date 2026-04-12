@@ -27,6 +27,7 @@ interface StagedFile {
   name: string;
   category: string;
   language: string;
+  posterType: string;
   status: UploadStatus;
   errorMessage?: string;
 }
@@ -51,6 +52,7 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
         name: file.name.split('.').slice(0, -1).join('.'),
         category,
         language,
+        posterType: category === "poster" ? "マグポス" : "",
         status: "idle" as UploadStatus,
       };
     });
@@ -100,6 +102,7 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
           category: item.category,
           language: item.language,
           customName: item.name,
+          poster_type: item.category === "poster" ? item.posterType : undefined,
         });
 
         setStagedFiles((prev) =>
@@ -319,6 +322,19 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
                                 <option value="id">インドネシア語</option>
                                 <option value="es">スペイン語</option>
                               </select>
+
+                              {file.category === "poster" && (
+                                <select
+                                  value={file.posterType}
+                                  onChange={(e) => updateFileMeta(file.id, "posterType", e.target.value)}
+                                  disabled={file.status !== "idle" && file.status !== "error"}
+                                  className="text-[10px] bg-amber-50 border border-amber-200 rounded-md px-1.5 py-1 text-amber-800 font-bold focus:ring-2 focus:ring-primary/20 outline-none"
+                                >
+                                  <option value="マグポス">マグポス</option>
+                                  <option value="コルトン">コルトン</option>
+                                  <option value="その他">その他</option>
+                                </select>
+                              )}
                             </div>
 
                             {file.status === "error" && (
