@@ -36,9 +36,12 @@ minimumReleaseAgeExclude:
   - stripe-replit-sync
 
 onlyBuiltDependencies:
+  - '@parcel/watcher'
   - '@swc/core'
+  - core-js
   - esbuild
   - msw
+  - sharp
   - unrs-resolver
 
 overrides:
