@@ -1257,7 +1257,21 @@ export default function CartEditor() {
     if (!canvasRef.current) return;
     setExporting("png");
     try {
-      const canvas = await html2canvas(canvasRef.current, { scale: 2.5, useCORS: true, backgroundColor: "#ffffff" });
+      const canvas = await html2canvas(canvasRef.current, { 
+        scale: 2.5, 
+        useCORS: true, 
+        backgroundColor: "#ffffff",
+        onclone: (clonedDoc) => {
+          const el = clonedDoc.getElementById("export-container");
+          if (el) {
+            el.style.backgroundColor = "white";
+            el.style.paddingLeft = "100px";
+            el.style.paddingRight = "100px";
+            el.style.paddingTop = "40px";
+            el.style.paddingBottom = "40px";
+          }
+        }
+      });
       const dataUrl = canvas.toDataURL("image/png");
       
       // Blob変換を経由することでWebViewでの拡張子なしUUIDファイル化を回避
@@ -1273,7 +1287,21 @@ export default function CartEditor() {
     if (!canvasRef.current) return;
     setExporting("pdf");
     try {
-      const canvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      const canvas = await html2canvas(canvasRef.current, { 
+        scale: 2, 
+        useCORS: true, 
+        backgroundColor: "#ffffff",
+        onclone: (clonedDoc) => {
+          const el = clonedDoc.getElementById("export-container");
+          if (el) {
+            el.style.backgroundColor = "white";
+            el.style.paddingLeft = "100px";
+            el.style.paddingRight = "100px";
+            el.style.paddingTop = "40px";
+            el.style.paddingBottom = "40px";
+          }
+        }
+      });
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
       const pW = pdf.internal.pageSize.getWidth();
@@ -1300,7 +1328,21 @@ export default function CartEditor() {
     try {
       
       // 1. Capture Main Cart Layout Image
-      const cartCanvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      const cartCanvas = await html2canvas(canvasRef.current, { 
+        scale: 2, 
+        useCORS: true, 
+        backgroundColor: "#ffffff",
+        onclone: (clonedDoc) => {
+          const el = clonedDoc.getElementById("export-container");
+          if (el) {
+            el.style.backgroundColor = "white";
+            el.style.paddingLeft = "100px";
+            el.style.paddingRight = "100px";
+            el.style.paddingTop = "40px";
+            el.style.paddingBottom = "40px";
+          }
+        }
+      });
       const cartImgBase64 = cartCanvas.toDataURL("image/png");
 
       // 2. Create and Capture Detail Report Image (Off-screen)
@@ -1712,7 +1754,7 @@ export default function CartEditor() {
 
           <div className="w-full overflow-x-auto pb-4 pt-2 flex justify-center">
             <motion.div layout className="m-auto shrink-0">
-              <div ref={canvasRef as any} className="flex flex-col items-center p-4 bg-background shrink-0">
+              <div ref={canvasRef as any} id="export-container" className="flex flex-col items-center p-4 bg-background shrink-0">
                 <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
                   <CartPanel
                     cartId="A" layout={cartA} activeTarget={activeTarget}
