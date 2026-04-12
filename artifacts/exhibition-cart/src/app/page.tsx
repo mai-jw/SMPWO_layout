@@ -1228,6 +1228,31 @@ export default function CartEditor() {
     setShowNewPanel(false);
   };
 
+  const saveFileWrapper = async (blob: Blob, suggestedName: string) => {
+    if ('showSaveFilePicker' in window) {
+      try {
+        const handle = await (window as any).showSaveFilePicker({
+          suggestedName,
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return;
+      } catch (err: any) {
+        if (err.name === 'AbortError') return; // Cancelled
+      }
+    }
+    // Fallback: 依然としてWebViewなどでID化される可能性は残るが、最善の努力を行う
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.download = suggestedName;
+    a.href = url;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   const handleExportPng = async () => {
     if (!canvasRef.current) return;
     setExporting("png");
@@ -1238,17 +1263,9 @@ export default function CartEditor() {
       // Blob変換を経由することでWebViewでの拡張子なしUUIDファイル化を回避
       const res = await fetch(dataUrl);
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
       
-      const a = document.createElement("a");
-      a.download = "cart-layout.png";
-      a.href = url;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      alert("PNG画像をダウンロードフォルダに保存しました。");
+      await saveFileWrapper(blob, "cart-layout.png");
+      alert("PNG画像を保存しました。");
     } finally { setExporting(null); }
   };
 
@@ -1271,16 +1288,9 @@ export default function CartEditor() {
       pdf.addImage(imgData, "PNG", 12, 15, imgW, imgH);
       
       const blob = pdf.output("blob");
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.download = "cart-layout.pdf";
-      a.href = url;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
       
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      alert("PDFドキュメントをダウンロードフォルダに保存しました。");
+      await saveFileWrapper(blob, "cart-layout.pdf");
+      alert("PDFドキュメントを保存しました。");
     } finally { setExporting(null); }
   };
 
@@ -1402,16 +1412,9 @@ export default function CartEditor() {
       // 4. Generate and Download
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.download = "cart-layout.xlsx";
-      a.href = url;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
       
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      alert("Excelビジュアルレポートをダウンロードフォルダに保存しました。");
+      await saveFileWrapper(blob, "cart-layout.xlsx");
+      alert("Excelビジュアルレポートを保存しました。");
     } catch (err: any) {
       console.error("[Excel Export Error]", err);
       alert("Excel書き出し中にエラーが発生しました。");
