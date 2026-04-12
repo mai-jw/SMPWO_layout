@@ -1228,21 +1228,28 @@ export default function CartEditor() {
     setShowNewPanel(false);
   };
 
-  const saveFileWrapper = async (blob: Blob, suggestedName: string) => {
+  const saveFileWrapper = async (blob: Blob, suggestedName: string, mimeType?: string, extension?: string) => {
     if ('showSaveFilePicker' in window) {
       try {
-        const handle = await (window as any).showSaveFilePicker({
-          suggestedName,
-        });
+        const pickerOptions: any = { suggestedName };
+        if (mimeType && extension) {
+          pickerOptions.types = [{
+            description: 'Files',
+            accept: { [mimeType]: [extension] }
+          }];
+        }
+        const handle = await (window as any).showSaveFilePicker(pickerOptions);
         const writable = await handle.createWritable();
         await writable.write(blob);
         await writable.close();
         return;
       } catch (err: any) {
-        if (err.name === 'AbortError') return; // Cancelled
+        if (err.name === 'AbortError') return; // Cancelled by user
+        console.warn("[SaveFilePicker] Failed, falling back to classic download:", err);
       }
     }
-    // Fallback: 依然としてWebViewなどでID化される可能性は残るが、最善の努力を行う
+    
+    // Fallback: Use <a> tag download
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.download = suggestedName;
@@ -1278,7 +1285,7 @@ export default function CartEditor() {
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       
-      await saveFileWrapper(blob, "cart-layout.png");
+      await saveFileWrapper(blob, "cart-layout.png", "image/png", ".png");
       alert("PNG画像を保存しました。");
     } finally { setExporting(null); }
   };
@@ -1324,7 +1331,7 @@ export default function CartEditor() {
       
       const blob = pdf.output("blob");
       
-      await saveFileWrapper(blob, "cart-layout.pdf");
+      await saveFileWrapper(blob, "cart-layout.pdf", "application/pdf", ".pdf");
       alert("PDFドキュメントを保存しました。");
     } finally { setExporting(null); }
   };
@@ -1333,7 +1340,6 @@ export default function CartEditor() {
     if (!canvasRef.current) return;
     setExporting("xlsx");
     try {
-      
       // 1. Capture Main Cart Layout Image
       const cartCanvas = await html2canvas(canvasRef.current, { 
         scale: 2, 
@@ -1352,118 +1358,30 @@ export default function CartEditor() {
       });
       const cartImgBase64 = cartCanvas.toDataURL("image/png");
 
-      // 2. Create and Capture Detail Report Image (Off-screen)
-      const reportDiv = document.createElement("div");
-      reportDiv.style.position = "absolute";
-      reportDiv.style.left = "-9999px";
-      reportDiv.style.top = "0";
-      reportDiv.style.width = "1000px";
-      reportDiv.style.background = "#ffffff";
-      reportDiv.style.padding = "40px";
-      reportDiv.style.fontFamily = "sans-serif";
-      
-      const getItemName = (id: string | null) => (id && itemMap[id] ? itemMap[id].name : id ? "（削除済）" : "（未配置）");
-      
-      let reportHtml = `
-        <div style="margin-bottom: 30px; border-bottom: 2px solid #1b618d; padding-bottom: 10px;">
-          <h1 style="margin: 0; color: #1b618d; font-size: 24px;">展示カート配置レポート</h1>
-          <p style="margin: 5px 0 0 0; color: #64748b; font-size: 14px;">期間: ${formatPeriodDisplay(period)} | 作成日: ${new Date().toLocaleDateString("ja-JP")}</p>
-        </div>
-        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-          <thead>
-            <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">区分</th>
-              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">場所</th>
-              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">タグ1</th>
-              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">タグ2</th>
-              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">カートA</th>
-              <th style="padding: 12px; text-align: left; border: 1px solid #e2e8f0;">カートB</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">ポスター</td>
-              <td style="padding: 10px; border: 1px solid #e2e8f0;">—</td>
-              <td style="padding: 10px; border: 1px solid #e2e8f0;">—</td>
-              <td style="padding: 10px; border: 1px solid #e2e8f0;">—</td>
-              <td style="padding: 10px; border: 1px solid #e2e8f0;">${getItemName(cartA.poster)}</td>
-              <td style="padding: 10px; border: 1px solid #e2e8f0;">${getItemName(cartB.poster)}</td>
-            </tr>
-      `;
-
-      const maxRows = Math.max(cartA.shelves.length, cartB.shelves.length);
-      for (let idx = 0; idx < maxRows; idx++) {
-        const la = cartA.shelves[idx];
-        const lb = cartB.shelves[idx];
-        const shelfLabel = ["上段", "中段", "下段"][idx] || `${idx + 1}段目`;
-        const t1a = la ? getTagLabel(la.tag_1) || "なし" : "—";
-        const t1b = lb ? getTagLabel(lb.tag_1) || "なし" : "—";
-        const t2a = la ? getTagLabel(la.tag_2) || "なし" : "—";
-        const t2b = lb ? getTagLabel(lb.tag_2) || "なし" : "—";
-        
-        reportHtml += `
-          <tr style="background: #f1f5f9;">
-            <td style="padding: 8px 10px; border: 1px solid #e2e8f0; font-weight: bold;" rowspan="${Math.max(la?.items.length || 0, lb?.items.length || 0)}">棚 (${shelfLabel})</td>
-            <td style="padding: 8px 10px; border: 1px solid #e2e8f0; font-size: 11px;">スロット1</td>
-            <td style="padding: 8px 10px; border: 1px solid #e2e8f0;">${t1a} / ${t1b}</td>
-            <td style="padding: 8px 10px; border: 1px solid #e2e8f0;">${t2a} / ${t2b}</td>
-            <td style="padding: 8px 10px; border: 1px solid #e2e8f0;">${getItemName(la?.items[0] ?? null)}</td>
-            <td style="padding: 8px 10px; border: 1px solid #e2e8f0;">${getItemName(lb?.items[0] ?? null)}</td>
-          </tr>
-        `;
-        
-        const slots = Math.max(la?.items.length || 0, lb?.items.length || 0);
-        for (let i = 1; i < slots; i++) {
-          reportHtml += `
-            <tr>
-              <td style="padding: 6px 10px; border: 1px solid #e2e8f0; font-size: 11px; color: #64748b;">スロット${i+1}</td>
-              <td style="padding: 6px 10px; border: 1px solid #e2e8f0; color: #94a3b8; font-size: 10px;">〃</td>
-              <td style="padding: 6px 10px; border: 1px solid #e2e8f0; color: #94a3b8; font-size: 10px;">〃</td>
-              <td style="padding: 6px 10px; border: 1px solid #e2e8f0;">${getItemName(la?.items[i] ?? null)}</td>
-              <td style="padding: 6px 10px; border: 1px solid #e2e8f0;">${getItemName(lb?.items[i] ?? null)}</td>
-            </tr>
-          `;
-        }
-      }
-
-      reportHtml += `</tbody></table>`;
-      reportDiv.innerHTML = reportHtml;
-      document.body.appendChild(reportDiv);
-      
-      const reportCanvas = await html2canvas(reportDiv, { scale: 2, backgroundColor: "#ffffff" });
-      const reportImgBase64 = reportCanvas.toDataURL("image/png");
-      document.body.removeChild(reportDiv);
-
-      // 3. Construct Excel Workbook
+      // 2. Construct Excel Workbook
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet("配置レポート");
+      const worksheet = workbook.addWorksheet("配置レイアウト");
 
       // Add Cart layout image
       const cartImageId = workbook.addImage({
         base64: cartImgBase64,
         extension: "png",
       });
+
+      const cartRatio = cartCanvas.width / cartCanvas.height;
+      const targetWidth = 800; // Reference width in Excel pixels
+
       worksheet.addImage(cartImageId, {
         tl: { col: 1, row: 1 },
-        ext: { width: 800, height: 400 }
+        ext: { width: targetWidth, height: targetWidth / cartRatio }
       });
 
-      // Add Data Report image below
-      const reportImageId = workbook.addImage({
-        base64: reportImgBase64,
-        extension: "png",
-      });
-      worksheet.addImage(reportImageId, {
-        tl: { col: 1, row: 22 }, // Start well below the first image
-        ext: { width: 900, height: reportCanvas.height * (900/reportCanvas.width) }
-      });
-
-      // 4. Generate and Download
+      // 3. Generate and Download
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
       
-      await saveFileWrapper(blob, "cart-layout.xlsx");
-      alert("Excelビジュアルレポートを保存しました。");
+      await saveFileWrapper(blob, "cart-layout.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx");
+      alert("Excelファイルを保存しました。");
     } catch (err: any) {
       console.error("[Excel Export Error]", err);
       alert("Excel書き出し中にエラーが発生しました。");
