@@ -6,7 +6,9 @@ import {
   ShoppingCart, Image as ImageIcon, X, Download, FileSpreadsheet,
   FileImage, Save, Copy, CalendarDays, RotateCcw, CheckCircle2,
   ChevronDown, Tag, Pencil, ChevronRight, Search, Layers, Upload,
-  Check, Trash2, Library, Settings,
+  Check, Trash2, Library, Settings, Star, Book, BookOpen, FileText,
+  Mail, Bookmark, Notebook, Scroll, Contact, Newspaper, BookCopy, Files,
+  Map, BookText, Languages,
 } from "lucide-react";
 import Link from "next/link";
 import { useItems, useUpdateItem, useDeleteItem } from "@/hooks/use-items";
@@ -362,17 +364,28 @@ interface SelectionSidebarProps {
      LeftGallery — Left sidebar for previewing gallery items
    ═══════════════════════════════════════════════════════ */
 
-type GalleryFilterType = "all" | "poster" | "booklet" | "magazine" | "booklet_doc" | "document" | "pamphlet" | "invitation";
+type GalleryFilterType = "all" | "poster" | "booklet" | "magazine" | "booklet_doc" | "document" | "pamphlet" | "bible";
 
 const GALLERY_FILTER_LABELS: Record<GalleryFilterType, string> = {
   all: "すべて",
   poster: "ポスター",
-  booklet: "冊子",
+  booklet: "冊子類",
   magazine: "雑誌",
-  booklet_doc: "冊子サイズ書籍",
-  document: "文庫本サイズ書籍",
-  pamphlet: "パンフレット",
-  invitation: "招待状",
+  booklet_doc: "書籍\n(冊子サイズ)",
+  document: "書籍\n(文庫サイズ)",
+  pamphlet: "パンフレット/\n招待状",
+  bible: "聖書",
+};
+
+const GALLERY_FILTER_ICONS: Record<GalleryFilterType, any> = {
+  all: Library,
+  poster: ImageIcon,
+  booklet: BookText,
+  magazine: Newspaper,
+  booklet_doc: Book,
+  document: BookCopy,
+  pamphlet: Map,
+  bible: BookOpen,
 };
 
 const LANG_FILTER_OPTIONS = [
@@ -475,16 +488,16 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
       className="shrink-0 bg-white border-r border-border flex flex-col overflow-hidden transition-none"
       style={{ width }}
     >
-      <div className="p-4 border-b border-border flex items-center justify-between">
+      <div className="py-1 px-4 bg-[#64748b] flex items-center justify-between shadow-md relative z-10">
         <div className="flex items-center gap-3">
-          <ImageIcon className="w-9 h-9 text-foreground" />
+          <Library className="w-5 h-5 text-white" />
           <div>
-            <p className="text-base font-black text-foreground">画像データ</p>
+            <p className="font-rounded font-black text-sm tracking-widest text-white mt-0.5">LIBRARY</p>
           </div>
         </div>
         <button 
           onClick={onOpenUpload}
-          className="p-2 bg-sky-50 text-sky-600 hover:bg-sky-600 hover:text-white rounded-lg transition-all flex items-center justify-center group border border-sky-100"
+          className="p-1.5 bg-amber-400 text-amber-950 hover:bg-amber-300 rounded-lg transition-all flex items-center justify-center group shadow-md active:scale-95"
           title="画像をアップロード"
         >
           <Upload className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" />
@@ -497,32 +510,38 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
           <input type="text" placeholder="名前で検索..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full text-sm font-medium border border-border rounded-lg pl-9 pr-3 py-2.5 bg-slate-50 text-foreground outline-none focus:border-sky-400 placeholder:text-slate-400 transition-all" />
         </div>
-        <div className="flex flex-wrap gap-1">
-          {(Object.entries(GALLERY_FILTER_LABELS) as [GalleryFilterType, string][]).map(([key, label]) => (
-            <button key={key} onClick={() => setFilter(key as GalleryFilterType)}
-              className={`text-[11px] px-2 py-1.5 rounded-lg font-bold transition-all border ${
-                filter === key 
-                  ? "bg-sky-500 text-white border-sky-600 shadow-sm" 
-                  : "bg-sky-50/50 text-sky-700 border-sky-100 hover:bg-sky-100/80"
-              }`}>
-              {label}
-            </button>
-          ))}
+        <div className="grid grid-cols-4 gap-1.5">
+          {(Object.entries(GALLERY_FILTER_LABELS) as [GalleryFilterType, string][]).map(([key, label]) => {
+            const Icon = GALLERY_FILTER_ICONS[key];
+            return (
+              <button key={key} onClick={() => setFilter(key as GalleryFilterType)}
+                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all border ${
+                  filter === key 
+                    ? "bg-sky-500 text-white border-sky-600 shadow-sm" 
+                    : "bg-white text-slate-500 border-slate-100 hover:border-sky-200 hover:bg-sky-50/30"
+                }`}>
+                <Icon className={`w-5 h-5 ${filter === key ? "text-white" : "text-slate-400"}`} />
+                <span className="text-[9px] font-bold leading-[1.1] text-center min-h-[2.2em] flex items-center justify-center whitespace-pre-line tracking-tighter">
+                  {label}
+                </span>
+              </button>
+            );
+          })}
         </div>
         
         {/* Language Filter Dropdown */}
-        <div className="relative">
+        <div className="relative w-2/3">
           <select
             value={langFilter}
             onChange={(e) => setLangFilter(e.target.value)}
-            className="w-full text-sm font-bold bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2.5 outline-none text-slate-600 focus:border-sky-400 transition-all appearance-none cursor-pointer"
+            className="w-full text-[11px] font-bold bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 outline-none text-slate-600 focus:border-sky-400 transition-all appearance-none cursor-pointer"
           >
             {LANG_FILTER_OPTIONS.map((opt) => (
               <option key={opt.key} value={opt.key}>{opt.key === "all" ? "すべての言語" : opt.label}</option>
             ))}
           </select>
-          <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
-          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <Languages className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
         </div>
       </div>
 
@@ -685,7 +704,8 @@ function SelectionSidebar({
   const LAYOUT_TO_CATEGORIES: Record<string, string[]> = {
     booklet: ["booklet", "magazine"],
     booklet_doc: ["booklet_doc"],
-    document: ["document"],
+    document: ["document", "bible"],
+    bible: ["document", "bible"],
     pamphlet: ["pamphlet", "invitation"],
   };
 
@@ -732,18 +752,24 @@ function SelectionSidebar({
             <Layers className="w-4 h-4" /> レイアウトタイプ
           </p>
           <div className="grid grid-cols-2 gap-2">
-            {(["booklet", "booklet_doc", "document", "pamphlet"] as ShelfLayoutType[]).map((t) => (
+            {(["booklet", "booklet_doc", "document", "bible", "pamphlet"] as ShelfLayoutType[]).map((t) => (
               <button
                 key={t}
                 onClick={() => onLayoutChange(activeTarget.cart, shelfIdx, t)}
-                className={`text-[10px] font-bold py-3 rounded-xl transition-all border flex flex-col items-center gap-1 ${
+                className={`text-[10px] font-bold py-3 rounded-xl transition-all border flex flex-col items-center justify-center gap-1 ${
                   shelf.layout_type === t ? "bg-rose-100 text-rose-900 border-rose-300 shadow-sm" : "bg-background text-muted-foreground border-border hover:bg-muted"
                 }`}
               >
-                <span className="truncate w-full px-1 text-center font-black text-xs leading-tight">
-                  {t === "booklet" ? "冊子/雑誌" : t === "booklet_doc" ? "冊子サイズ書籍" : t === "document" ? "文庫本サイズ書籍" : "パンフレット/招待状"}
+                <span className="truncate w-full px-1 text-center font-black text-xs leading-[1.1] whitespace-pre-line tracking-tighter">
+                  {t === "booklet" ? "冊子類/雑誌" : 
+                   t === "booklet_doc" ? "書籍\n(冊子サイズ)" : 
+                   t === "document" ? "書籍\n(文庫サイズ)" : 
+                   t === "bible" ? "聖書" :
+                   "パンフレット/\n招待状"}
                 </span>
-                <span className="opacity-70 text-[10px] font-black uppercase tracking-tighter">{t === "booklet" || t === "booklet_doc" ? "2 スロット" : t === "document" ? "3 スロット" : "4 スロット"}</span>
+                <span className="opacity-70 text-[9px] font-black uppercase tracking-tighter mt-0.5">
+                  {(t === "document" || t === "bible") ? "3 スロット" : t === "pamphlet" ? "4 スロット" : "2 スロット"}
+                </span>
               </button>
             ))}
           </div>
@@ -927,8 +953,11 @@ function SelectionSidebar({
                     className="w-full text-sm font-bold border border-border rounded-xl pl-10 pr-4 py-3 bg-background text-foreground outline-none focus:ring-4 focus:ring-primary/10 placeholder:text-muted-foreground/50 transition-all shadow-sm" />
                 </div>
                 {activeTarget.section === "shelf" && shelf && (
-                  <p className="text-[10px] font-bold text-muted-foreground bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">
-                    {shelf.layout_type === "booklet" ? "冊子・雑誌" : shelf.layout_type === "booklet_doc" ? "冊子サイズ書籍" : shelf.layout_type === "document" ? "文庫本サイズ書籍" : "パンフレット・招待状"} の画像を表示中
+                  <p className="text-[10px] font-bold text-muted-foreground bg-slate-50 rounded-lg px-3 py-2 border border-slate-100 italic">
+                    {shelf.layout_type === "booklet" ? "冊子類・雑誌" : 
+                     shelf.layout_type === "booklet_doc" ? "書籍 (冊子サイズ)" : 
+                     (shelf.layout_type === "document" || shelf.layout_type === "bible") ? "書籍 (文庫サイズ)/聖書" : 
+                     "パンフレット/招待状"} の画像を表示中
                   </p>
                 )}
               </div>
@@ -969,7 +998,7 @@ function GuidePanel() {
   return (
     <aside className="w-72 shrink-0 bg-card border-l border-border flex flex-col items-center justify-center text-center p-8">
       <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-        <Layers className="w-7 h-7 text-primary" />
+        <Library className="w-7 h-7 text-primary" />
       </div>
       <p className="text-sm font-bold text-foreground mb-2">要素を選択してください</p>
       <p className="text-xs text-muted-foreground leading-relaxed">
@@ -1370,9 +1399,9 @@ export default function CartEditor() {
         <div className="flex items-center gap-3 mr-6 tracking-tight h-10 relative">
           <div className="w-12 h-10 flex items-center justify-center relative mx-4">
             <img 
-              src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/same.gif" 
+              src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/same_resize.gif" 
               alt="SMPWO Logo" 
-              className="w-full h-full object-contain scale-[2.3] transform-gpu" 
+              className="w-full h-full object-contain transform-gpu scale-[1.6]" 
             />
           </div>
           <span className="font-rounded font-black text-xl tracking-widest text-[#64748b] mt-0.5 relative z-10">SMPWO LAYOUT</span>

@@ -27,7 +27,7 @@ export interface Item {
 }
 
 /* ─── Cart Layout V2 ─── */
-export type ShelfLayoutType = "booklet" | "booklet_doc" | "document" | "pamphlet" | "none";
+export type ShelfLayoutType = "booklet" | "booklet_doc" | "document" | "pamphlet" | "bible" | "none";
 export type TagType = "lang" | "free" | "free_dist" | "none";
 export type ShelfKey = "shelf1" | "shelf2" | "shelf3";
 
@@ -52,7 +52,7 @@ export interface CartLayoutV2 {
 export const DEFAULT_TAG: TagData = { type: "none", value: "" };
 
 export function makeDefaultShelf(type: ShelfLayoutType = "none"): ShelfData {
-  const count = type === "booklet" || type === "booklet_doc" ? 2 : type === "document" ? 3 : type === "pamphlet" ? 4 : 0;
+  const count = (type === "booklet" || type === "booklet_doc") ? 2 : (type === "document" || type === "bible") ? 3 : type === "pamphlet" ? 4 : 0;
   return {
     layout_type: type,
     tag_1: { type: "none", value: "" },
@@ -111,10 +111,10 @@ export function detectCategoryAndLanguage(filename: string): { category: string;
   // Category detection
   if (lower.includes("_poster")) category = "poster";
   else if (lower.includes("_mag")) category = "magazine";
+  else if (lower.includes("_bible")) category = "bible";
   else if (lower.includes("_book_doc")) category = "booklet_doc";
   else if (lower.includes("_book")) category = "document";
-  else if (lower.includes("_pamphlet")) category = "pamphlet";
-  else if (lower.includes("_invit")) category = "invitation";
+  else if (lower.includes("_pamphlet") || lower.includes("_invit")) category = "pamphlet";
 
   // Language detection
   if (lower.includes("_en")) language = "en";
