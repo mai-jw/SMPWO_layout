@@ -95,18 +95,18 @@ function TagDisplay({ shelf, shelfIndex, isActive, onClick }: TagDisplayProps) {
         <div className="absolute inset-0 flex items-center">
           {shelf.tag_1.value && (
             <div 
-              className="absolute -translate-x-1/2 bg-white px-2 py-0.5 rounded shadow-sm border border-slate-200"
+              className="absolute -translate-x-1/2 flex justify-center"
               style={{ left: positions[0] }}
             >
-              <span className="text-[9px] font-black tracking-tight text-red-600 leading-none whitespace-nowrap">{shelf.tag_1.value}</span>
+              <span className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">{shelf.tag_1.value}</span>
             </div>
           )}
           {shelf.tag_2.value && (
             <div 
-              className="absolute -translate-x-1/2 bg-white px-2 py-0.5 rounded shadow-sm border border-slate-200"
+              className="absolute -translate-x-1/2 flex justify-center"
               style={{ left: positions[1] }}
             >
-              <span className="text-[9px] font-black tracking-tight text-red-600 leading-none whitespace-nowrap">{shelf.tag_2.value}</span>
+              <span className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">{shelf.tag_2.value}</span>
             </div>
           )}
         </div>
@@ -129,7 +129,6 @@ function TagDisplay({ shelf, shelfIndex, isActive, onClick }: TagDisplayProps) {
       <div className="relative flex-1 h-full flex items-center overflow-visible">
         {renderContent()}
       </div>
-      {!isHidden && <ChevronDown className="w-3 h-3 shrink-0 opacity-60 ml-auto" />}
     </button>
   );
 }
@@ -697,9 +696,9 @@ function SelectionSidebar({
 
   const panelTitle = activeTarget ? (
     activeTarget.section === "poster" ? "ポスター選択" :
-    activeTarget.section === "shelf" ? `${["上段","中段","下段"][(activeTarget as any).shelfIndex]} - スロット${(activeTarget as any).slotIndex + 1} 選択` : ""
+    activeTarget.section === "shelf" ? `${["上段","中段","下段"][(activeTarget as any).shelfIndex]} — スロット${(activeTarget as any).slotIndex + 1} 選択` : ""
   ) : "";
-  const panelSub = activeTarget ? `カート${activeTarget.cart}` : "";
+  const panelSub = activeTarget ? `カート ${activeTarget.cart}` : "";
 
   const LAYOUT_TO_CATEGORIES: Record<string, string[]> = {
     booklet: ["booklet", "magazine"],
@@ -907,19 +906,18 @@ function SelectionSidebar({
 
       {/* 2. Header (Sticky) - Only visible when an item is selected */}
       {activeTarget && (
-        <div className="py-1 px-3 border-b border-border flex items-center justify-between bg-white sticky top-0 z-20 shadow-sm">
-          <div>
-            <p className="text-sm font-black uppercase tracking-wider text-muted-foreground leading-none">
-              {activeTarget.section === "tag" ? `カート${activeTarget.cart} — ${["上段","中段","下段"][shelfIdx]}` : (panelSub || "")}
+        <div className="py-1 px-4 border-b border-border flex items-center justify-between bg-white sticky top-0 z-20 shadow-sm min-h-[40px]">
+          <div className="flex flex-col justify-center">
+            <p className="text-[11px] font-black uppercase tracking-widest text-[#64748b] leading-tight flex items-center gap-1.5">
+              <span>{panelSub}</span>
+              <span className="opacity-40">|</span>
+              <span className="text-slate-800">
+                {activeTarget.section === "tag" ? `${["上段","中段","下段"][shelfIdx]} 設定` : (panelTitle || "")}
+              </span>
             </p>
-            {activeTarget.section !== "tag" && (
-              <p className="text-xl font-black text-foreground mt-1.5">
-                {panelTitle || ""}
-              </p>
-            )}
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-muted transition-all group">
-            <X className="w-6 h-6 text-muted-foreground group-hover:rotate-90 transition-transform" />
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 transition-all group">
+            <X className="w-5 h-5 text-slate-400 group-hover:rotate-90 transition-transform" />
           </button>
         </div>
       )}
@@ -1172,13 +1170,13 @@ export default function CartEditor() {
     const setter = getSetCart(cart);
     setter((prev) => {
       const shelf = prev.shelves[shelfIdx];
-      const count = t === "pamphlet" ? 4 : t === "document" ? 3 : 2;
+      const count = t === "pamphlet" ? 4 : (t === "document" || t === "bible") ? 3 : 2;
       const newItems = Array(count).fill(null).map((_, i) => shelf.items[i] ?? null);
       
       let tag_1 = shelf.tag_1;
       let tag_2 = shelf.tag_2;
       
-      const isDocOrPamphlet = t === "document" || t === "pamphlet";
+      const isDocOrPamphlet = t === "document" || t === "bible" || t === "pamphlet";
       const isRow1 = shelfIdx === 0;
       
       if (!isRow1 && !isDocOrPamphlet) {
