@@ -37,7 +37,7 @@ export function useUploadItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ file, category, language, customName }: UploadItemPayload) => {
+    mutationFn: async ({ file, category, language, customName, poster_type }: UploadItemPayload) => {
       // 1. Generate safe unique filename
       const ext = file.name.split(".").pop() || "bin";
       const fileName = `${Date.now()}-${uuidv4()}.${ext}`;
@@ -76,7 +76,7 @@ export function useUploadItem() {
             url: publicUrlData.publicUrl,
             category,
             language,
-            poster_type,
+            poster_type: category === "poster" ? (poster_type || "") : undefined,
           },
         ])
         .select()

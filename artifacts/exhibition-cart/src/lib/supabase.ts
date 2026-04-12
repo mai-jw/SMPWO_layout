@@ -1,16 +1,33 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || "") as string;
-const supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "") as string;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn("[Supabase] 環境変数が設定されていません。VITE_SUPABASE_URL と VITE_SUPABASE_ANON_KEY を設定してください。");
+  const missing = [];
+  if (!supabaseUrl) missing.push("SUPABASE_URL");
+  if (!supabaseAnonKey) missing.push("SUPABASE_ANON_KEY");
+  console.error(`[Supabase Error] Missing required environment variables: ${missing.join(", ")}. Ensure they are prefixed with NEXT_PUBLIC_ for client access.`);
 }
 
 export const supabase = createClient(
-  supabaseUrl || "https://placeholder.supabase.co",
-  supabaseAnonKey || "placeholder-key"
+  supabaseUrl || "https://placeholder-url-ensure-env-is-set.supabase.co",
+  supabaseAnonKey || "placeholder-key-ensure-env-is-set"
 );
+
+/**
+ * Basic connectivity check helper for debugging
+ */
+export async function checkConnection() {
+  try {
+    const { data, error } = await supabase.from("items").select("count").limit(1);
+    if (error) throw error;
+    return { ok: true, msg: "Connected successfully" };
+  } catch (err: any) {
+    console.error("[Supabase Connection Check Failed]", err);
+    return { ok: false, msg: err.message };
+  }
+}
 
 export const STORAGE_BUCKET = "exhibition-images";
 export const LAYOUTS_TABLE = "layouts";

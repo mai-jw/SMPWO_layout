@@ -8,16 +8,22 @@ import {
   ChevronDown, Tag, Pencil, ChevronRight, Search, Layers, Upload,
   Check, Trash2, Library, Settings, Star, Book, BookOpen, FileText,
   Mail, Bookmark, Notebook, Scroll, Contact, Newspaper, BookCopy, Files,
-  Map, BookText, Languages,
+  Map, BookText, Languages, Cloud,
 } from "lucide-react";
 import Link from "next/link";
 import { useItems, useUpdateItem, useDeleteItem } from "@/hooks/use-items";
-import { useLayouts, useSaveLayout, useLocationsConfig, useSaveLocationsConfig } from "@/hooks/use-layouts";
+import { useLayouts, useSaveLayout, useLocationsConfig, useSaveLocationsConfig, DEFAULT_LOCATIONS } from "@/hooks/use-layouts";
 import { useUI } from "@/context/ui-context";
+import { 
+  CART_IMAGE_URL, SHELF_COORDINATES, POSTER_PLACEMENT,
+  GALLERY_FILTER_LABELS, GALLERY_FILTER_ICONS, 
+  LAYOUT_TO_CATEGORIES, LANG_FILTER_OPTIONS, EXPLICIT_LANG_KEYS 
+} from "@/lib/config";
 import {
   type Item, type ShelfKey, type ShelfData, type CartLayoutV2,
   type TagData, type ShelfLayoutType,
   makeInitialCartLayoutV2, makeDefaultShelf, filledCountV2, maxCountV2,
+  checkConnection,
 } from "@/lib/supabase";
 
 type CartId = "A" | "B";
@@ -27,16 +33,6 @@ type ActiveTarget =
   | { cart: CartId; section: "tag"; shelfIndex: number }
   | null;
 type SidebarFilter = "all" | "poster" | "ja" | "foreign";
-
-const FILTER_LABELS: Record<SidebarFilter, string> = {
-  all: "すべて", poster: "ポスター", ja: "日本語", foreign: "外国語",
-};
-
-function getTagLabel(tag: TagData): string {
-  if (tag.type === "none") return "";
-  if (tag.type === "free_dist") return "無料配布";
-  return tag.value || "";
-}
 
 const LANGUAGES = [
   "日本語", "外国語", "英語",
@@ -69,13 +65,8 @@ function TagDisplay({ shelf, shelfIndex, isActive, onClick }: TagDisplayProps) {
     :                        "bg-red-500 border-red-600"
   );
 
-  // Position mapping based on layout type
-  // Centers (relative to 100% width):
-  // 2 slots: 25%, 75%
-  // 3 slots: 16.6%, 50%, 83.3% -> Use 16.6% and 83.3% for the 2 tags
-  // 4 slots: 12.5%, 37.5%, 62.5%, 87.5% -> Use 25% (between 1&2) and 75% (between 3&4)
   const getPositions = () => {
-    if (layout === "document") return ["16.6%", "83.3%"];
+    if (layout === "document" || layout === "bible") return ["16.6%", "83.3%"];
     if (layout === "pamphlet") return ["25%", "75%"];
     return ["25%", "75%"]; // booklet or other
   };
@@ -216,23 +207,7 @@ function ShelfSection({
   cartId, shelfIndex, shelf, activeTarget, isSelecting, itemMap,
   onSlotClick, onClear, onTagClick,
 }: ShelfSectionProps) {
-  /*
-   * Stacking Coordinates — shifted down to avoid poster overlap.
-   *   Poster:    5% → ~37% (visual bottom including aspect-ratio padding)
-   *   Tag 1:    37.5%  (height 2%)
-   *   Row 1:    39.5%  (height 13.5%)
-   *   Tag 2:    53.0%
-   *   Row 2:    55.0%
-   *   Tag 3:    68.5%
-   *   Row 3:    70.5%
-   */
-  const tops = [
-    { tag: "36.5%", items: "39.0%", tagH: "2%", itemsH: "14.5%" },
-    { tag: "54.9%", items: "57.4%", tagH: "2%", itemsH: "14.5%" },
-    { tag: "72.0%", items: "74.5%", tagH: "2%", itemsH: "14.5%" },
-  ];
-
-  const coord = tops[shelfIndex];
+  const coord = SHELF_COORDINATES[shelfIndex];
   const isTagActive = activeTarget?.cart === cartId && activeTarget.section === "tag" && (activeTarget as any).shelfIndex === shelfIndex;
 
   return (
@@ -306,11 +281,15 @@ function CartPanel({
           className="relative w-full aspect-1080/1350 bg-contain bg-no-repeat bg-center"
           style={{ backgroundImage: `url('https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/cart_empty_guid.png')` }}
         >
-          {/* Poster — aligned to the grey frame at top of cart */}
           <div 
-            className={`absolute top-[1.8%] left-[35.6%] w-[29.0%] aspect-[1/1.48] transition-all overflow-hidden ${
+            className={`absolute transition-all overflow-hidden ${POSTER_PLACEMENT.aspect} ${
               isPosterActive ? "ring-2 ring-yellow-400 z-40 shadow-xl scale-[1.01]" : "z-10"
             }`}
+            style={{ 
+              top: POSTER_PLACEMENT.top, 
+              left: POSTER_PLACEMENT.left, 
+              width: POSTER_PLACEMENT.width 
+            }}
           >
             <ItemSlot
               item={layout.poster ? itemMap[layout.poster] : undefined}
@@ -359,50 +338,7 @@ interface SelectionSidebarProps {
   onClose: () => void;
 }
 
-/* ═══════════════════════════════════════════════════════
-     LeftGallery — Left sidebar for previewing gallery items
-   ═══════════════════════════════════════════════════════ */
-
-type GalleryFilterType = "all" | "poster" | "booklet" | "magazine" | "booklet_doc" | "document" | "pamphlet" | "bible";
-
-const GALLERY_FILTER_LABELS: Record<GalleryFilterType, string> = {
-  all: "すべて",
-  poster: "ポスター",
-  booklet: "冊子類",
-  magazine: "雑誌",
-  booklet_doc: "書籍\n(冊子サイズ)",
-  document: "書籍\n(文庫サイズ)",
-  pamphlet: "パンフレット/\n招待状",
-  bible: "聖書",
-};
-
-const GALLERY_FILTER_ICONS: Record<GalleryFilterType, any> = {
-  all: Library,
-  poster: ImageIcon,
-  booklet: BookText,
-  magazine: Newspaper,
-  booklet_doc: Book,
-  document: BookCopy,
-  pamphlet: Map,
-  bible: BookOpen,
-};
-
-const LANG_FILTER_OPTIONS = [
-  { key: "all", label: "すべて" },
-  { key: "ja", label: "日本語" },
-  { key: "en", label: "英語" },
-  { key: "zh_hans", label: "中国語（簡体字）" },
-  { key: "zh_hant", label: "中国語（繁体字）" },
-  { key: "ko", label: "韓国語" },
-  { key: "vi", label: "ベトナム語" },
-  { key: "tl", label: "タガログ語" },
-  { key: "th", label: "タイ語" },
-  { key: "id", label: "インドネシア語" },
-  { key: "es", label: "スペイン語" },
-  { key: "foreign", label: "外国語" },
-];
-
-const EXPLICIT_LANG_KEYS = ["ja", "en", "zh_hans", "zh_hant", "ko", "vi", "tl", "th", "id", "es"];
+type GalleryFilterType = keyof typeof GALLERY_FILTER_LABELS;
 
 interface LeftGalleryProps {
   items: Item[];
@@ -426,16 +362,18 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
   const updateMutation = useUpdateItem();
   const deleteMutation = useDeleteItem();
 
-  const filteredItems = items.filter((item) => {
-    const matchCat = filter === "all" || item.category === filter;
-    
-    // "Foreign" means not in the explicit list above
-    const isForeign = !EXPLICIT_LANG_KEYS.includes(item.language) && item.language !== "all";
-    const matchLang = langFilter === "all" || (langFilter === "foreign" ? isForeign : item.language === langFilter);
-    
-    const matchSearch = !searchQuery || item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchCat && matchLang && matchSearch;
-  });
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      const matchCat = filter === "all" || item.category === filter;
+      
+      // "Foreign" means not in the explicit list in EXPLICIT_LANG_KEYS
+      const isForeign = !EXPLICIT_LANG_KEYS.includes(item.language) && item.language !== "all";
+      const matchLang = langFilter === "all" || (langFilter === "foreign" ? isForeign : item.language === langFilter);
+      
+      const matchSearch = !searchQuery || item.name.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchCat && matchLang && matchSearch;
+    });
+  }, [items, filter, langFilter, searchQuery]);
 
   const handleStartEdit = (e: React.MouseEvent, item: Item) => {
     e.stopPropagation();
@@ -496,7 +434,7 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
         </div>
         <button 
           onClick={onOpenUpload}
-          className="p-1.5 bg-amber-400 text-amber-950 hover:bg-amber-300 rounded-lg transition-all flex items-center justify-center group shadow-md active:scale-95"
+          className="p-1.5 bg-[#ffd76d] text-zinc-800 hover:opacity-90 rounded-lg transition-all flex items-center justify-center group shadow-md active:scale-95"
           title="画像をアップロード"
         >
           <Upload className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" />
@@ -516,10 +454,10 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
               <button key={key} onClick={() => setFilter(key as GalleryFilterType)}
                 className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all border ${
                   filter === key 
-                    ? "bg-sky-500 text-white border-sky-600 shadow-sm" 
+                    ? "bg-[#aecbe2] text-slate-800 border-[#9bbad2] shadow-sm" 
                     : "bg-white text-slate-500 border-slate-100 hover:border-sky-200 hover:bg-sky-50/30"
                 }`}>
-                <Icon className={`w-5 h-5 ${filter === key ? "text-white" : "text-slate-400"}`} />
+                <Icon className={`w-5 h-5 ${filter === key ? "text-slate-700" : "text-slate-400"}`} />
                 <span className="text-[9px] font-bold leading-[1.1] text-center min-h-[2.2em] flex items-center justify-center whitespace-pre-line tracking-tighter">
                   {label}
                 </span>
@@ -549,7 +487,7 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
           <p className="text-base text-muted-foreground text-center py-8 font-medium">該当するアイテムなし</p>
         ) : (
           filteredItems.map((item) => (
-            <div key={item.id} className="w-full flex items-center gap-3 rounded-xl p-2.5 text-left border border-transparent hover:bg-muted group">
+            <div key={item.id} className="w-full flex items-center gap-3 rounded-xl p-2.5 text-left border border-transparent hover:bg-sky-50 hover:border-sky-100 group transition-all">
               <img src={item.url} alt={item.name} className="w-14 h-14 object-cover rounded-lg shrink-0 bg-muted shadow-sm" />
               <div className="min-w-0 flex-1 relative pr-8 text-xs font-black">
                 {editingId === item.id ? (
@@ -708,18 +646,20 @@ function SelectionSidebar({
     pamphlet: ["pamphlet", "invitation"],
   };
 
-  const filteredItems = items.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    if (activeTarget?.section === "shelf" && shelf) {
-      const allowedCategories = LAYOUT_TO_CATEGORIES[shelf.layout_type] || [];
-      return matchesSearch && allowedCategories.includes(item.category);
-    }
-    if (activeTarget?.section === "poster") {
-      return matchesSearch && item.category === "poster";
-    }
-    const matchesFilter = filter === "all" || item.category === filter;
-    return matchesSearch && matchesFilter;
-  });
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+      if (activeTarget?.section === "shelf" && shelf) {
+        const allowedCategories = LAYOUT_TO_CATEGORIES[shelf.layout_type] || [];
+        return matchesSearch && allowedCategories.includes(item.category);
+      }
+      if (activeTarget?.section === "poster") {
+        return matchesSearch && item.category === "poster";
+      }
+      const matchesFilter = filter === "all" || item.category === filter;
+      return matchesSearch && matchesFilter;
+    });
+  }, [items, searchQuery, activeTarget, shelf, filter]);
 
   const renderShelfSettings = () => {
     if (!shelf) return null;
@@ -966,7 +906,7 @@ function SelectionSidebar({
               ) : (
                 filteredItems.map((item) => (
                   <button key={item.id} onClick={() => onSelectItem(item)}
-                    className="w-full flex items-center gap-4 rounded-2xl p-3 text-left transition-all border border-transparent hover:bg-muted/80 group">
+                    className="w-full flex items-center gap-4 rounded-2xl p-3 text-left transition-all border border-transparent hover:bg-sky-50 hover:border-sky-100 group">
                     <img src={item.url} alt={item.name} className="w-14 h-14 object-cover rounded-xl shrink-0 bg-muted shadow-sm" />
                     <div className="min-w-0 flex-1">
                       <p className="text-base font-black text-foreground truncate leading-tight group-hover:text-primary transition-colors">{item.name}</p>
@@ -1033,7 +973,7 @@ export default function CartEditor() {
   const [isEditingLocations, setIsEditingLocations] = useState(false);
   const [locationEditInput, setLocationEditInput] = useState("");
 
-  const { data: locationsConfig = ["梅田A", "梅田GG", "N広場", "N道頓堀", "N北東", "築港", "天保山", "天王寺駅南東", "天王寺駅北西", "ハルカス"] } = useLocationsConfig();
+  const { data: locationsConfig = DEFAULT_LOCATIONS } = useLocationsConfig();
   const saveLocationsConfig = useSaveLocationsConfig();
   const [editingLocList, setEditingLocList] = useState<string[]>([]);
   
@@ -1107,6 +1047,17 @@ export default function CartEditor() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showNewPanel]);
+
+  // Initial connection health check
+  useEffect(() => {
+    checkConnection().then(res => {
+      if (!res.ok) {
+        console.error("[Startup] Database connection check failed. App may show limited data.");
+      } else {
+        console.log("[Startup] Connected to Supabase backend successfully.");
+      }
+    });
+  }, []);
 
   const { data: items = [], isLoading } = useItems();
   const { data: layouts = [] } = useLayouts();
@@ -1209,7 +1160,7 @@ export default function CartEditor() {
   const isExistingPeriod = useMemo(() => layouts.some(l => l.period === period), [layouts, period]);
 
   const handleSave = async () => {
-    if (!period.trim()) return;
+    if (!period.trim() || saveStatus === "saving") return;
 
     if (isExistingPeriod) {
       const ok = window.confirm(`「${formatPeriodDisplay(period)}」の上書き保存をします。\n過去のデータに上書きされ、元に戻せなくなりますがよろしいですか？`);
@@ -1220,8 +1171,14 @@ export default function CartEditor() {
     try {
       await saveLayout.mutateAsync({ period, cart_a: cartA, cart_b: cartB });
       setSaveStatus("saved");
+      alert(`「${formatPeriodDisplay(period)}」の設定を保存しました。\n※お手元のパソコンに画像や表（PNG/PDF/Excel）として書き出したい場合は、右端のボタンをクリックしてください。`);
       setTimeout(() => setSaveStatus("idle"), 2500);
-    } catch { setSaveStatus("error"); setTimeout(() => setSaveStatus("idle"), 3000); }
+    } catch (err: any) { 
+      console.error("[Save Error] Failed to persist layout to Supabase:", err);
+      setSaveStatus("error"); 
+      alert(`保存に失敗しました: ${err.message || "不明なエラー"}`);
+      setTimeout(() => setSaveStatus("idle"), 3000); 
+    }
   };
 
   const handleCreateNew = () => {
@@ -1254,10 +1211,18 @@ export default function CartEditor() {
     try {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(canvasRef.current, { scale: 2.5, useCORS: true, backgroundColor: "#ffffff" });
-      const a = document.createElement("a");
-      a.download = `展示カート_${formatPeriodDisplay(period)}.png`;
-      a.href = (canvas as HTMLCanvasElement).toDataURL("image/png");
-      a.click();
+      
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const cleanName = formatPeriodDisplay(period).replace(/\s/g, "_");
+        a.download = `cart_${cleanName}.png`;
+        a.href = url;
+        a.click();
+        URL.revokeObjectURL(url);
+        alert("PNG画像をダウンロードフォルダに保存しました。");
+      }, "image/png");
     } finally { setExporting(null); }
   };
 
@@ -1280,7 +1245,9 @@ export default function CartEditor() {
       const imgW = pW - 24;
       const imgH = Math.min(imgW / ratio, pH - 20);
       pdf.addImage(imgData, "PNG", 12, 15, imgW, imgH);
-      pdf.save(`展示カート_${formatPeriodDisplay(period)}.pdf`);
+      const safePeriod = period.replace(/::/g, "_").replace(/[:\-]/g, "");
+      pdf.save(`CartLayout_${safePeriod}.pdf`);
+      alert("PDFドキュメントをダウンロードフォルダに保存しました。");
     } finally { setExporting(null); }
   };
 
@@ -1324,7 +1291,8 @@ export default function CartEditor() {
       const ws = XLSX.utils.aoa_to_sheet(rows);
       ws["!cols"] = [8, 6, 8, 12, 10, 10, 28, 2, 28].map((w) => ({ wch: w }));
       XLSX.utils.book_append_sheet(wb, ws, `配置リスト_${formatPeriodDisplay(period)}`.substring(0, 31)); // Excel Sheet names can't exceed 31 chars
-      XLSX.writeFile(wb, `展示カート_${formatPeriodDisplay(period)}.xlsx`);
+      XLSX.writeFile(wb, `CartLayout_${formatPeriodDisplay(period).replace(/\s/g, "_")}.xlsx`);
+      alert("Excelファイルをダウンロードフォルダに保存しました。");
     } finally { setExporting(null); }
   };
 
@@ -1397,7 +1365,7 @@ export default function CartEditor() {
         <div className="flex items-center gap-3 mr-6 tracking-tight h-10 relative">
           <div className="w-12 h-10 flex items-center justify-center relative mx-4">
             <img 
-              src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/same_resize.gif" 
+              src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/samesame.gif" 
               alt="SMPWO Logo" 
               className="w-full h-full object-contain transform-gpu scale-[1.6]" 
             />
@@ -1533,8 +1501,8 @@ export default function CartEditor() {
         <div className="flex-1" />
         <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()}
           className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-medium transition-all disabled:opacity-60 ${
-            saveStatus === "saved" ? "bg-blue-600 text-white" :
-            saveStatus === "error" ? "bg-red-600 text-white" : "bg-blue-800 text-white hover:bg-blue-700 shadow-sm"
+            saveStatus === "saved" ? "bg-emerald-500 text-white" :
+            saveStatus === "error" ? "bg-red-500 text-white" : "bg-[#1b618d] text-white hover:opacity-90 shadow-sm"
           }`}>
           {saveStatus === "saved" ? <CheckCircle2 className="w-3.5 h-3.5" /> :
            saveStatus === "saving" ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> :
