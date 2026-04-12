@@ -57,13 +57,30 @@ export function useLayouts() {
         .from(LAYOUTS_TABLE)
         .select("*")
         .neq("period", CONFIG_LOCATIONS_ID)
-        .order("created_at", { ascending: false });
+        .order("period", { ascending: false });
       if (error) throw new Error(error.message);
-      return (data ?? []).map((row) => ({
-        ...row,
-        cart_a: hydrateLayout(row.cart_a),
-        cart_b: hydrateLayout(row.cart_b),
-      }));
+      return (data ?? [])
+        .map((row) => ({
+          ...row,
+          cart_a: hydrateLayout(row.cart_a),
+          cart_b: hydrateLayout(row.cart_b),
+        }))
+        .sort((a, b) => {
+          const regex = /^(\d{4})-(\d{2})-(前半|後半)(?:::(.+))?$/;
+          const matchA = a.period.match(regex);
+          const matchB = b.period.match(regex);
+          if (matchA && matchB) {
+            const [, yA, mA, hA, lA] = matchA;
+            const [, yB, mB, hB, lB] = matchB;
+            if (yB !== yA) return yB.localeCompare(yA);
+            if (mB !== mA) return mB.localeCompare(mA);
+            if (hA !== hB) return hA === "後半" ? -1 : 1;
+            if (lA && !lB) return -1;
+            if (!lA && lB) return 1;
+            return (lA || "").localeCompare(lB || "", "ja");
+          }
+          return b.period.localeCompare(a.period, "ja");
+        });
     },
   });
 }

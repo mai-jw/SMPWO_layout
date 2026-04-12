@@ -23,8 +23,10 @@ import {
   type Item, type ShelfKey, type ShelfData, type CartLayoutV2,
   type TagData, type ShelfLayoutType,
   makeInitialCartLayoutV2, makeDefaultShelf, filledCountV2, maxCountV2,
-  checkConnection,
 } from "@/lib/supabase";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
+import ExcelJS from "exceljs";
 
 type CartId = "A" | "B";
 type ActiveTarget =
@@ -410,16 +412,17 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
 
   const handleDeleteItem = async (e: React.MouseEvent, item: Item) => {
     e.stopPropagation();
-    const ok = window.confirm(`「${item.name}」を削除します。\n選択肢を削除すると、登録データからも削除されます。よろしいでしょうか？`);
-    if (!ok) return;
-    
+    setDeleteConfirmId(item.id!);
+  };
+
+  const executeDelete = async (item: Item) => {
     try {
       await deleteMutation.mutateAsync(item);
       setEditingId(null);
       setDeleteConfirmId(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to delete item:", err);
-      alert("削除に失敗しました。詳細なエラー内容はコンソールを確認してください。");
+      alert(`削除に失敗しました: ${err.message || "詳細なエラー内容はコンソールを確認してください。"}`);
     }
   };
 
@@ -552,20 +555,42 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
                       )}
                     </div>
                     <div className="flex items-center justify-end pt-1 gap-2">
-                      <button 
-                        onClick={(e) => handleDeleteItem(e, item)}
-                        className="p-1.5 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 relative z-20"
-                        title="削除"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleSaveEdit(item.id!); }} 
-                        className="p-1.5 bg-sky-600 text-white rounded-lg flex items-center justify-center shadow-sm hover:bg-sky-700 transition-colors px-4 relative z-20"
-                        title="保存"
-                      >
-                        <Check className="w-4 h-4" />
-                      </button>
+                      {deleteConfirmId === item.id ? (
+                        <div className="absolute -top-2 left-0 right-0 bg-white/95 backdrop-blur rounded-lg p-2 shadow-lg border border-red-200 flex flex-col items-center justify-center z-50">
+                          <p className="text-xs font-bold text-red-600 mb-2">完全に削除しますか？</p>
+                          <div className="flex gap-2 w-full">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); executeDelete(item); }}
+                              className="flex-1 px-2 py-1.5 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700 transition"
+                            >
+                              はい
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(null); }}
+                              className="flex-1 px-2 py-1.5 bg-slate-100 text-slate-700 text-xs font-bold rounded hover:bg-slate-200 transition"
+                            >
+                              戻る
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={(e) => handleDeleteItem(e, item)}
+                            className="p-1.5 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 relative z-20"
+                            title="削除"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleSaveEdit(item.id!); }} 
+                            className="p-1.5 bg-sky-600 text-white rounded-lg flex items-center justify-center shadow-sm hover:bg-sky-700 transition-colors px-4 relative z-20"
+                            title="保存"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -684,7 +709,7 @@ function SelectionSidebar({
             {(["booklet", "booklet_doc", "document", "bible", "pamphlet"] as ShelfLayoutType[]).map((t) => (
               <button
                 key={t}
-                onClick={() => onLayoutChange(activeTarget.cart, shelfIdx, t)}
+                onClick={() => activeTarget && onLayoutChange(activeTarget.cart, shelfIdx, t)}
                 className={`text-[10px] font-bold py-3 rounded-xl transition-all border flex flex-col items-center justify-center gap-1 ${
                   shelf.layout_type === t ? "bg-rose-100 text-rose-900 border-rose-300 shadow-sm" : "bg-background text-muted-foreground border-border hover:bg-muted"
                 }`}
@@ -962,6 +987,7 @@ export default function CartEditor() {
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [isEditingLocations, setIsEditingLocations] = useState(false);
   const [locationEditInput, setLocationEditInput] = useState("");
+  const [layoutDeleteConfirm, setLayoutDeleteConfirm] = useState(false);
 
   const { data: locationsConfig = DEFAULT_LOCATIONS } = useLocationsConfig();
   const saveLocationsConfig = useSaveLocationsConfig();
@@ -1038,16 +1064,6 @@ export default function CartEditor() {
     };
   }, [showNewPanel]);
 
-  // Initial connection health check
-  useEffect(() => {
-    checkConnection().then(res => {
-      if (!res.ok) {
-        console.error("[Startup] Database connection check failed. App may show limited data.");
-      } else {
-        console.log("[Startup] Connected to Supabase backend successfully.");
-      }
-    });
-  }, []);
 
   const { data: items = [], isLoading } = useItems();
   const { data: layouts = [] } = useLayouts();
@@ -1172,16 +1188,16 @@ export default function CartEditor() {
     }
   };
   
-  const handleDeleteLayout = async () => {
+  const executeDeleteLayout = async () => {
     if (!period.trim() || !isExistingPeriod) return;
-    const ok = window.confirm(`チェックしたレイアウト「${formatPeriodDisplay(period)}」を削除します。\n選択肢を削除すると、登録データからも削除されます。よろしいでしょうか？`);
-    if (!ok) return;
     
     try {
       await deleteLayout.mutateAsync(period);
       alert("レイアウトを削除しました。");
       handleReset();
       setPeriod(""); // Clear selection
+      setActiveTarget(null); // Ensure target is cleared
+      setLayoutDeleteConfirm(false);
     } catch (err: any) {
       console.error("[Delete Error] Failed to delete layout:", err);
       alert(`削除に失敗しました: ${err.message || "不明なエラー"}`);
@@ -1216,22 +1232,23 @@ export default function CartEditor() {
     if (!canvasRef.current) return;
     setExporting("png");
     try {
-      const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(canvasRef.current, { scale: 2.5, useCORS: true, backgroundColor: "#ffffff" });
+      const dataUrl = canvas.toDataURL("image/png");
       
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        const cleanName = formatPeriodDisplay(period).replace(/[\s\(\)]/g, "_");
-        a.download = `cart_${cleanName}.png`;
-        a.href = url;
-        a.click();
-        
-        // Use a delay for revocation to ensure browser has time to initiate the actual OS write
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-        alert("PNG画像をダウンロードフォルダに保存しました。");
-      }, "image/png");
+      // Blob変換を経由することでWebViewでの拡張子なしUUIDファイル化を回避
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement("a");
+      a.download = "cart-layout.png";
+      a.href = url;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      alert("PNG画像をダウンロードフォルダに保存しました。");
     } finally { setExporting(null); }
   };
 
@@ -1239,10 +1256,8 @@ export default function CartEditor() {
     if (!canvasRef.current) return;
     setExporting("pdf");
     try {
-      const html2canvas = (await import("html2canvas")).default;
-      const { jsPDF } = await import("jspdf");
       const canvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
-      const imgData = (canvas as HTMLCanvasElement).toDataURL("image/png");
+      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
       const pW = pdf.internal.pageSize.getWidth();
       const pH = pdf.internal.pageSize.getHeight();
@@ -1258,10 +1273,11 @@ export default function CartEditor() {
       const blob = pdf.output("blob");
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      const cleanName = formatPeriodDisplay(period).replace(/[\s\(\)]/g, "_");
-      a.download = `cart_${cleanName}.pdf`;
+      a.download = "cart-layout.pdf";
       a.href = url;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       alert("PDFドキュメントをダウンロードフォルダに保存しました。");
@@ -1272,8 +1288,6 @@ export default function CartEditor() {
     if (!canvasRef.current) return;
     setExporting("xlsx");
     try {
-      const html2canvas = (await import("html2canvas")).default;
-      const ExcelJS = (await import("exceljs")).default;
       
       // 1. Capture Main Cart Layout Image
       const cartCanvas = await html2canvas(canvasRef.current, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
@@ -1390,10 +1404,11 @@ export default function CartEditor() {
       const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      const cleanName = formatPeriodDisplay(period).replace(/[\s\(\)]/g, "_");
-      a.download = `report_${cleanName}.xlsx`;
+      a.download = "cart-layout.xlsx";
       a.href = url;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       alert("Excelビジュアルレポートをダウンロードフォルダに保存しました。");
@@ -1618,13 +1633,35 @@ export default function CartEditor() {
         </button>
 
         {isExistingPeriod && (
-          <button 
-            onClick={(e) => { e.stopPropagation(); handleDeleteLayout(); }}
-            className="flex items-center justify-center text-red-500 hover:bg-red-50 w-8 h-8 rounded-md transition-all border border-slate-200 hover:border-red-200 relative z-50 ml-1 shadow-sm active:scale-90"
-            title="この期間のデータを完全に削除"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          <div className="relative">
+            {layoutDeleteConfirm ? (
+              <div className="absolute right-0 top-full mt-2 bg-white/95 backdrop-blur rounded-lg p-2 shadow-xl border border-red-200 z-[100] flex flex-col items-center min-w-[200px]">
+                <p className="text-xs font-bold text-red-600 mb-2">完全に削除しますか？</p>
+                <div className="flex gap-2 w-full">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); executeDeleteLayout(); }}
+                    className="flex-1 px-2 py-1.5 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700 transition"
+                  >
+                    はい
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setLayoutDeleteConfirm(false); }}
+                    className="flex-1 px-2 py-1.5 bg-slate-100 text-slate-700 text-xs font-bold rounded hover:bg-slate-200 transition"
+                  >
+                    戻る
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button 
+                onClick={(e) => { e.stopPropagation(); setLayoutDeleteConfirm(true); }}
+                className="flex items-center justify-center text-red-500 hover:bg-red-50 w-8 h-8 rounded-md transition-all border border-slate-200 hover:border-red-200 relative z-50 ml-1 shadow-sm active:scale-90"
+                title="この期間のデータを完全に削除"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         )}
         {[
           { key: "png" as const, label: "PNG", icon: <FileImage className="w-3.5 h-3.5" />, cls: "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold shadow-xs" },

@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { useItems, useDeleteItem } from "@/hooks/use-items";
 import type { Item } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2, Image as ImageIcon, Trash2, Filter, AlertCircle } from "lucide-react";
+import { Search, Loader2, Image as ImageIcon, Trash2, Filter, AlertCircle, Pencil, X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -12,6 +12,9 @@ import { ja } from "date-fns/locale";
 export default function ItemsListPage() {
   const { data: items = [], isLoading, error } = useItems();
   const deleteMutation = useDeleteItem();
+  
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -26,9 +29,14 @@ export default function ItemsListPage() {
     });
   }, [items, searchQuery, filterCategory, filterLanguage]);
 
-  const handleDelete = async (item: Item) => {
-    if (confirm(`「${item.name}」を削除してもよろしいですか？`)) {
+  const executeDelete = async (item: Item) => {
+    try {
       await deleteMutation.mutateAsync(item);
+      setEditingId(null);
+      setDeleteConfirmId(null);
+    } catch (err: any) {
+      console.error("Failed to delete item:", err);
+      alert(`削除に失敗しました: ${err.message || "詳細なエラー内容はコンソールを確認してください。"}`);
     }
   };
 
@@ -172,14 +180,56 @@ export default function ItemsListPage() {
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                    
-                    <button
-                      onClick={() => handleDelete(item)}
-                      className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur text-destructive hover:text-white hover:bg-destructive rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-sm"
-                      title="削除"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {editingId === item.id ? (
+                      <div className="absolute top-2 right-2 flex gap-2">
+                        {deleteConfirmId === item.id ? (
+                          <>
+                            <div className="absolute -top-1 -right-1 bg-white/95 backdrop-blur rounded-lg p-2 shadow-lg border border-red-200 flex flex-col items-end whitespace-nowrap min-w-[200px] z-50">
+                              <p className="text-xs font-bold text-red-600 mb-2 px-1">本当に削除しますか？</p>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => executeDelete(item)}
+                                  className="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700 transition flex items-center gap-1"
+                                >
+                                  はい、削除
+                                </button>
+                                <button
+                                  onClick={() => setDeleteConfirmId(null)}
+                                  className="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-bold rounded hover:bg-slate-200 transition"
+                                >
+                                  キャンセル
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => setDeleteConfirmId(item.id!)}
+                              className="p-2 bg-white/95 backdrop-blur text-destructive hover:text-white hover:bg-destructive rounded-lg shadow-sm transition-all duration-200"
+                              title="削除を実行"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="p-2 bg-white/95 backdrop-blur text-slate-500 hover:text-slate-800 rounded-lg shadow-sm transition-all duration-200"
+                              title="キャンセル"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setEditingId(item.id!)}
+                        className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-sm"
+                        title="編集"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                   
                   <div className="flex-1 flex flex-col px-1">
