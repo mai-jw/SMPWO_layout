@@ -1,3 +1,4 @@
+run = "pnpm run dev"
 modules = ["nodejs-24"]
 
 [[artifacts]]
@@ -5,6 +6,9 @@ id = "artifacts/api-server"
 
 [[artifacts]]
 id = "artifacts/mockup-sandbox"
+
+[[artifacts]]
+id = "artifacts/exhibition-cart"
 
 [deployment]
 router = "application"
