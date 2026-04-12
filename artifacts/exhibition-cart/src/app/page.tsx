@@ -1303,17 +1303,24 @@ export default function CartEditor() {
         }
       });
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pW = pdf.internal.pageSize.getWidth();
       const pH = pdf.internal.pageSize.getHeight();
-      pdf.setFontSize(11); pdf.setFont("helvetica", "bold");
-      pdf.text(`展示カートレイアウト — ${formatPeriodDisplay(period)}`, 12, 10);
-      pdf.setFontSize(8); pdf.setFont("helvetica", "normal");
-      pdf.text(new Date().toLocaleDateString("ja-JP"), pW - 12, 10, { align: "right" });
-      const ratio = (canvas as HTMLCanvasElement).width / (canvas as HTMLCanvasElement).height;
-      const imgW = pW - 24;
-      const imgH = Math.min(imgW / ratio, pH - 20);
-      pdf.addImage(imgData, "PNG", 12, 15, imgW, imgH);
+      
+      const ratio = canvas.width / canvas.height;
+      let imgW = pW - 20;
+      let imgH = imgW / ratio;
+      
+      // If height exceeds page (keeping bottom margin), scale down width too
+      if (imgH > pH - 20) {
+        imgH = pH - 20;
+        imgW = imgH * ratio;
+      }
+      
+      // Center both horizontally and vertically
+      const xOffset = (pW - imgW) / 2;
+      const yOffset = (pH - imgH) / 2;
+      pdf.addImage(imgData, "PNG", xOffset, yOffset, imgW, imgH);
       
       const blob = pdf.output("blob");
       
