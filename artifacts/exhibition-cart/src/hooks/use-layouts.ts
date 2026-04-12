@@ -45,6 +45,7 @@ function hydrateLayout(raw: unknown): CartLayoutV2 {
 
   return {
     poster: typeof r.poster === "string" ? r.poster : null,
+    posterType: typeof r.posterType === "string" ? r.posterType : "",
     shelves: shelves as ShelfData[],
   };
 }

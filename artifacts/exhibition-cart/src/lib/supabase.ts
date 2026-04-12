@@ -4,7 +4,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUP
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  const missing = [];
+  const missing: string[] = [];
   if (!supabaseUrl) missing.push("SUPABASE_URL");
   if (!supabaseAnonKey) missing.push("SUPABASE_ANON_KEY");
   console.error(`[Supabase Error] Missing required environment variables: ${missing.join(", ")}. Ensure they are prefixed with NEXT_PUBLIC_ for client access.`);

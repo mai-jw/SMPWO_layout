@@ -776,7 +776,7 @@ function SelectionSidebar({
                     <label className="text-[11px] font-black text-slate-500 mb-1.5 block px-1">左タグ</label>
                     <select
                       value={shelf.tag_1.value}
-                      onChange={(e) => onTagChange(activeTarget.cart, shelfIdx, "tag_1", { type: "lang", value: (e.target as HTMLSelectElement).value })}
+                      onChange={(e) => onTagChange(activeTarget!.cart, shelfIdx, "tag_1", { type: "lang", value: (e.target as HTMLSelectElement).value })}
                       className="w-full text-sm bg-white border border-slate-200 rounded-xl px-3 py-3 outline-none text-foreground font-black focus:ring-4 focus:ring-primary/10 shadow-sm transition-all"
                     >
                       <option value="">（言語選択）</option>
@@ -789,7 +789,7 @@ function SelectionSidebar({
                       value={shelf.tag_2.type === "lang" ? shelf.tag_2.value : ""}
                       onChange={(e) => {
                         const val = (e.target as HTMLSelectElement).value;
-                        onTagChange(activeTarget.cart, shelfIdx, "tag_2", val ? { type: "lang", value: val } : { type: "none", value: "" });
+                        onTagChange(activeTarget!.cart, shelfIdx, "tag_2", val ? { type: "lang", value: val } : { type: "none", value: "" });
                       }}
                       className="w-full text-sm bg-white border border-slate-200 rounded-xl px-3 py-3 outline-none text-foreground font-black focus:ring-4 focus:ring-primary/10 shadow-sm transition-all"
                     >
