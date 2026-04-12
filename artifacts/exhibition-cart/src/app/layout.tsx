@@ -25,8 +25,8 @@ const rounded = M_PLUS_Rounded_1c({
 });
 
 export const metadata: Metadata = {
-  title: "展示カート作成ツール",
-  description: "展示カートのレイアウトを編集・管理するツール",
+  title: "SMPWO LAYOUT",
+  description: "カートのレイアウトを編集・管理するツール",
 };
 
 import { UIProvider } from "@/context/ui-context";
