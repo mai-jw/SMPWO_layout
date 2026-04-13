@@ -149,7 +149,7 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 md:z-50 max-md:z-[300] flex items-end justify-center pointer-events-none">
+    <div className="fixed inset-0 z-[500] flex items-end justify-center">
       {/* Backdrop */}
       <motion.div 
         initial={{ opacity: 0 }}
