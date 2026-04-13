@@ -1913,7 +1913,7 @@ export default function CartEditor() {
 
         {/* Mobile Sidebar Overlay */}
         <AnimatePresence>
-          {isMobileSidebarOpen && activeTarget && isMobileView && (
+          {isMobileSidebarOpen && isMobileView && (
             <div className="fixed inset-0 z-[100]">
               <motion.div 
                 initial={{ opacity: 0 }} 
