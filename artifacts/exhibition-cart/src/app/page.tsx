@@ -8,11 +8,12 @@ import {
   ChevronDown, Tag, Pencil, ChevronRight, Search, Layers, Upload,
   Check, Trash2, Library, Settings, Star, Book, BookOpen, FileText,
   Mail, Bookmark, Notebook, Scroll, Contact, Newspaper, BookCopy, Files,
-  Map, BookText, Languages, Cloud,
+  Map, BookText, Languages, Cloud, Monitor, Smartphone, Home, LayoutGrid, Menu, LayoutDashboard,
 } from "lucide-react";
 import Link from "next/link";
 import { useItems, useUpdateItem, useDeleteItem } from "@/hooks/use-items";
 import { useLayouts, useSaveLayout, useDeleteLayout, useLocationsConfig, useSaveLocationsConfig, DEFAULT_LOCATIONS } from "@/hooks/use-layouts";
+import { useViewMode } from "@/hooks/use-view-mode";
 import { useUI } from "@/context/ui-context";
 import { 
   CART_IMAGE_URL, SHELF_COORDINATES, POSTER_PLACEMENT,
@@ -992,6 +993,12 @@ export default function CartEditor() {
   const [isEditingLocations, setIsEditingLocations] = useState(false);
   const [locationEditInput, setLocationEditInput] = useState("");
   const [layoutDeleteConfirm, setLayoutDeleteConfirm] = useState(false);
+  
+  // View Mode state (Device-based + Manual Override)
+  const { isMobileView, toggleViewMode, hasMounted } = useViewMode();
+  const [isMobileGalleryOpen, setIsMobileGalleryOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isMobileActionMenuOpen, setIsMobileActionMenuOpen] = useState(false);
 
   const { data: locationsConfig = DEFAULT_LOCATIONS } = useLocationsConfig();
   const saveLocationsConfig = useSaveLocationsConfig();
@@ -1096,9 +1103,27 @@ export default function CartEditor() {
   const handleTagClick = useCallback((cart: CartId, shelfIdx: number) => {
     setActiveTarget((prev) => {
       const same = prev?.cart === cart && prev.section === "tag" && (prev as any).shelfIndex === shelfIdx;
+      if (!same && isMobileView) setIsMobileSidebarOpen(true);
       return same ? null : { cart, section: "tag", shelfIndex: shelfIdx };
     });
+  }, [isMobileView]);
+
+  // Set initial scroll for cart
+  const cartScrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (cartScrollRef.current) {
+      const scrollWidth = cartScrollRef.current.scrollWidth;
+      const clientWidth = cartScrollRef.current.clientWidth;
+      cartScrollRef.current.scrollLeft = (scrollWidth - clientWidth) / 2;
+    }
   }, []);
+
+  // Auto-open sidebar on mobile when a target is selected
+  useEffect(() => {
+    if (activeTarget && isMobileView) {
+      setIsMobileSidebarOpen(true);
+    }
+  }, [activeTarget, isMobileView]);
 
   // Select item from sidebar → assign to active slot & close
   const handleSelectItem = useCallback((item: Item) => {
@@ -1457,232 +1482,321 @@ export default function CartEditor() {
       <div className="shrink-0 bg-white px-4 py-1.5 flex items-center gap-3 relative z-30">
         {/* Absolute border to stay on top of scaled logo */}
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-border z-50 pointer-events-none" />
+
+        {/* Mobile: Hamburger menu button at top-left */}
+        {isMobileView && (
+          <button
+            onClick={() => setIsMobileActionMenuOpen(true)}
+            className={`flex items-center justify-center w-9 h-9 rounded-xl border transition-all active:scale-95 shrink-0 ${
+              isMobileActionMenuOpen
+                ? "bg-primary text-white border-primary shadow-md"
+                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+            }`}
+            title="メニューを開く"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
         
-        <div className="flex items-center gap-3 mr-6 tracking-tight h-10 relative">
-          <div className="w-12 h-10 flex items-center justify-center relative mx-4">
+        <div className={`flex items-center gap-3 tracking-tight h-10 relative ${isMobileView ? "mr-2" : "mr-6"}`}>
+          <div className="w-12 h-10 flex items-center justify-center relative mx-4 shrink-0">
             <img 
               src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/samesame.gif" 
               alt="SMPWO Logo" 
               className="w-full h-full object-contain transform-gpu scale-[1.6]" 
             />
           </div>
-          <span className="font-rounded font-black text-xl tracking-widest text-[#64748b] mt-0.5 relative z-10">SMPWO LAYOUT</span>
+          {!isMobileView && (
+            <span className="font-rounded font-black text-xl tracking-widest text-[#64748b] mt-0.5 relative z-10 hidden sm:inline">SMPWO LAYOUT</span>
+          )}
         </div>
-        
-        <div className="flex items-center gap-1.5 bg-white border border-border rounded-none px-2.5 py-0.5 shadow-xs hover:border-primary/40 transition-colors">
-          <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
-          <select 
-            value={period} 
-            onChange={(e) => {
-              const val = e.target.value;
-              setPeriod(val);
-              const existing = layouts.find(l => l.period === val);
-              if (existing) {
-                setCartA(existing.cart_a);
-                setCartB(existing.cart_b);
-              }
-            }}
-            className="text-sm font-semibold text-foreground bg-transparent outline-none w-56 cursor-pointer"
-          >
-            {!layouts.some(l => l.period === period) && (
-              <option value={period}>{formatPeriodDisplay(period)}</option>
-            )}
-            {layouts.map(l => (
-              <option key={l.period} value={l.period}>{formatPeriodDisplay(l.period)}</option>
-            ))}
-          </select>
-        </div>
-        <div className="relative" ref={newPanelRef}>
-          <button onClick={() => setShowNewPanel((v) => !v)}
-            className="flex items-center gap-1.5 text-sm px-3 py-0.5 rounded-none border border-border bg-white hover:bg-muted font-bold text-foreground transition-all shadow-xs active:scale-95">
-            新規作成<ChevronDown className="w-3 h-3" />
-          </button>
-          <AnimatePresence>
-            {showNewPanel && (
-              <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                className="absolute top-full left-0 mt-1 bg-card border border-border rounded-xl shadow-xl p-4 z-30 min-w-[240px] flex flex-col gap-3">
-                <p className="text-xs font-bold text-muted-foreground">期間</p>
-                <div className="flex items-center gap-2">
-                  <select value={newMonth} onChange={(e) => setNewMonth(Number(e.target.value))}
-                    className="flex-1 text-sm border border-border rounded-lg px-2 py-1.5 bg-background text-foreground font-medium outline-none">
-                    {Array.from({length: 12}, (_, i) => i + 1).map(m => (
-                      <option key={m} value={m}>{m}月</option>
-                    ))}
-                  </select>
-                  <select value={newHalf} onChange={(e) => setNewHalf(e.target.value as "前半" | "後半")}
-                    className="flex-1 text-sm border border-border rounded-lg px-2 py-1.5 bg-background text-foreground font-medium outline-none">
-                    <option value="前半">前半</option>
-                    <option value="後半">後半</option>
-                  </select>
-                </div>
-                {/* Location Selection */}
-                <div className="flex flex-col gap-1.5 border-t border-border mt-1 pt-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs font-bold text-muted-foreground">地点を選択</p>
-                      {newLocations.length > 0 && !newLocations.includes("すべて") && (
-                        <button
-                          onClick={() => setNewLocations([])}
-                          className="text-[10px] text-slate-400 hover:text-red-500 border border-slate-200 hover:border-red-200 bg-white px-1.5 py-0.5 rounded transition-all"
-                        >すべて解除</button>
-                      )}
-                    </div>
-                    <button 
-                      onClick={() => setIsEditingLocations(true)}
-                      className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-md hover:bg-muted"
-                      title="地点リストを編集"
-                    >
-                      <Pencil className="w-3 h-3" />
-                    </button>
+
+        {/* Period selector: PC only */}
+        {!isMobileView && (
+          <div className="flex items-center gap-1.5 bg-white border border-border rounded-none px-2 py-0.5 shadow-xs hover:border-primary/40 transition-colors">
+            <CalendarDays className="w-3.5 h-3.5 text-muted-foreground shrink-0 ml-1" />
+            <select 
+              value={period} 
+              onChange={(e) => {
+                const val = e.target.value;
+                setPeriod(val);
+                const existing = layouts.find(l => l.period === val);
+                if (existing) {
+                  setCartA(existing.cart_a);
+                  setCartB(existing.cart_b);
+                }
+              }}
+              className="text-xs sm:text-sm font-semibold text-foreground bg-transparent outline-none w-32 sm:w-56 cursor-pointer"
+            >
+              {!layouts.some(l => l.period === period) && (
+                <option value={period}>{formatPeriodDisplay(period)}</option>
+              )}
+              {layouts.map(l => (
+                <option key={l.period} value={l.period}>{formatPeriodDisplay(l.period)}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        {!isMobileView && (
+          <div className="relative" ref={newPanelRef}>
+            <button onClick={() => setShowNewPanel((v) => !v)}
+              className="flex items-center gap-1.5 text-sm px-2 sm:px-3 py-0.5 rounded-none border border-border bg-white hover:bg-muted font-bold text-foreground transition-all shadow-xs active:scale-95">
+              {isMobileView ? "新規" : "新規作成"}<ChevronDown className="w-3 h-3" />
+            </button>
+            <AnimatePresence>
+              {showNewPanel && (
+                <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                  className="absolute top-full left-0 mt-1 bg-card border border-border rounded-xl shadow-xl p-4 z-30 min-w-[240px] flex flex-col gap-3">
+                  <p className="text-xs font-bold text-muted-foreground">期間</p>
+                  <div className="flex items-center gap-2">
+                    <select value={newMonth} onChange={(e) => setNewMonth(Number(e.target.value))}
+                      className="flex-1 text-sm border border-border rounded-lg px-2 py-1.5 bg-background text-foreground font-medium outline-none">
+                      {Array.from({length: 12}, (_, i) => i + 1).map(m => (
+                        <option key={m} value={m}>{m}月</option>
+                      ))}
+                    </select>
+                    <select value={newHalf} onChange={(e) => setNewHalf(e.target.value as "前半" | "後半")}
+                      className="flex-1 text-sm border border-border rounded-lg px-2 py-1.5 bg-background text-foreground font-medium outline-none">
+                      <option value="前半">前半</option>
+                      <option value="後半">後半</option>
+                    </select>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 max-h-[160px] overflow-y-auto px-1 py-1">
-                    <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={newLocations.includes("すべて")}
-                        onChange={() => {
-                          setNewLocations(["すべて"]);
-                        }}
-                        className="rounded border-slate-300 text-primary focus:ring-primary/20 cursor-pointer"
-                      />
-                      すべて
-                    </label>
-                    {locationsConfig.map(loc => (
-                      <label key={loc} className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+                  {/* Location Selection */}
+                  <div className="flex flex-col gap-1.5 border-t border-border mt-1 pt-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-muted-foreground">地点を選択</p>
+                        {newLocations.length > 0 && !newLocations.includes("すべて") && (
+                          <button
+                            onClick={() => setNewLocations([])}
+                            className="text-[10px] text-slate-400 hover:text-red-500 border border-slate-200 hover:border-red-200 bg-white px-1.5 py-0.5 rounded transition-all"
+                          >すべて解除</button>
+                        )}
+                      </div>
+                      <button 
+                        onClick={() => setIsEditingLocations(true)}
+                        className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-md hover:bg-muted"
+                        title="地点リストを編集"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 max-h-[160px] overflow-y-auto px-1 py-1">
+                      <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
                         <input 
                           type="checkbox" 
-                          checked={!newLocations.includes("すべて") && newLocations.includes(loc)}
+                          checked={newLocations.includes("すべて")}
                           onChange={() => {
-                            setNewLocations(prev => {
-                              const filtered = prev.filter(l => l !== "すべて");
-                              if (filtered.includes(loc)) {
-                                const res = filtered.filter(l => l !== loc);
-                                return res.length === 0 ? ["すべて"] : res;
-                              }
-                              return [...filtered, loc];
-                            });
+                            setNewLocations(["すべて"]);
                           }}
                           className="rounded border-slate-300 text-primary focus:ring-primary/20 cursor-pointer"
                         />
-                        <span className="truncate">{loc}</span>
+                        すべて
                       </label>
-                    ))}
-                  </div>
-                </div>
-
-                {(() => {
-                  const locStr = newLocations.includes("すべて") ? "" : `::${newLocations.join(",")}`;
-                  const targetPeriodFromState = `${new Date().getFullYear()}-${String(newMonth).padStart(2, "0")}-${newHalf}${locStr}`;
-                  const isTargetExists = layouts.some(l => l.period === targetPeriodFromState);
-
-                  return (
-                    <div className="flex flex-col gap-2 mt-2">
-                      <button 
-                        onClick={handleCreateNew}
-                        disabled={isTargetExists}
-                        className="w-full text-sm bg-primary text-white rounded-lg py-2 font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                        作成
-                      </button>
-                      {isTargetExists && (
-                        <p className="text-[10px] text-red-500 font-bold text-center">※この組み合わせは既に存在します</p>
-                      )}
+                      {locationsConfig.map(loc => (
+                        <label key={loc} className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={!newLocations.includes("すべて") && newLocations.includes(loc)}
+                            onChange={() => {
+                              setNewLocations(prev => {
+                                const filtered = prev.filter(l => l !== "すべて");
+                                if (filtered.includes(loc)) {
+                                  const res = filtered.filter(l => l !== loc);
+                                  return res.length === 0 ? ["すべて"] : res;
+                                }
+                                return [...filtered, loc];
+                              });
+                            }}
+                            className="rounded border-slate-300 text-primary focus:ring-primary/20 cursor-pointer"
+                          />
+                          <span className="truncate">{loc}</span>
+                        </label>
+                      ))}
                     </div>
-                  );
-                })()}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-        <div className="flex-1" />
-        <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()}
-          className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-medium transition-all disabled:opacity-60 ${
-            saveStatus === "saved" ? "bg-emerald-500 text-white" :
-            saveStatus === "error" ? "bg-red-500 text-white" : "bg-[#1b618d] text-white hover:opacity-90 shadow-sm"
-          }`}>
-          {saveStatus === "saved" ? <CheckCircle2 className="w-3.5 h-3.5" /> :
-           saveStatus === "saving" ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> :
-           <Save className="w-3.5 h-3.5" />}
-          {saveStatus === "saved" ? "保存済み" : saveStatus === "error" ? "エラー" : saveStatus === "saving" ? "保存中…" : (isExistingPeriod ? "上書き保存" : "保存")}
-        </button>
+                  </div>
 
-        {isExistingPeriod && (
-          <div className="relative">
-            {layoutDeleteConfirm ? (
-              <div className="absolute right-0 top-full mt-2 bg-white/95 backdrop-blur rounded-lg p-2 shadow-xl border border-red-200 z-[100] flex flex-col items-center min-w-[200px]">
-                <p className="text-xs font-bold text-red-600 mb-2">完全に削除しますか？</p>
-                <div className="flex gap-2 w-full">
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); executeDeleteLayout(); }}
-                    className="flex-1 px-2 py-1.5 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700 transition"
-                  >
-                    はい
-                  </button>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); setLayoutDeleteConfirm(false); }}
-                    className="flex-1 px-2 py-1.5 bg-slate-100 text-slate-700 text-xs font-bold rounded hover:bg-slate-200 transition"
-                  >
-                    戻る
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button 
-                onClick={(e) => { e.stopPropagation(); setLayoutDeleteConfirm(true); }}
-                className="flex items-center justify-center text-red-500 hover:bg-red-50 w-8 h-8 rounded-md transition-all border border-slate-200 hover:border-red-200 relative z-50 ml-1 shadow-sm active:scale-90"
-                title="この期間のデータを完全に削除"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
+                  {(() => {
+                    const locStr = newLocations.includes("すべて") ? "" : `::${newLocations.join(",")}`;
+                    const targetPeriodFromState = `${new Date().getFullYear()}-${String(newMonth).padStart(2, "0")}-${newHalf}${locStr}`;
+                    const isTargetExists = layouts.some(l => l.period === targetPeriodFromState);
+
+                    return (
+                      <div className="flex flex-col gap-2 mt-2">
+                        <button 
+                          onClick={handleCreateNew}
+                          disabled={isTargetExists}
+                          className="w-full text-sm bg-primary text-white rounded-lg py-2 font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                          作成
+                        </button>
+                        {isTargetExists && (
+                          <p className="text-[10px] text-red-500 font-bold text-center">※この組み合わせは既に存在します</p>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
-        {[
-          { key: "png" as const, label: "PNG", icon: <FileImage className="w-3.5 h-3.5" />, cls: "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold shadow-xs" },
-          { key: "pdf" as const, label: "PDF", icon: <Download className="w-3.5 h-3.5" />, cls: "border-red-400 bg-red-50 text-red-700 hover:bg-red-100 font-bold shadow-xs" },
-          { key: "xlsx" as const, label: "Excel", icon: <FileSpreadsheet className="w-3.5 h-3.5" />, cls: "border-green-400 bg-green-50 text-green-700 hover:bg-green-100 font-bold shadow-xs" },
-        ].map(({ key, label, icon, cls }) => (
-          <button key={key} disabled={!!exporting}
-            onClick={key === "png" ? handleExportPng : key === "pdf" ? handleExportPdf : handleExportXlsx}
-            className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md border disabled:opacity-50 transition-all active:scale-95 ${cls}`}>
-            {exporting === key ? <div className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" /> : icon}
-            {label}
+        <div className="flex-1" />
+        {!isMobileView && (
+          <>
+            <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()}
+              className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-medium transition-all disabled:opacity-60 ${
+                saveStatus === "saved" ? "bg-emerald-500 text-white" :
+                saveStatus === "error" ? "bg-red-500 text-white" : "bg-[#1b618d] text-white hover:opacity-90 shadow-sm"
+              }`}>
+              {saveStatus === "saved" ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> :
+              saveStatus === "saving" ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" /> :
+              <Save className="w-3.5 h-3.5 shrink-0" />}
+              <span className="hidden sm:inline">
+                {saveStatus === "saved" ? "保存済み" : saveStatus === "error" ? "エラー" : saveStatus === "saving" ? "保存中…" : (isExistingPeriod ? "上書き保存" : "保存")}
+              </span>
+              <span className="sm:hidden">
+                {saveStatus === "saved" ? "OK" : saveStatus === "saving" ? "…" : "保存"}
+              </span>
+            </button>
+
+            {isExistingPeriod && (
+              <div className="relative">
+                {layoutDeleteConfirm ? (
+                  <div className="absolute right-0 top-full mt-2 bg-white/95 backdrop-blur rounded-lg p-2 shadow-xl border border-red-200 z-[100] flex flex-col items-center min-w-[200px]">
+                    <p className="text-xs font-bold text-red-600 mb-2">完全に削除しますか？</p>
+                    <div className="flex gap-2 w-full">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); executeDeleteLayout(); }}
+                        className="flex-1 px-2 py-1.5 bg-red-600 text-white text-xs font-bold rounded hover:bg-red-700 transition"
+                      >
+                        はい
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setLayoutDeleteConfirm(false); }}
+                        className="flex-1 px-2 py-1.5 bg-slate-100 text-slate-700 text-xs font-bold rounded hover:bg-slate-200 transition"
+                      >
+                        戻る
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setLayoutDeleteConfirm(true); }}
+                    className="flex items-center justify-center text-red-500 hover:bg-red-50 w-8 h-8 rounded-md transition-all border border-slate-200 hover:border-red-200 relative z-50 ml-1 shadow-sm active:scale-90"
+                    title="この期間のデータを完全に削除"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            )}
+            {/* Compact Export Buttons for Mobile */}
+            <div className="flex items-center gap-1 px-1 border-l border-border ml-1">
+              {[
+                { key: "png" as const, label: "PNG", icon: <FileImage className="w-3.5 h-3.5" />, cls: "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold shadow-xs" },
+                { key: "pdf" as const, label: "PDF", icon: <Download className="w-3.5 h-3.5" />, cls: "border-red-400 bg-red-50 text-red-700 hover:bg-red-100 font-bold shadow-xs" },
+                { key: "xlsx" as const, label: "Excel", icon: <FileSpreadsheet className="w-3.5 h-3.5" />, cls: "border-green-400 bg-green-50 text-green-700 hover:bg-green-100 font-bold shadow-xs" },
+              ].map(({ key, label, icon, cls }) => (
+                <button key={key} disabled={!!exporting}
+                  onClick={key === "png" ? handleExportPng : key === "pdf" ? handleExportPdf : handleExportXlsx}
+                  className={`flex items-center gap-1 text-[10px] px-1.5 sm:px-2 py-0.5 rounded-md border disabled:opacity-50 transition-all active:scale-95 ${cls}`}>
+                  {exporting === key ? <div className="w-3.5 h-3.5 border-2 border-current/30 border-t-white rounded-full animate-spin" /> : icon}
+                  <span className="hidden sm:inline">{label}</span>
+                  {key === "xlsx" && <span className="sm:hidden">Excel</span>}
+                  {key !== "xlsx" && <span className="sm:hidden uppercase">{key}</span>}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+        {/* View Mode Toggle */}
+        <div className="flex items-center gap-1 border-l border-border ml-1 pl-1">
+          <button
+            onClick={toggleViewMode}
+            className={`flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-md border font-bold transition-all active:scale-95 shadow-xs ${
+              isMobileView 
+                ? "bg-slate-800 text-white border-slate-900" 
+                : "bg-white text-slate-700 border-slate-300"
+            }`}
+            title={isMobileView ? "PC版に切り替え" : "Mobile版に切り替え"}
+          >
+            {isMobileView ? <Monitor className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />}
+            <span>{isMobileView ? "PC版" : "Mobile版"}</span>
           </button>
-        ))}
+        </div>
       </div>
 
       {/* Main Content: Left Gallery + Carts + Side Panel */}
-      <div className="flex flex-1 overflow-hidden relative">
-        <LeftGallery 
-          items={items} 
-          onOpenUpload={openUploadPanel} 
-          width={galleryWidth} 
-        />
+      <div className={`flex flex-1 overflow-hidden relative ${isMobileView ? "pb-16" : ""}`}>
         
-        {/* Resize Handle */}
-        <div 
-          onMouseDown={startResizing}
-          className={`
-            absolute top-0 bottom-0 w-1.5 cursor-col-resize z-50 hover:bg-primary/20 transition-colors
-            ${isResizing ? "bg-primary/40" : "bg-transparent"}
-          `}
-          style={{ left: galleryWidth - 3 }} 
-        />
-        <main className="flex-1 overflow-auto p-5">
+        {/* Mobile Gallery Overlay */}
+        <AnimatePresence>
+          {isMobileGalleryOpen && isMobileView && (
+            <div className="fixed inset-0 z-[100]">
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                onClick={() => setIsMobileGalleryOpen(false)}
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
+              />
+              <motion.div 
+                initial={{ x: "-100%" }} 
+                animate={{ x: 0 }} 
+                exit={{ x: "-100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="absolute left-0 top-0 bottom-0 w-[280px] bg-white shadow-2xl flex flex-col"
+              >
+                <div className="p-4 border-b border-border flex items-center justify-between">
+                  <h3 className="font-bold flex items-center gap-2 text-slate-800"><Library className="w-5 h-5 text-primary" /> ライブラリ</h3>
+                  <button onClick={() => setIsMobileGalleryOpen(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <LeftGallery items={items} onOpenUpload={openUploadPanel} width={280} />
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {!isMobileView && (
+          <div className="shrink-0 h-full relative">
+            <LeftGallery 
+              items={items} 
+              onOpenUpload={openUploadPanel} 
+              width={galleryWidth} 
+            />
+            {/* Resize Handle */}
+            <div 
+              onMouseDown={startResizing}
+              className={`
+                absolute top-0 right-0 w-1.5 h-full cursor-col-resize z-50 hover:bg-primary/20 transition-colors
+                ${isResizing ? "bg-primary/40" : "bg-transparent"}
+              `}
+            />
+          </div>
+        )}
+        
+        <main className="flex-1 overflow-auto p-3 sm:p-5 h-full bg-[#fdfaf3]">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-black text-foreground tracking-tight">カートレイアウト</h2>
             </div>
             {activeTarget && (
               <button onClick={() => setActiveTarget(null)}
-                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 border border-border rounded-lg px-2 py-1 bg-muted transition-colors">
+                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 border border-border rounded-lg px-2 py-1 bg-white transition-colors shadow-sm">
                 <X className="w-3 h-3" /> 選択解除
               </button>
             )}
           </div>
 
-          <div className="w-full overflow-x-auto pb-4 pt-2 flex justify-center">
-            <motion.div layout className="m-auto shrink-0">
+          <div 
+            ref={cartScrollRef}
+            className={`w-full overflow-x-auto pb-8 pt-2 flex scrollbar-hide active:cursor-grabbing select-none ${isMobileView ? "" : "justify-center"}`}
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
+            <motion.div layout className="shrink-0">
               <div ref={canvasRef as any} id="export-container" className="flex flex-col items-center p-4 bg-background shrink-0">
                 <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
                   <CartPanel
@@ -1797,24 +1911,319 @@ export default function CartEditor() {
           </div>
         </main>
 
-        {/* Right Side Panel — Now permanently visible with fixed navigation at the top */}
-        <div className="z-50 shrink-0 border-l border-border bg-card shadow-lg flex flex-col overflow-hidden">
-          <div className="w-72 h-[calc(100vh-56px)] shrink-0 flex flex-col">
-            <SelectionSidebar
-              activeTarget={activeTarget}
-              items={items}
-              itemMap={itemMap}
-              cartA={cartA}
-              cartB={cartB}
-              onSelectItem={handleSelectItem}
-              onLayoutChange={handleLayoutChange}
-              onTagChange={handleTagChange}
-              onShelfClick={handleTagClick}
-              onClose={() => setActiveTarget(null)}
-            />
+        {/* Mobile Sidebar Overlay */}
+        <AnimatePresence>
+          {isMobileSidebarOpen && activeTarget && isMobileView && (
+            <div className="fixed inset-0 z-[100]">
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
+              />
+              <motion.div 
+                initial={{ x: "100%" }} 
+                animate={{ x: 0 }} 
+                exit={{ x: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="absolute right-0 top-0 bottom-0 w-[300px] bg-white shadow-2xl flex flex-col"
+              >
+                <div className="p-4 border-b border-border flex items-center justify-between">
+                  <h3 className="font-bold flex items-center gap-2 text-slate-800"><Settings className="w-5 h-5 text-primary" /> 設定・選択</h3>
+                  <button onClick={() => setIsMobileSidebarOpen(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <SelectionSidebar
+                    activeTarget={activeTarget}
+                    items={items}
+                    itemMap={itemMap}
+                    cartA={cartA}
+                    cartB={cartB}
+                    onSelectItem={handleSelectItem}
+                    onLayoutChange={handleLayoutChange}
+                    onTagChange={handleTagChange}
+                    onShelfClick={handleTagClick}
+                    onClose={() => setIsMobileSidebarOpen(false)}
+                  />
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Desktop Right Side Panel */}
+        {!isMobileView && (
+          <div className="z-50 shrink-0 border-l border-border bg-card shadow-lg flex flex-col overflow-hidden">
+            <div className="w-72 h-[calc(100vh-56px)] shrink-0 flex flex-col">
+              <SelectionSidebar
+                activeTarget={activeTarget}
+                items={items}
+                itemMap={itemMap}
+                cartA={cartA}
+                cartB={cartB}
+                onSelectItem={handleSelectItem}
+                onLayoutChange={handleLayoutChange}
+                onTagChange={handleTagChange}
+                onShelfClick={handleTagClick}
+                onClose={() => setActiveTarget(null)}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
+
+      {/* Bottom Navigation for Mobile */}
+      {isMobileView && (
+        <div className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-border flex items-center px-4 z-[90] shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+          <button 
+            onClick={() => setIsMobileGalleryOpen(true)}
+            className="flex-1 flex flex-col items-center justify-center gap-1 text-slate-500 hover:text-primary transition-colors"
+          >
+            <div className="relative">
+              <Library className="w-6 h-6" />
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
+            </div>
+            <span className="text-[10px] font-black tracking-widest uppercase">Library</span>
+          </button>
+          
+          <button 
+            onClick={() => {
+              if (cartScrollRef.current) {
+                 const scrollWidth = cartScrollRef.current.scrollWidth;
+                 const clientWidth = cartScrollRef.current.clientWidth;
+                 cartScrollRef.current.scrollTo({
+                   left: (scrollWidth - clientWidth) / 2,
+                   behavior: "smooth"
+                 });
+              }
+            }}
+            className="flex-1 flex flex-col items-center justify-center gap-1 text-slate-500 hover:text-primary transition-colors"
+          >
+            <div className="p-2 bg-slate-100 rounded-full">
+              <Home className="w-7 h-7" />
+            </div>
+          </button>
+
+
+          <button 
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="flex-1 flex flex-col items-center justify-center gap-1 text-slate-500 hover:text-primary transition-colors"
+          >
+            <LayoutDashboard className="w-6 h-6" />
+            <span className="text-[10px] font-black tracking-widest uppercase">Layout</span>
+          </button>
+        </div>
+      )}
+
+        {/* Mobile Action Menu Overlay */}
+        <AnimatePresence>
+          {isMobileActionMenuOpen && isMobileView && (
+            <div className="fixed inset-0 z-[110]">
+              <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                onClick={() => setIsMobileActionMenuOpen(false)}
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
+              />
+              <motion.div 
+                initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }}
+                transition={{ type: "spring", damping: 28, stiffness: 220 }}
+                className="absolute top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white shadow-2xl flex flex-col"
+              >
+                {/* Drawer Header */}
+                <div className="p-4 flex items-center justify-between border-b border-slate-200 bg-white shadow-sm shrink-0">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-primary/10 rounded-lg text-primary">
+                      <Menu className="w-5 h-5" />
+                    </div>
+                    <h2 className="text-base font-black tracking-tight text-slate-800">メニュー</h2>
+                  </div>
+                  <button onClick={() => setIsMobileActionMenuOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                    <X className="w-5 h-5 text-slate-500" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                  {/* Period Selector Section */}
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">カートレイアウトの日時</p>
+                    <div className="flex items-center gap-2 bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3">
+                      <CalendarDays className="w-5 h-5 text-slate-400 shrink-0" />
+                      <select
+                        value={period}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPeriod(val);
+                          const existing = layouts.find(l => l.period === val);
+                          if (existing) {
+                            setCartA(existing.cart_a);
+                            setCartB(existing.cart_b);
+                          }
+                          setIsMobileActionMenuOpen(false);
+                        }}
+                        className="flex-1 text-sm font-bold text-slate-800 bg-transparent outline-none cursor-pointer"
+                      >
+                        {!layouts.some(l => l.period === period) && (
+                          <option value={period}>{formatPeriodDisplay(period)}</option>
+                        )}
+                        {layouts.map(l => (
+                          <option key={l.period} value={l.period}>{formatPeriodDisplay(l.period)}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Save Section */}
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">レイアウトを保存</p>
+                    <button 
+                      onClick={() => { handleSave(); setTimeout(() => setIsMobileActionMenuOpen(false), 800); }}
+                      disabled={saveStatus === "saving" || !period.trim()}
+                      className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold transition-all shadow-md active:scale-[0.98] ${
+                        saveStatus === "saved" ? "bg-emerald-500 text-white" :
+                        saveStatus === "error" ? "bg-red-500 text-white" : "bg-[#1b618d] text-white shadow-[#1b618d]/20"
+                      }`}
+                    >
+                      {saveStatus === "saved" ? <CheckCircle2 className="w-6 h-6" /> :
+                       saveStatus === "saving" ? <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" /> :
+                       <Save className="w-6 h-6" />}
+                      <span className="text-base">
+                        {saveStatus === "saved" ? "保存済み" : saveStatus === "error" ? "エラー" : saveStatus === "saving" ? "保存中…" : (isExistingPeriod ? "上書き保存" : "保存する")}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Export Section */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">書き出し</p>
+                      {exporting && <div className="text-[10px] text-primary animate-pulse font-bold">処理中...</div>}
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { key: "png" as const, label: "PNG画像", icon: <FileImage className="w-5 h-5" />, color: "bg-amber-50 text-amber-700 border-amber-200" },
+                        { key: "pdf" as const, label: "PDF文書", icon: <Download className="w-5 h-5" />, color: "bg-red-50 text-red-700 border-red-200" },
+                        { key: "xlsx" as const, label: "Excel", icon: <FileSpreadsheet className="w-5 h-5" />, color: "bg-green-50 text-green-700 border-green-200" },
+                      ].map(({ key, label, icon, color }) => (
+                        <button key={key} disabled={!!exporting}
+                          onClick={() => {
+                            if (key === "png") handleExportPng();
+                            else if (key === "pdf") handleExportPdf();
+                            else handleExportXlsx();
+                          }}
+                          className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all active:scale-95 shadow-sm bg-white ${color} ${exporting === key ? "ring-2 ring-primary ring-offset-1" : ""}`}
+                        >
+                          {icon}
+                          <span className="text-[10px] font-bold text-center leading-tight">{label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* New Creation Section */}
+                  <div className="space-y-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">新規レイアウト作成</p>
+                    <div className="flex items-center gap-3">
+                      <select value={newMonth} onChange={(e) => setNewMonth(Number(e.target.value))}
+                        className="flex-1 text-sm border-2 border-slate-100 rounded-xl px-3 py-3 bg-slate-50 text-slate-800 font-bold outline-none focus:border-primary/30 transition-all">
+                        {Array.from({length: 12}, (_, i) => i + 1).map(m => (
+                          <option key={m} value={m}>{m}月</option>
+                        ))}
+                      </select>
+                      <select value={newHalf} onChange={(e) => setNewHalf(e.target.value as "前半" | "後半")}
+                        className="flex-1 text-sm border-2 border-slate-100 rounded-xl px-3 py-3 bg-slate-50 text-slate-800 font-bold outline-none focus:border-primary/30 transition-all">
+                        <option value="前半">前半</option>
+                        <option value="後半">後半</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                       <div className="flex items-center justify-between">
+                         <p className="text-[10px] font-bold text-slate-400">地点を選択</p>
+                         <button onClick={() => setIsEditingLocations(true)} className="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-primary">
+                           <Pencil className="w-3.5 h-3.5" />
+                         </button>
+                       </div>
+                       <div className="grid grid-cols-2 gap-2 h-32 overflow-y-auto scrollbar-hide p-1">
+                          <label className="flex items-center gap-2 p-2 rounded-xl border border-slate-100 bg-slate-50/50 text-xs font-bold cursor-pointer transition-all active:scale-95">
+                            <input type="checkbox" checked={newLocations.includes("すべて")} onChange={() => setNewLocations(["すべて"])} className="rounded border-slate-300 text-primary" /> 
+                            すべて
+                          </label>
+                          {locationsConfig.map(loc => (
+                            <label key={loc} className="flex items-center gap-2 p-2 rounded-xl border border-slate-100 bg-slate-50/50 text-xs font-bold cursor-pointer transition-all active:scale-95">
+                              <input type="checkbox" checked={!newLocations.includes("すべて") && newLocations.includes(loc)}
+                                onChange={() => {
+                                  setNewLocations(prev => {
+                                    const filtered = prev.filter(l => l !== "すべて");
+                                    if (filtered.includes(loc)) {
+                                      const res = filtered.filter(l => l !== loc);
+                                      return res.length === 0 ? ["すべて"] : res;
+                                    }
+                                    return [...filtered, loc];
+                                  });
+                                }}
+                                className="rounded border-slate-300 text-primary"
+                              />
+                              <span className="truncate">{loc}</span>
+                            </label>
+                          ))}
+                       </div>
+                    </div>
+
+                    <div className="pt-2">
+                      {(() => {
+                        const locStr = newLocations.includes("すべて") ? "" : `::${newLocations.join(",")}`;
+                        const targetPeriodFromState = `${new Date().getFullYear()}-${String(newMonth).padStart(2, "0")}-${newHalf}${locStr}`;
+                        const isTargetExists = layouts.some(l => l.period === targetPeriodFromState);
+
+                        return (
+                          <div className="space-y-2">
+                            <button 
+                              onClick={() => { handleCreateNew(); setTimeout(() => setIsMobileActionMenuOpen(false), 500); }}
+                              disabled={isTargetExists}
+                              className="w-full text-sm bg-slate-800 text-white rounded-xl py-3 font-black tracking-widest hover:bg-slate-700 transition-all shadow-lg shadow-slate-200 active:scale-95 disabled:opacity-40 disabled:grayscale"
+                            >
+                              新規作成
+                            </button>
+                            {isTargetExists && (
+                              <p className="text-[10px] text-red-500 font-bold text-center">※この組み合わせは既に存在します</p>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Delete Section */}
+                  {isExistingPeriod && (
+                    <div className="pt-4 border-t border-slate-200">
+                      <button 
+                        onClick={() => { setLayoutDeleteConfirm(true); setIsMobileActionMenuOpen(false); }}
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-red-100 text-red-500 font-bold hover:bg-red-50 transition-all"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                        この期間を完全に削除
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Safe Area Padding for Mobile Nav */}
+                <div className="h-20 bg-white" />
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        <style jsx global>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
     </>
   );
