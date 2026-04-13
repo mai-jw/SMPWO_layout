@@ -52,7 +52,7 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
         name: file.name.split('.').slice(0, -1).join('.'),
         category,
         language,
-        posterType: category === "poster" ? "マグポス" : "",
+        posterType: category === "poster" ? "マグポス" : "マグポス",
         status: "idle" as UploadStatus,
       };
     });

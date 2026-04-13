@@ -1935,7 +1935,7 @@ export default function CartEditor() {
                                 <div className="font-bold text-foreground">{posterItem?.name || "—"}</div>
                                 <div className="flex gap-3 mt-0.5">
                                   <span className="text-red-600 font-bold">{posterItem?.language === "ja" ? "日本語" : posterItem?.language === "en" ? "英語" : posterItem?.language || ""}</span>
-                                  <span className="text-slate-500">({posterItem?.poster_type || layout.posterType || "未設定"})</span>
+                                  <span className="text-slate-500">({layout.posterType || posterItem?.poster_type || "未設定"})</span>
                                 </div>
                               </td>
                             </tr>
