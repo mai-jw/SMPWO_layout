@@ -164,6 +164,7 @@ function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster, layou
           <img 
             src={item.url} 
             alt={item.name} 
+            crossOrigin="anonymous"
             className="w-full h-full object-contain object-bottom drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] transition-transform group-hover:scale-[1.02]" 
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
@@ -284,10 +285,13 @@ function CartPanel({
     <div className="flex flex-col items-center gap-0.5">
       <h3 className="text-xs font-black text-muted-foreground tracking-widest">カート{cartId}</h3>
       <div className="w-[500px]">
-        <div 
-          className="relative w-full aspect-1080/1350 bg-contain bg-no-repeat bg-center"
-          style={{ backgroundImage: `url('https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/cart_empty_guid.png')` }}
-        >
+        <div className="relative w-full aspect-1080/1350">
+          <img 
+            src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/cart_empty_guid.png"
+            alt="Cart Base"
+            crossOrigin="anonymous"
+            className="absolute inset-0 w-full h-full object-contain"
+          />
           <div 
             className={`absolute transition-all overflow-hidden ${POSTER_PLACEMENT.aspect} ${
               isPosterActive ? "ring-2 ring-yellow-400 z-40 shadow-xl scale-[1.01]" : "z-10"
