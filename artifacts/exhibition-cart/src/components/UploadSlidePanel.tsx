@@ -110,6 +110,7 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
         );
         successCount++;
       } catch (error) {
+        console.error(`[Upload Error] File: ${item.name}`, error);
         const errorMessage = error instanceof Error ? error.message : "不明なエラーが発生しました";
         setStagedFiles((prev) =>
           prev.map((f) =>
@@ -124,11 +125,19 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
 
     setIsUploadingAll(false);
 
-    toast({
-      title: "アップロード完了",
-      description: `${successCount}件成功${errorCount > 0 ? `、${errorCount}件失敗` : ''}しました。`,
-      variant: errorCount > 0 ? "destructive" : "default",
-    });
+    // 成功したファイルがある場合はライブラリを更新
+    if (successCount > 0) {
+      toast({
+        title: "アップロード完了",
+        description: `${successCount}件の画像をライブラリに追加しました。${errorCount > 0 ? `(${errorCount}件失敗)` : ""}`,
+      });
+    } else if (errorCount > 0) {
+      toast({
+        title: "アップロード失敗",
+        description: "画像のアップロードに失敗しました。詳細はコンソールを確認してください。",
+        variant: "destructive",
+      });
+    }
   };
 
   const clearCompleted = () => {

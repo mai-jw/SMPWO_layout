@@ -1130,7 +1130,11 @@ export default function CartEditor() {
     if (!activeTarget) return;
     const setter = getSetCart(activeTarget.cart);
     if (activeTarget.section === "poster") {
-      setter((prev) => ({ ...prev, poster: item.id! }));
+      setter((prev) => ({ 
+        ...prev, 
+        poster: item.id!,
+        posterType: item.poster_type || "" // ポスタータイプを同期
+      }));
     } else if (activeTarget.section === "shelf") {
       const { shelfIndex, slotIndex } = activeTarget as { shelfIndex: number; slotIndex: number };
       setter((prev) => ({
@@ -1293,9 +1297,17 @@ export default function CartEditor() {
     if (!canvasRef.current) return;
     setExporting("png");
     try {
+      // Wait for all images to load before capturing
+      const images = canvasRef.current.getElementsByTagName('img');
+      await Promise.all(Array.from(images).map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+      }));
+
       const canvas = await html2canvas(canvasRef.current, { 
         scale: 2.5, 
         useCORS: true, 
+        logging: true, // CORSや描画の問題を追跡しやすくする
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
           const el = clonedDoc.getElementById("export-container");
@@ -1323,9 +1335,17 @@ export default function CartEditor() {
     if (!canvasRef.current) return;
     setExporting("pdf");
     try {
+      // Wait for all images to load before capturing
+      const images = canvasRef.current.getElementsByTagName('img');
+      await Promise.all(Array.from(images).map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+      }));
+
       const canvas = await html2canvas(canvasRef.current, { 
         scale: 2, 
         useCORS: true, 
+        logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
           const el = clonedDoc.getElementById("export-container");
@@ -1369,10 +1389,18 @@ export default function CartEditor() {
     if (!canvasRef.current) return;
     setExporting("xlsx");
     try {
+      // Wait for all images to load before capturing
+      const images = canvasRef.current.getElementsByTagName('img');
+      await Promise.all(Array.from(images).map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+      }));
+
       // 1. Capture Main Cart Layout Image
       const cartCanvas = await html2canvas(canvasRef.current, { 
         scale: 2, 
         useCORS: true, 
+        logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
           const el = clonedDoc.getElementById("export-container");

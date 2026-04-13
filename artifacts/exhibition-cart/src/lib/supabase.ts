@@ -7,7 +7,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
   const missing: string[] = [];
   if (!supabaseUrl) missing.push("SUPABASE_URL");
   if (!supabaseAnonKey) missing.push("SUPABASE_ANON_KEY");
-  console.error(`[Supabase Error] Missing required environment variables: ${missing.join(", ")}. Ensure they are prefixed with NEXT_PUBLIC_ for client access.`);
+  console.error(`[Supabase Error] Missing required environment variables: ${missing.join(", ")}. Ensure they are prefixed with NEXT_PUBLIC_ for client access. Current process.env check:`, {
+    URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  });
 }
 
 export const supabase = createClient(
