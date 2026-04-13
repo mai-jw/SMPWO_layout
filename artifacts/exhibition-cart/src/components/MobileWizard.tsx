@@ -73,7 +73,7 @@ interface MobileWizardProps {
   newHalf: "前半" | "後半";
   setNewHalf: (h: "前半" | "後半") => void;
   newLocations: string[];
-  setNewLocations: (locs: string[]) => void;
+  setNewLocations: React.Dispatch<React.SetStateAction<string[]>>;
   locationsConfig: string[];
   handleCreateNew: () => void;
   formatPeriodDisplay: (p: string) => string;
