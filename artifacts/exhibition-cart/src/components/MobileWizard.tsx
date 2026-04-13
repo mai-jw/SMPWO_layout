@@ -48,6 +48,7 @@ interface MobileWizardProps {
   setCartB: React.Dispatch<React.SetStateAction<CartLayoutV2>>;
   items: Item[];
   itemMap: Record<string, Item>;
+  layouts: { period: string; cart_a: CartLayoutV2; cart_b: CartLayoutV2 }[];
   
   // Handlers
   handleSave: () => Promise<void>;
@@ -56,14 +57,16 @@ interface MobileWizardProps {
   handleExportXlsx: () => Promise<void>;
   handleDelete: () => void;
   onOpenUpload: () => void;
+  executeDeleteLayoutForPeriod: (targetPeriod: string) => Promise<void>;
+  loadLayoutForEdit: (targetPeriod: string) => void;
   
   // Status
   saveStatus: "idle" | "saving" | "saved" | "error";
   exporting: "png" | "pdf" | "xlsx" | null;
   
   // Wizard State
-  step: "menu" | "new" | "edit" | "preview";
-  setStep: (s: "menu" | "new" | "edit" | "preview") => void;
+  step: "menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete";
+  setStep: (s: "menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete") => void;
   
   // View Toggle
   onToggleStandard: () => void;
@@ -89,10 +92,11 @@ const LANGUAGES = [
 ];
 
 export function MobileWizard({
-  period, cartA, setCartA, cartB, setCartB, items, itemMap,
+  period, cartA, setCartA, cartB, setCartB, items, itemMap, layouts,
   handleSave, handleExportPng, handleExportPdf, handleExportXlsx, handleDelete,
   onOpenUpload, saveStatus, exporting, step, setStep, onToggleStandard,
-  newMonth, setNewMonth, newHalf, setNewHalf, newLocations, setNewLocations, locationsConfig, handleCreateNew, formatPeriodDisplay
+  newMonth, setNewMonth, newHalf, setNewHalf, newLocations, setNewLocations, locationsConfig, handleCreateNew, formatPeriodDisplay,
+  executeDeleteLayoutForPeriod, loadLayoutForEdit
 }: MobileWizardProps) {
   
   const [activeCart, setActiveCart] = useState<CartId>("A");
@@ -136,7 +140,7 @@ export function MobileWizard({
                 title="カートレイアウト編集" 
                 desc="現在のカートの中身を設定します"
                 color="bg-blue-50 text-blue-600 border-blue-100"
-                onClick={() => setStep("edit")}
+                onClick={() => setStep("select-edit")}
               />
               <MenuCard 
                 icon={<Upload className="w-6 h-6" />} 
@@ -148,9 +152,9 @@ export function MobileWizard({
               <MenuCard 
                 icon={<Trash2 className="w-6 h-6" />} 
                 title="レイアウト削除" 
-                desc="現在の期間のデータを完全に削除します"
+                desc="保存されているレイアウトを削除します"
                 color="bg-red-50 text-red-600 border-red-100"
-                onClick={handleDelete}
+                onClick={() => setStep("select-delete")}
               />
             </div>
 
@@ -162,6 +166,68 @@ export function MobileWizard({
                 <Monitor className="w-5 h-5" />
                 <span>標準表示（PC版と同じ）に切り替え</span>
               </button>
+            </div>
+          </motion.div>
+        )}
+
+        {step === "select-edit" && (
+          <motion.div 
+            key="select-edit"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            className="flex flex-col h-full bg-white"
+          >
+            <WizardHeader title="編集するレイアウトを選択" onBack={() => setStep("menu")} />
+            <div className="flex-1 overflow-y-auto p-6 space-y-3">
+              {layouts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-48 text-slate-400">
+                  <p className="text-sm font-bold">保存済みのレイアウトがありません</p>
+                  <p className="text-xs mt-1">「新規レイアウト作成」から作成してください</p>
+                </div>
+              ) : (
+                layouts.map(l => (
+                  <button
+                    key={l.period}
+                    onClick={() => loadLayoutForEdit(l.period)}
+                    className="w-full flex items-center justify-between p-5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-left active:scale-[0.97] transition-all hover:border-blue-200 hover:bg-blue-50"
+                  >
+                    <div>
+                      <p className="font-black text-slate-800 text-base">{formatPeriodDisplay(l.period)}</p>
+                      <p className="text-xs text-slate-400 font-bold mt-0.5">タップして編集</p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-blue-400 shrink-0" />
+                  </button>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {step === "select-delete" && (
+          <motion.div 
+            key="select-delete"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            className="flex flex-col h-full bg-white"
+          >
+            <WizardHeader title="削除するレイアウトを選択" onBack={() => setStep("menu")} />
+            <div className="flex-1 overflow-y-auto p-6 space-y-3">
+              {layouts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-48 text-slate-400">
+                  <p className="text-sm font-bold">保存済みのレイアウトがありません</p>
+                </div>
+              ) : (
+                layouts.map(l => (
+                  <DeleteLayoutRow
+                    key={l.period}
+                    period={l.period}
+                    displayName={formatPeriodDisplay(l.period)}
+                    onConfirm={() => executeDeleteLayoutForPeriod(l.period)}
+                  />
+                ))
+              )}
             </div>
           </motion.div>
         )}
@@ -667,4 +733,43 @@ function ExportBtn({ icon, active, onClick, label }: any) {
        <span className="text-[10px] font-black">{label}</span>
     </button>
   )
+}
+
+function DeleteLayoutRow({ period, displayName, onConfirm }: { period: string; displayName: string; onConfirm: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+  return (
+    <div className="w-full rounded-2xl border-2 border-slate-100 overflow-hidden">
+      {confirming ? (
+        <div className="bg-red-50 p-4 space-y-3">
+          <p className="text-sm font-black text-red-700">「{displayName}」を削除しますか？</p>
+          <p className="text-xs text-red-500 font-bold">この操作は元に戻せません。</p>
+          <div className="flex gap-3">
+            <button
+              onClick={onConfirm}
+              className="flex-1 py-3 bg-red-600 text-white font-black text-sm rounded-xl active:scale-95 transition-all"
+            >
+              削除する
+            </button>
+            <button
+              onClick={() => setConfirming(false)}
+              className="flex-1 py-3 bg-white border border-slate-200 text-slate-700 font-black text-sm rounded-xl active:scale-95 transition-all"
+            >
+              キャンセル
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setConfirming(true)}
+          className="w-full flex items-center justify-between p-5 bg-white text-left active:scale-[0.97] transition-all hover:bg-red-50"
+        >
+          <div>
+            <p className="font-black text-slate-800 text-base">{displayName}</p>
+            <p className="text-xs text-red-400 font-bold mt-0.5">タップして削除</p>
+          </div>
+          <Trash2 className="w-5 h-5 text-red-400 shrink-0" />
+        </button>
+      )}
+    </div>
+  );
 }

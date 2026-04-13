@@ -1018,7 +1018,7 @@ export default function CartEditor() {
   
   // Mobile Wizard States
   const [mobileViewType, setMobileViewType] = useState<"standard" | "wizard">("wizard");
-  const [wizardStep, setWizardStep] = useState<"menu" | "new" | "edit" | "preview">("menu");
+  const [wizardStep, setWizardStep] = useState<"menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete">("menu");
   const [activeWizardCart, setActiveWizardCart] = useState<CartId>("A");
   const [activeWizardShelf, setActiveWizardShelf] = useState<number>(0); // 0, 1, 2
 
@@ -1254,6 +1254,32 @@ export default function CartEditor() {
       console.error("[Delete Error] Failed to delete layout:", err);
       alert(`削除に失敗しました: ${err.message || "不明なエラー"}`);
     }
+  };
+
+  // Mobile-specific: delete a specific period by key
+  const executeDeleteLayoutForPeriod = async (targetPeriod: string) => {
+    try {
+      await deleteLayout.mutateAsync(targetPeriod);
+      if (period === targetPeriod) {
+        handleReset();
+        setPeriod("");
+        setActiveTarget(null);
+      }
+      setWizardStep("menu");
+    } catch (err: any) {
+      console.error("[Mobile Delete Error]", err);
+      alert(`削除に失敗しました: ${err.message || "不明なエラー"}`);
+    }
+  };
+
+  // Mobile-specific: load layout for editing
+  const loadLayoutForEdit = (targetPeriod: string) => {
+    const existing = layouts.find(l => l.period === targetPeriod);
+    if (!existing) return;
+    setPeriod(existing.period);
+    setCartA(existing.cart_a);
+    setCartB(existing.cart_b);
+    setWizardStep("edit");
   };
 
   const handleCreateNew = () => {
@@ -1555,6 +1581,9 @@ export default function CartEditor() {
           locationsConfig={locationsConfig}
           handleCreateNew={handleCreateNew}
           formatPeriodDisplay={formatPeriodDisplay}
+          layouts={layouts}
+          executeDeleteLayoutForPeriod={executeDeleteLayoutForPeriod}
+          loadLayoutForEdit={loadLayoutForEdit}
         />
       )}
 
