@@ -484,14 +484,14 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
             const Icon = GALLERY_FILTER_ICONS[key];
             return (
               <button key={key} onClick={() => setFilter(key as GalleryFilterType)}
-                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-xl transition-all border ${
+                className={`flex flex-col items-center justify-center gap-1 py-2 px-0.5 rounded-xl transition-all border ${
                   filter === key 
                     ? "bg-[#aecbe2] text-slate-800 border-[#9bbad2] shadow-sm" 
                     : "bg-white text-slate-500 border-slate-100 hover:border-sky-200 hover:bg-sky-50/30"
                 }`}>
-                <Icon className={`w-5 h-5 ${filter === key ? "text-slate-700" : "text-slate-400"}`} />
-                <span className="text-[9px] font-bold leading-[1.1] text-center min-h-[2.2em] flex items-center justify-center whitespace-pre-line tracking-tighter">
-                  {label}
+                <Icon className={`w-5 h-5 shrink-0 ${filter === key ? "text-slate-700" : "text-slate-400"}`} />
+                <span className="text-[8.5px] font-bold leading-[1.1] text-center min-h-[2.2em] flex items-center justify-center whitespace-pre-line tracking-tighter w-full break-keep px-px">
+                  {label === "パンフレット\n招待状" ? "パンフレット/\n招待状" : label}
                 </span>
               </button>
             );
