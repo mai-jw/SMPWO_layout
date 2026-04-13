@@ -357,9 +357,13 @@ interface LeftGalleryProps {
   items: Item[];
   onOpenUpload: () => void;
   width: number;
+  cartA?: CartLayoutV2;
+  setCartA?: React.Dispatch<React.SetStateAction<CartLayoutV2>>;
+  cartB?: CartLayoutV2;
+  setCartB?: React.Dispatch<React.SetStateAction<CartLayoutV2>>;
 }
 
-function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
+function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCartB }: LeftGalleryProps) {
   const [filter, setFilter] = useState<GalleryFilterType>("all");
   const [langFilter, setLangFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -403,13 +407,24 @@ function LeftGallery({ items, onOpenUpload, width }: LeftGalleryProps) {
       return;
     }
     try {
+      const typeToSave = editCategory === "poster" ? editPosterType : "";
       await updateMutation.mutateAsync({ 
         id, 
         name: editValue,
         category: editCategory,
         language: editLanguage,
-        poster_type: editCategory === "poster" ? editPosterType : undefined,
+        poster_type: typeToSave,
       });
+
+      // 現在表示・編集中のカートに使用されている場合は同期する
+      if (editCategory === "poster") {
+        if (setCartA && cartA?.poster === id) {
+          setCartA(prev => ({ ...prev, posterType: typeToSave }));
+        }
+        if (setCartB && cartB?.poster === id) {
+          setCartB(prev => ({ ...prev, posterType: typeToSave }));
+        }
+      }
     } catch (err) {
       console.error("Failed to update item:", err);
     }
@@ -1831,7 +1846,15 @@ export default function CartEditor() {
                   <button onClick={() => setIsMobileGalleryOpen(false)} className="p-2 -mr-2 text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
                 </div>
                 <div className="flex-1 overflow-hidden">
-                  <LeftGallery items={items} onOpenUpload={openUploadPanel} width={280} />
+                  <LeftGallery 
+                    items={items} 
+                    onOpenUpload={openUploadPanel} 
+                    width={280} 
+                    cartA={cartA}
+                    setCartA={setCartA}
+                    cartB={cartB}
+                    setCartB={setCartB}
+                  />
                 </div>
               </motion.div>
             </div>
@@ -1844,6 +1867,10 @@ export default function CartEditor() {
               items={items} 
               onOpenUpload={openUploadPanel} 
               width={galleryWidth} 
+              cartA={cartA}
+              setCartA={setCartA}
+              cartB={cartB}
+              setCartB={setCartB}
             />
             {/* Resize Handle */}
             <div 
