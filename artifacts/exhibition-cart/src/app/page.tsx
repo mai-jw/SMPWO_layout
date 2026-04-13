@@ -351,7 +351,7 @@ interface SelectionSidebarProps {
   onClose: () => void;
 }
 
-type GalleryFilterType = keyof typeof GALLERY_FILTER_LABELS;
+export type GalleryFilterType = keyof typeof GALLERY_FILTER_LABELS;
 
 interface LeftGalleryProps {
   items: Item[];

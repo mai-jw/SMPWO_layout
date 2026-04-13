@@ -22,14 +22,16 @@ import {
   Search
 } from "lucide-react";
 import { 
-  CartLayoutV2, 
   CartId, 
-  Item, 
-  ShelfLayoutType, 
-  TagData,
   ActiveTarget,
   GalleryFilterType
 } from "@/app/page";
+import { 
+  CartLayoutV2, 
+  Item, 
+  ShelfLayoutType, 
+  TagData 
+} from "@/lib/supabase";
 import { 
   SHELF_COORDINATES, 
   GALLERY_FILTER_LABELS
