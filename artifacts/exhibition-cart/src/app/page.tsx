@@ -1202,11 +1202,7 @@ export default function CartEditor() {
   const handleSave = async () => {
     if (!period.trim() || saveStatus === "saving") return;
 
-    if (isExistingPeriod) {
-      const ok = window.confirm(`「${formatPeriodDisplay(period)}」の上書き保存をします。\n過去のデータに上書きされ、元に戻せなくなりますがよろしいですか？`);
-      if (!ok) return;
-    }
-
+    // 上書き保存の確認ダイアログを削除（直接実行）
     setSaveStatus("saving");
     try {
       await saveLayout.mutateAsync({ period, cart_a: cartA, cart_b: cartB });
@@ -1515,7 +1511,7 @@ export default function CartEditor() {
         {isMobileView && (
           <button
             onClick={() => setIsMobileActionMenuOpen(true)}
-            className={`flex items-center justify-center w-9 h-9 rounded-xl border transition-all active:scale-95 shrink-0 ${
+            className={`flex items-center justify-center w-9 h-9 rounded-xl border transition-all active:scale-95 shrink-0 select-none ${
               isMobileActionMenuOpen
                 ? "bg-primary text-white border-primary shadow-md"
                 : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
@@ -1568,7 +1564,7 @@ export default function CartEditor() {
         {!isMobileView && (
           <div className="relative" ref={newPanelRef}>
             <button onClick={() => setShowNewPanel((v) => !v)}
-              className="flex items-center gap-1.5 text-sm px-2 sm:px-3 py-0.5 rounded-none border border-border bg-white hover:bg-muted font-bold text-foreground transition-all shadow-xs active:scale-95">
+              className="flex items-center gap-1.5 text-sm px-2 sm:px-3 py-0.5 rounded-none border border-border bg-white hover:bg-muted font-bold text-foreground transition-all shadow-xs active:scale-95 select-none">
               {isMobileView ? "新規" : "新規作成"}<ChevronDown className="w-3 h-3" />
             </button>
             <AnimatePresence>
@@ -1673,7 +1669,7 @@ export default function CartEditor() {
         {!isMobileView && (
           <>
             <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()}
-              className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-medium transition-all disabled:opacity-60 ${
+              className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-medium transition-all select-none disabled:opacity-60 ${
                 saveStatus === "saved" ? "bg-emerald-500 text-white" :
                 saveStatus === "error" ? "bg-red-500 text-white" : "bg-[#1b618d] text-white hover:opacity-90 shadow-sm"
               }`}>
@@ -1711,7 +1707,7 @@ export default function CartEditor() {
                 ) : (
                   <button 
                     onClick={(e) => { e.stopPropagation(); setLayoutDeleteConfirm(true); }}
-                    className="flex items-center justify-center text-red-500 hover:bg-red-50 w-8 h-8 rounded-md transition-all border border-slate-200 hover:border-red-200 relative z-50 ml-1 shadow-sm active:scale-90"
+                    className="flex items-center justify-center text-red-500 hover:bg-red-50 w-8 h-8 rounded-md transition-all border border-slate-200 hover:border-red-200 relative z-50 ml-1 shadow-sm active:scale-90 select-none"
                     title="この期間のデータを完全に削除"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -1728,7 +1724,7 @@ export default function CartEditor() {
               ].map(({ key, label, icon, cls }) => (
                 <button key={key} disabled={!!exporting}
                   onClick={key === "png" ? handleExportPng : key === "pdf" ? handleExportPdf : handleExportXlsx}
-                  className={`flex items-center gap-1 text-[10px] px-1.5 sm:px-2 py-0.5 rounded-md border disabled:opacity-50 transition-all active:scale-95 ${cls}`}>
+                  className={`flex items-center gap-1 text-[10px] px-1.5 sm:px-2 py-0.5 rounded-md border disabled:opacity-50 transition-all active:scale-95 select-none ${cls}`}>
                   {exporting === key ? <div className="w-3.5 h-3.5 border-2 border-current/30 border-t-white rounded-full animate-spin" /> : icon}
                   <span className="hidden sm:inline">{label}</span>
                   {key === "xlsx" && <span className="sm:hidden">Excel</span>}
@@ -1742,7 +1738,7 @@ export default function CartEditor() {
         <div className="flex items-center gap-1 border-l border-border ml-1 pl-1">
           <button
             onClick={toggleViewMode}
-            className={`flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-md border font-bold transition-all active:scale-95 shadow-xs ${
+            className={`flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-md border font-bold transition-all active:scale-95 shadow-xs select-none ${
               isMobileView 
                 ? "bg-slate-800 text-white border-slate-900" 
                 : "bg-white text-slate-700 border-slate-300"

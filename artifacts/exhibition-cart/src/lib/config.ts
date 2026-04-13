@@ -37,7 +37,7 @@ export const GALLERY_FILTER_LABELS = {
   magazine: "雑誌",
   booklet_doc: "書籍\n(冊子サイズ)",
   document: "書籍\n(文庫サイズ)",
-  pamphlet: "パンフレット/\n招待状",
+  pamphlet: "パンフレット\n招待状",
   bible: "聖書",
 } as const;
 
