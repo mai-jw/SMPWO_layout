@@ -20,6 +20,7 @@ import {
   GALLERY_FILTER_LABELS, GALLERY_FILTER_ICONS, 
   LAYOUT_TO_CATEGORIES, LANG_FILTER_OPTIONS, EXPLICIT_LANG_KEYS 
 } from "@/lib/config";
+import { MobileWizard } from "@/components/MobileWizard";
 import {
   type Item, type ShelfKey, type ShelfData, type CartLayoutV2,
   type TagData, type ShelfLayoutType,
@@ -29,8 +30,8 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import ExcelJS from "exceljs";
 
-type CartId = "A" | "B";
-type ActiveTarget =
+export type CartId = "A" | "B";
+export type ActiveTarget =
   | { cart: CartId; section: "poster" }
   | { cart: CartId; section: "shelf"; shelfIndex: number; slotIndex: number }
   | { cart: CartId; section: "tag"; shelfIndex: number }
@@ -999,6 +1000,13 @@ export default function CartEditor() {
   const [isMobileGalleryOpen, setIsMobileGalleryOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isMobileActionMenuOpen, setIsMobileActionMenuOpen] = useState(false);
+  
+  // Mobile Wizard States
+  const [mobileViewType, setMobileViewType] = useState<"standard" | "wizard">("wizard");
+  const [wizardStep, setWizardStep] = useState<"menu" | "new" | "edit" | "preview">("menu");
+  const [activeWizardCart, setActiveWizardCart] = useState<CartId>("A");
+  const [activeWizardShelf, setActiveWizardShelf] = useState<number>(0); // 0, 1, 2
+
 
   const { data: locationsConfig = DEFAULT_LOCATIONS } = useLocationsConfig();
   const saveLocationsConfig = useSaveLocationsConfig();
@@ -1501,7 +1509,42 @@ export default function CartEditor() {
         )}
       </AnimatePresence>
 
-      <div className="flex flex-col h-[calc(100vh-56px)] bg-background">
+      {/* NEW: Mobile Wizard Main Entry */}
+      {isMobileView && mobileViewType === "wizard" && (
+        <MobileWizard 
+          period={period}
+          setPeriod={setPeriod}
+          cartA={cartA}
+          setCartA={setCartA}
+          cartB={cartB}
+          setCartB={setCartB}
+          items={items}
+          itemMap={itemMap}
+          handleSave={handleSave}
+          handleExportPng={handleExportPng}
+          handleExportPdf={handleExportPdf}
+          handleExportXlsx={handleExportXlsx}
+          handleDelete={executeDeleteLayout}
+          onOpenUpload={openUploadPanel}
+          saveStatus={saveStatus}
+          exporting={exporting}
+          step={wizardStep}
+          setStep={setWizardStep}
+          onToggleStandard={() => setMobileViewType("standard")}
+          newMonth={newMonth}
+          setNewMonth={setNewMonth}
+          newHalf={newHalf}
+          setNewHalf={setNewHalf}
+          newLocations={newLocations}
+          setNewLocations={setNewLocations}
+          locationsConfig={locationsConfig}
+          handleCreateNew={handleCreateNew}
+          formatPeriodDisplay={formatPeriodDisplay}
+        />
+      )}
+
+      {/* Wrap existing content in conditional to hide when showing wizard */}
+      <div className={`flex flex-col h-[calc(100vh-56px)] bg-background ${isMobileView && mobileViewType === "wizard" ? "hidden" : "flex"}`}>
       {/* Top Toolbar */}
       <div className="shrink-0 bg-white px-4 py-1.5 flex items-center gap-3 relative z-30">
         {/* Absolute border to stay on top of scaled logo */}
@@ -1519,6 +1562,17 @@ export default function CartEditor() {
             title="メニューを開く"
           >
             <Menu className="w-5 h-5" />
+          </button>
+        )}
+
+        {/* Wizard/Standard Toggle for Mobile */}
+        {isMobileView && (
+          <button 
+            onClick={() => setMobileViewType(prev => prev === "wizard" ? "standard" : "wizard")}
+            className="flex items-center gap-1.5 text-[10px] px-2 py-1.5 rounded-xl border border-primary/20 bg-primary/5 text-primary font-black active:scale-95 transition-all shadow-sm"
+          >
+            {mobileViewType === "wizard" ? <LayoutGrid className="w-3.5 h-3.5" /> : <Settings className="w-3.5 h-3.5" />}
+            <span>{mobileViewType === "wizard" ? "通常表示" : "ウィザード"}</span>
           </button>
         )}
         
