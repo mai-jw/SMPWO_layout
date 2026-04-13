@@ -30,7 +30,8 @@ import {
   CartLayoutV2, 
   Item, 
   ShelfLayoutType, 
-  TagData 
+  TagData,
+  TagType
 } from "@/lib/supabase";
 import { 
   SHELF_COORDINATES, 
@@ -270,7 +271,7 @@ export function MobileWizard({
                        {(["booklet", "booklet_doc", "document", "bible", "pamphlet"] as ShelfLayoutType[]).map(t => (
                          <button key={t} 
                            onClick={() => {
-                             const update = (prev: CartLayoutV2) => ({
+                             const update = (prev: CartLayoutV2): CartLayoutV2 => ({
                                ...prev,
                                shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, layout_type: t, items: t === "document" || t === "bible" ? [null, null, null] : t === "pamphlet" ? [null, null, null, null] : [null, null] } : s)
                              });
@@ -307,9 +308,9 @@ export function MobileWizard({
                                   <div className="flex gap-2">
                                      <button 
                                        onClick={() => {
-                                         const update = (prev: CartLayoutV2) => ({
+                                         const update = (prev: CartLayoutV2): CartLayoutV2 => ({
                                            ...prev,
-                                           shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "none", value: "" }, tag_2: { type: "none", value: "" } } : s)
+                                           shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "none" as TagType, value: "" }, tag_2: { type: "none" as TagType, value: "" } } : s)
                                          });
                                          activeCart === "A" ? setCartA(update) : setCartB(update);
                                        }}
@@ -320,9 +321,9 @@ export function MobileWizard({
                                      {canLangTag && (
                                        <button 
                                          onClick={() => {
-                                           const update = (prev: CartLayoutV2) => ({
+                                           const update = (prev: CartLayoutV2): CartLayoutV2 => ({
                                              ...prev,
-                                             shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang", value: s.tag_1.type === "lang" ? s.tag_1.value : "" }, tag_2: { type: "none", value: "" } } : s)
+                                             shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang" as TagType, value: s.tag_1.type === "lang" ? s.tag_1.value : "" }, tag_2: { type: "none" as TagType, value: "" } } : s)
                                            });
                                            activeCart === "A" ? setCartA(update) : setCartB(update);
                                          }}
@@ -334,9 +335,9 @@ export function MobileWizard({
                                      {canFreeDist && (
                                        <button 
                                          onClick={() => {
-                                           const update = (prev: CartLayoutV2) => ({
+                                           const update = (prev: CartLayoutV2): CartLayoutV2 => ({
                                              ...prev,
-                                             shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "free_dist", value: "無料で差し上げています" }, tag_2: { type: "none", value: "" } } : s)
+                                             shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "free_dist" as TagType, value: "無料で差し上げています" }, tag_2: { type: "none" as TagType, value: "" } } : s)
                                            });
                                            activeCart === "A" ? setCartA(update) : setCartB(update);
                                          }}
@@ -353,9 +354,9 @@ export function MobileWizard({
                                           <select 
                                             value={currentShelf.tag_1.value}
                                             onChange={(e) => {
-                                              const update = (prev: CartLayoutV2) => ({
+                                              const update = (prev: CartLayoutV2): CartLayoutV2 => ({
                                                 ...prev,
-                                                shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang", value: e.target.value } } : s)
+                                                shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang" as TagType, value: e.target.value } } : s)
                                               });
                                               activeCart === "A" ? setCartA(update) : setCartB(update);
                                             }}
@@ -370,9 +371,9 @@ export function MobileWizard({
                                           <select 
                                             value={currentShelf.tag_2.value}
                                             onChange={(e) => {
-                                              const update = (prev: CartLayoutV2) => ({
+                                              const update = (prev: CartLayoutV2): CartLayoutV2 => ({
                                                 ...prev,
-                                                shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_2: { type: e.target.value ? "lang" : "none", value: e.target.value } } : s)
+                                                shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_2: { type: (e.target.value ? "lang" : "none") as TagType, value: e.target.value } } : s)
                                               });
                                               activeCart === "A" ? setCartA(update) : setCartB(update);
                                             }}
@@ -422,7 +423,7 @@ export function MobileWizard({
                                {item && (
                                   <button 
                                     onClick={() => {
-                                       const update = (prev: CartLayoutV2) => ({
+                                       const update = (prev: CartLayoutV2): CartLayoutV2 => ({
                                           ...prev,
                                           shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, items: s.items.map((id, j) => j === sIdx ? null : id) } : s)
                                        });
@@ -463,7 +464,7 @@ export function MobileWizard({
                   </button>
                   {currentCart.poster && (
                      <button 
-                       onClick={() => (activeCart === "A" ? setCartA : setCartB)(prev => ({ ...prev, poster: null }))}
+                       onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, poster: null }))}
                        className="w-full py-4 text-sm font-bold text-red-500 bg-red-50 rounded-2xl"
                      >
                        削除する
@@ -588,7 +589,7 @@ export function MobileWizard({
                     <button 
                       key={it.id}
                       onClick={() => {
-                        const update = (prev: CartLayoutV2) => {
+                        const update = (prev: CartLayoutV2): CartLayoutV2 => {
                           if (activeShelfIdx === 3) return { ...prev, poster: it.id!, posterType: it.poster_type || prev.posterType };
                           return {
                              ...prev,
