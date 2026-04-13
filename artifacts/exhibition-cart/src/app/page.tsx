@@ -490,9 +490,16 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
                     : "bg-white text-slate-500 border-slate-100 hover:border-sky-200 hover:bg-sky-50/30"
                 }`}>
                 <Icon className={`w-5 h-5 shrink-0 ${filter === key ? "text-slate-700" : "text-slate-400"}`} />
-                <span className="text-[8.5px] font-bold leading-[1.1] text-center min-h-[2.2em] flex items-center justify-center whitespace-pre-line tracking-tighter w-full break-keep px-px">
-                  {label === "パンフレット\n招待状" ? "パンフレット/\n招待状" : label}
-                </span>
+                {key === "pamphlet" ? (
+                  <span className="flex flex-col items-center justify-center gap-0 leading-[1.2] min-h-[2.2em] text-center font-bold tracking-tighter w-full" style={{ fontSize: '7.5px' }}>
+                    <span style={{ whiteSpace: 'nowrap', display: 'block' }}>パンフレット</span>
+                    <span style={{ whiteSpace: 'nowrap', display: 'block' }}>/招待状</span>
+                  </span>
+                ) : (
+                  <span className="text-[8.5px] font-bold leading-[1.1] text-center min-h-[2.2em] flex items-center justify-center whitespace-pre-line tracking-tighter w-full">
+                    {label}
+                  </span>
+                )}
               </button>
             );
           })}
