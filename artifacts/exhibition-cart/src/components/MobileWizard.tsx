@@ -15,29 +15,24 @@ import {
   FileImage, 
   FileSpreadsheet,
   X,
-  Menu,
   Smartphone,
   Monitor,
   LayoutDashboard,
-  Settings,
   Tag,
-  Layers,
-  Search,
-  Check
+  Search
 } from "lucide-react";
 import { 
   CartLayoutV2, 
   CartId, 
-  ActiveTarget, 
   Item, 
   ShelfLayoutType, 
-  TagData 
-} from "@/app/page"; // Need to make sure these are exported or redefined
+  TagData,
+  ActiveTarget,
+  GalleryFilterType
+} from "@/app/page";
 import { 
   SHELF_COORDINATES, 
-  GALLERY_FILTER_LABELS, 
-  GALLERY_FILTER_ICONS,
-  LANG_FILTER_OPTIONS
+  GALLERY_FILTER_LABELS
 } from "@/lib/config";
 
 interface MobileWizardProps {
@@ -63,7 +58,7 @@ interface MobileWizardProps {
   saveStatus: "idle" | "saving" | "saved" | "error";
   exporting: "png" | "pdf" | "xlsx" | null;
   
-  // Wizard State (Controlled by parent or local? Let's say parent passed for sync)
+  // Wizard State
   step: "menu" | "new" | "edit" | "preview";
   setStep: (s: "menu" | "new" | "edit" | "preview") => void;
   
@@ -91,14 +86,14 @@ const LANGUAGES = [
 ];
 
 export function MobileWizard({
-  period, setPeriod, cartA, setCartA, cartB, setCartB, items, itemMap,
+  period, cartA, setCartA, cartB, setCartB, items, itemMap,
   handleSave, handleExportPng, handleExportPdf, handleExportXlsx, handleDelete,
   onOpenUpload, saveStatus, exporting, step, setStep, onToggleStandard,
   newMonth, setNewMonth, newHalf, setNewHalf, newLocations, setNewLocations, locationsConfig, handleCreateNew, formatPeriodDisplay
 }: MobileWizardProps) {
   
   const [activeCart, setActiveCart] = useState<CartId>("A");
-  const [activeShelfIdx, setActiveShelfIdx] = useState<number>(0); // 0, 1, 2, or 3 for poster
+  const [activeShelfIdx, setActiveShelfIdx] = useState<number>(0); 
   const [selectionMode, setSelectionMode] = useState<"shelf-type" | "items">("shelf-type");
   const [activeSlotIdx, setActiveSlotIdx] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState("");
@@ -143,7 +138,7 @@ export function MobileWizard({
               <MenuCard 
                 icon={<Upload className="w-6 h-6" />} 
                 title="画像のアップロード" 
-                desc="新しい出版物やポスターを追加します"
+                desc="新しいアイテムをライブラリに追加します"
                 color="bg-amber-50 text-amber-600 border-amber-100"
                 onClick={onOpenUpload}
               />
@@ -255,7 +250,6 @@ export function MobileWizard({
               }} 
             />
             
-            {/* Progress Bar */}
             <div className="h-1.5 w-full bg-slate-100 flex">
                {Array.from({length: 8}, (_, i) => {
                  const currentFlat = (activeCart === "A" ? 0 : 4) + activeShelfIdx;
@@ -267,7 +261,6 @@ export function MobileWizard({
 
             <div className="flex-1 overflow-y-auto p-6">
               {activeShelfIdx < 3 ? (
-                // Shelf Edit
                 <section className="space-y-8">
                   <div className="space-y-4">
                     <p className="text-xs font-black text-slate-400 uppercase tracking-widest">段のレイアウトタイプ</p>
@@ -281,7 +274,7 @@ export function MobileWizard({
                              });
                              activeCart === "A" ? setCartA(update) : setCartB(update);
                            }}
-                           className={`p-3 rounded-2xl border-2 font-bold text-xs transition-all flex flex-col items-center gap-1 ${currentShelf?.layout_type === t ? "bg-rose-50 border-rose-300 text-rose-700" : "bg-slate-50 border-slate-100 text-slate-500"}`}
+                           className={`p-3 rounded-2xl border-2 font-bold text-xs transition-al flex flex-col items-center gap-1 ${currentShelf?.layout_type === t ? "bg-rose-50 border-rose-300 text-rose-700" : "bg-slate-50 border-slate-100 text-slate-500"}`}
                          >
                            <span className="whitespace-pre-line text-center">{GALLERY_FILTER_LABELS[t] || t}</span>
                          </button>
@@ -289,7 +282,6 @@ export function MobileWizard({
                     </div>
                   </div>
 
-                  {/* Tag Selection */}
                   {currentShelf?.layout_type !== "none" && (
                     <div className="space-y-4 pt-4 border-t border-slate-100">
                       {(() => {
@@ -447,7 +439,6 @@ export function MobileWizard({
                   )}
                 </section>
               ) : (
-                // Poster Edit
                 <section className="space-y-6">
                   <p className="text-xs font-black text-slate-400 uppercase tracking-widest">ポスター画像を選択</p>
                   <button 
@@ -565,7 +556,6 @@ export function MobileWizard({
         )}
       </AnimatePresence>
 
-      {/* Item Selection Overlay */}
       <AnimatePresence>
         {selectionMode === "items" && (
           <motion.div 
@@ -593,30 +583,36 @@ export function MobileWizard({
                     return allowed.includes(it.category) && it.name.toLowerCase().includes(searchQuery.toLowerCase());
                  })
                  .map(it => (
-                  <button 
-                    key={it.id}
-                    onClick={() => {
-                      const update = (prev: CartLayoutV2) => {
-                        if (activeShelfIdx === 3) return { ...prev, poster: it.id!, posterType: it.poster_type || prev.posterType };
-                        return {
-                           ...prev,
-                           shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, items: s.items.map((id, j) => j === activeSlotIdx ? it.id! : id) } : s)
+                    <button 
+                      key={it.id}
+                      onClick={() => {
+                        const update = (prev: CartLayoutV2) => {
+                          if (activeShelfIdx === 3) return { ...prev, poster: it.id!, posterType: it.poster_type || prev.posterType };
+                          return {
+                             ...prev,
+                             shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, items: s.items.map((id, j) => j === activeSlotIdx ? it.id! : id) } : s)
+                          };
                         };
-           </div>
-
-           <button 
-             onClick={onToggleStandard}
-             className="w-full py-4 text-xs font-bold text-slate-400 bg-transparent flex items-center justify-center gap-2 mt-8"
-           >
-             <Smartphone className="w-4 h-4" />
-             標準表示に切り替える
-           </button>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
+                        (activeCart === "A" ? setCartA : setCartB)(update);
+                        setSelectionMode("shelf-type");
+                      }}
+                      className="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-colors text-left"
+                    >
+                      <img src={it.url} className="w-12 h-12 object-cover rounded-xl shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-slate-800 truncate">{it.name}</p>
+                        <p className="text-[10px] text-slate-400 font-black uppercase">
+                          {GALLERY_FILTER_LABELS[it.category as GalleryFilterType] || it.category}
+                        </p>
+                      </div>
+                    </button>
+                 ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 // Helper Components
