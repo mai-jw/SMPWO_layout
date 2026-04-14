@@ -1957,10 +1957,10 @@ export default function CartEditor() {
 
           <div 
             ref={cartScrollRef}
-            className={`w-full overflow-x-auto pb-8 pt-2 flex scrollbar-hide active:cursor-grabbing select-none ${isMobileView ? "" : "justify-center"}`}
+            className="w-full overflow-x-auto pb-8 pt-2 flex scrollbar-hide active:cursor-grabbing select-none justify-start"
             style={{ WebkitOverflowScrolling: "touch" }}
           >
-            <motion.div layout className="shrink-0">
+            <motion.div layout className="shrink-0 mx-auto">
               <div ref={canvasRef as any} id="export-container" className="flex flex-col items-center p-4 bg-background shrink-0">
                 <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
                   <CartPanel
@@ -1993,16 +1993,26 @@ export default function CartEditor() {
                               <td className="py-1.5">
                                 <div className="font-bold text-foreground">{posterItem?.name || "—"}</div>
                                 <div className="flex gap-3 mt-0.5">
-                                  <span className="text-red-600 font-bold">{posterItem?.language === "ja" ? "日本語" : posterItem?.language === "en" ? "英語" : posterItem?.language || ""}</span>
-                                  <span className="text-slate-500">({layout.posterType || posterItem?.poster_type || "未設定"})</span>
+                                  {posterItem && (
+                                    <>
+                                      <span className="text-red-600 font-bold">
+                                        {LANG_FILTER_OPTIONS.find(o => o.key === posterItem.language)?.label || posterItem.language}
+                                      </span>
+                                      <span className="text-slate-500">({layout.posterType || posterItem.poster_type || "未設定"})</span>
+                                    </>
+                                  )}
+                                  {!posterItem && <span className="text-slate-300">—</span>}
                                 </div>
                               </td>
                             </tr>
                             {/* Shelves */}
                             {layout.shelves.map((shelf, sIdx) => {
-                              const shelfItems = shelf.items.map(itemId => itemId ? itemMap[itemId] : null);
-                              const hasItems = shelfItems.some(i => i !== null);
-                              const layoutLabel = shelf.layout_type === "booklet" ? "冊冊" : shelf.layout_type === "booklet_doc" ? "冊冊" : shelf.layout_type === "document" ? "冊冊" : shelf.layout_type === "pamphlet" ? "冊冊" : "";
+                              const shelfItems = shelf.items.map(itemId => itemId ? itemMap[itemId] : null).filter((it): it is Item => it !== null);
+                              const hasItems = shelfItems.length > 0;
+                              
+                              // Get unique languages of items on this shelf
+                              const languages = Array.from(new Set(shelfItems.map(it => it.language)));
+
                               return (
                                 <tr key={sIdx} className="border-t border-slate-300">
                                   <td className="py-1.5 pr-2 font-bold text-slate-500 align-top whitespace-nowrap">{SHELF_LABELS[sIdx]}</td>
@@ -2012,19 +2022,17 @@ export default function CartEditor() {
                                     ) : (
                                       <>
                                         <div className="font-bold text-foreground">
-                                          {Array.from(new Set(shelfItems.map((item) => item?.name).filter(Boolean))).join("、") || "—"}
+                                          {Array.from(new Set(shelfItems.map((item) => item.name))).join("、") || "—"}
                                         </div>
-                                        <div className="flex gap-3 mt-0.5 flex-wrap">
-                                          {shelf.tag_1.type === "lang" && shelf.tag_1.value && (
-                                            <span className="text-red-600 font-bold">{shelf.tag_1.value}</span>
-                                          )}
-                                          {shelf.tag_2.type === "lang" && shelf.tag_2.value && (
-                                            <span className="text-red-600 font-bold">{shelf.tag_2.value}</span>
-                                          )}
-                                          {shelf.tag_1.type === "free_dist" && (
-                                            <span className="text-zinc-600 font-bold">無料で差し上げています</span>
-                                          )}
-                                        </div>
+                                        {hasItems && (
+                                          <div className="flex gap-3 mt-0.5 flex-wrap">
+                                            {languages.map(lang => (
+                                              <span key={lang} className="text-red-600 font-bold">
+                                                {LANG_FILTER_OPTIONS.find(o => o.key === lang)?.label || lang}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
                                       </>
                                     )}
                                   </td>
