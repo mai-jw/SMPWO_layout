@@ -1618,7 +1618,7 @@ export default function CartEditor() {
       )}
 
       {/* Wrap existing content in conditional to hide when showing wizard */}
-      <div className={`flex flex-col h-[calc(100vh-56px)] bg-background ${isMobileView && mobileViewType === "wizard" ? "opacity-0 pointer-events-none fixed inset-0 -z-10" : "flex"}`}>
+      <div className={`flex flex-col h-[calc(100vh-56px)] bg-background ${isMobileView && mobileViewType === "wizard" ? "pointer-events-none fixed inset-0 -z-10" : "flex"}`}>
       {/* Top Toolbar */}
       <div className="shrink-0 bg-white px-4 py-1.5 flex items-center gap-3 relative z-30">
         {/* Absolute border to stay on top of scaled logo */}
@@ -2007,11 +2007,11 @@ export default function CartEditor() {
                             </tr>
                             {/* Shelves */}
                             {layout.shelves.map((shelf, sIdx) => {
-                              const shelfItems = shelf.items.map(itemId => itemId ? itemMap[itemId] : null).filter((it): it is Item => it !== null);
+                              const shelfItems = shelf.items.map(itemId => itemId ? itemMap[itemId] : null).filter((it): it is Item => Boolean(it));
                               const hasItems = shelfItems.length > 0;
                               
                               // Get unique languages of items on this shelf
-                              const languages = Array.from(new Set(shelfItems.map(it => it.language)));
+                              const languages = Array.from(new Set(shelfItems.map(it => it.language).filter(Boolean)));
 
                               return (
                                 <tr key={sIdx} className="border-t border-slate-300">
