@@ -1368,6 +1368,16 @@ export default function CartEditor() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
+  const dataURLtoBlob = (dataurl: string) => {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)![1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while(n--) u8arr[n] = bstr.charCodeAt(n);
+    return new Blob([u8arr], {type:mime});
+  };
+
   const handleExportPng = async () => {
     if (!canvasRef.current) return;
     setExporting("png");
@@ -1380,29 +1390,29 @@ export default function CartEditor() {
       }));
 
       const canvas = await html2canvas(canvasRef.current, { 
-        scale: 2.5, 
+        scale: 2, 
         useCORS: true, 
-        logging: true, // CORSや描画の問題を追跡しやすくする
+        logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
           const el = clonedDoc.getElementById("export-container");
           if (el) {
             el.style.backgroundColor = "white";
-            el.style.paddingLeft = "100px";
-            el.style.paddingRight = "100px";
-            el.style.paddingTop = "40px";
-            el.style.paddingBottom = "40px";
+            el.style.padding = "100px 100px 40px 100px";
+            // Strip filters that crash html2canvas
+            const filtered = el.querySelectorAll('[class*="drop-shadow"]');
+            filtered.forEach(item => (item as HTMLElement).style.filter = "none");
           }
         }
       });
       const dataUrl = canvas.toDataURL("image/png");
-      
-      // Blob変換を経由することでWebViewでの拡張子なしUUIDファイル化を回避
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
+      const blob = dataURLtoBlob(dataUrl);
       
       await saveFileWrapper(blob, "cart-layout.png", "image/png", ".png");
       alert("PNG画像を保存しました。");
+    } catch (err: any) {
+      console.error("[PNG Export Error]", err);
+      alert("PNG書き出し中にエラーが発生しました: " + (err.message || "Unknown error"));
     } finally { setExporting(null); }
   };
 
@@ -1426,10 +1436,9 @@ export default function CartEditor() {
           const el = clonedDoc.getElementById("export-container");
           if (el) {
             el.style.backgroundColor = "white";
-            el.style.paddingLeft = "100px";
-            el.style.paddingRight = "100px";
-            el.style.paddingTop = "40px";
-            el.style.paddingBottom = "40px";
+            el.style.padding = "100px 100px 40px 100px";
+            const filtered = el.querySelectorAll('[class*="drop-shadow"]');
+            filtered.forEach(item => (item as HTMLElement).style.filter = "none");
           }
         }
       });
@@ -1442,13 +1451,11 @@ export default function CartEditor() {
       let imgW = pW - 20;
       let imgH = imgW / ratio;
       
-      // If height exceeds page (keeping bottom margin), scale down width too
       if (imgH > pH - 20) {
         imgH = pH - 20;
         imgW = imgH * ratio;
       }
       
-      // Center both horizontally and vertically
       const xOffset = (pW - imgW) / 2;
       const yOffset = (pH - imgH) / 2;
       pdf.addImage(imgData, "PNG", xOffset, yOffset, imgW, imgH);
@@ -1457,6 +1464,9 @@ export default function CartEditor() {
       
       await saveFileWrapper(blob, "cart-layout.pdf", "application/pdf", ".pdf");
       alert("PDFドキュメントを保存しました。");
+    } catch (err: any) {
+      console.error("[PDF Export Error]", err);
+      alert("PDF書き出し中にエラーが発生しました: " + (err.message || "Unknown error"));
     } finally { setExporting(null); }
   };
 
@@ -1481,10 +1491,9 @@ export default function CartEditor() {
           const el = clonedDoc.getElementById("export-container");
           if (el) {
             el.style.backgroundColor = "white";
-            el.style.paddingLeft = "100px";
-            el.style.paddingRight = "100px";
-            el.style.paddingTop = "40px";
-            el.style.paddingBottom = "40px";
+            el.style.padding = "100px 100px 40px 100px";
+            const filtered = el.querySelectorAll('[class*="drop-shadow"]');
+            filtered.forEach(item => (item as HTMLElement).style.filter = "none");
           }
         }
       });
