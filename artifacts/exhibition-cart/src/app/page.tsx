@@ -1416,7 +1416,7 @@ export default function CartEditor() {
           };
           syncStyles(originalContainer, clonedContainer);
           clonedContainer.style.backgroundColor = "#ffffff";
-          clonedContainer.style.padding = "100px 180px 40px 180px";
+          clonedContainer.style.padding = "100px 300px 40px 300px";
           clonedContainer.style.display = "flex";
         }
       });
@@ -1473,7 +1473,7 @@ export default function CartEditor() {
           };
           syncStyles(originalContainer, clonedContainer);
           clonedContainer.style.backgroundColor = "#ffffff";
-          clonedContainer.style.padding = "100px 100px 40px 100px";
+          clonedContainer.style.padding = "100px 300px 40px 300px";
           clonedContainer.style.display = "flex";
         }
       });
@@ -1539,7 +1539,7 @@ export default function CartEditor() {
           };
           syncStyles(originalContainer, clonedContainer);
           clonedContainer.style.backgroundColor = "#ffffff";
-          clonedContainer.style.padding = "100px 100px 40px 100px";
+          clonedContainer.style.padding = "100px 300px 40px 300px";
           clonedContainer.style.display = "flex";
         }
       });
