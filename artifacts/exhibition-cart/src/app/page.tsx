@@ -1385,21 +1385,22 @@ export default function CartEditor() {
           clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
           
           // CRITICAL: Re-inject basic box-sizing reset since Tailwind's global reset was wiped.
-          // This prevents cumulative pixel shifts from borders/padding.
           const resetStyle = clonedDoc.createElement("style");
           resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
           clonedDoc.head.appendChild(resetStyle);
 
+          // PREVENT CLIPPING: Make the virtual body extremely large so margins aren't cut off
+          clonedDoc.body.style.width = "5000px";
+          clonedDoc.body.style.height = "5000px";
+          clonedDoc.body.style.backgroundColor = "#ffffff";
           clonedDoc.body.innerHTML = "";
           clonedDoc.body.appendChild(clonedContainer);
 
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
             const rect = orig.getBoundingClientRect();
-            
             cloned.style.width = `${rect.width}px`;
             cloned.style.height = `${rect.height}px`;
-
             for (let i = 0; i < style.length; i++) {
               const prop = style[i];
               let val = style.getPropertyValue(prop);
@@ -1415,9 +1416,13 @@ export default function CartEditor() {
             }
           };
           syncStyles(originalContainer, clonedContainer);
+
+          // Force spacing and margins
           clonedContainer.style.backgroundColor = "#ffffff";
-          clonedContainer.style.padding = "100px 240px 40px 240px";
+          clonedContainer.style.boxSizing = "content-box";
+          clonedContainer.style.padding = "100px 300px 100px 300px";
           clonedContainer.style.display = "flex";
+          clonedContainer.style.width = "max-content"; // Let it expand with content+padding
         }
       });
       const dataUrl = canvas.toDataURL("image/png");
