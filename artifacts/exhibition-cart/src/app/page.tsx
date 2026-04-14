@@ -1376,28 +1376,71 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          // Brute-force: Replace all oklch/oklab strings in the entire document HTML before parsing
-          const rawHTML = clonedDoc.documentElement.innerHTML;
-          if (rawHTML.includes("oklch") || rawHTML.includes("oklab")) {
-            clonedDoc.documentElement.innerHTML = rawHTML
-              .replace(/oklch\([^)]+\)/g, "rgb(31, 29, 27)")
-              .replace(/oklab\([^)]+\)/g, "rgb(31, 29, 27)");
-          }
+          // 1. Clear problematic heads and links
+          const head = clonedDoc.head;
+          const links = Array.from(clonedDoc.getElementsByTagName("link"));
+          links.forEach(l => l.parentNode?.removeChild(l));
+          
+          // 2. Inject a Minimal, Safe CSS for Exporting (Everything in HSL/Hex)
+          const style = clonedDoc.createElement("style");
+          style.textContent = `
+            * { box-sizing: border-box; }
+            #export-container { 
+              background: #fdfaf3 !important; 
+              color: #1f1d1b !important;
+              font-family: sans-serif !important;
+            }
+            table { border-collapse: collapse; width: 100%; }
+            td { padding: 4px; border-bottom: 1px solid #e2e8f0; }
+            .bg-background { background-color: #fdfaf3 !important; }
+            .text-foreground { color: #1f1d1b !important; }
+            .text-primary { color: #6366f1 !important; }
+            .text-slate-500 { color: #64748b !important; }
+            .text-slate-300 { color: #cbd5e1 !important; }
+            .text-red-600 { color: #dc2626 !important; }
+            .text-red-500 { color: #ef4444 !important; }
+            .bg-red-50 { background-color: #fef2f2 !important; }
+            .border-slate-300 { border-color: #cbd5e1 !important; }
+            .font-bold { font-weight: 700 !important; }
+            .font-black { font-weight: 900 !important; }
+            .text-xs { font-size: 12px !important; }
+            .text-[11px] { font-size: 11px !important; }
+            .flex { display: flex !important; }
+            .flex-col { flex-direction: column !important; }
+            .items-center { align-items: center !important; }
+            .items-start { align-items: flex-start !important; }
+            .justify-center { justify-content: center !important; }
+            .gap-3 { gap: 12px !important; }
+            .gap-8 { gap: 32px !important; }
+            .mt-6 { margin-top: 24px !important; }
+            .space-x-\\[-180px\\] > * + * { margin-left: -180px !important; }
+            /* ... add more essential layout helpers as needed ... */
+          `;
+          head.appendChild(style);
 
+          // 3. Brute-force HTML sanitize
+          const body = clonedDoc.body;
+          body.innerHTML = body.innerHTML
+            .replace(/oklch\([^)]+\)/g, "rgb(31, 29, 27)")
+            .replace(/oklab\([^)]+\)/g, "rgb(31, 29, 27)");
+            
           const el = clonedDoc.getElementById("export-container");
           if (el) {
-            el.style.backgroundColor = "white";
+            el.style.backgroundColor = "#fdfaf3";
             el.style.padding = "100px 100px 40px 100px";
+            el.style.display = "flex";
+            el.style.opacity = "1";
+            el.style.visibility = "visible";
             
-            // Further sanitize specific elements just in case
+            // Further sanitize specific elements
             const allElements = el.getElementsByTagName("*");
             for (let i = 0; i < allElements.length; i++) {
               const node = allElements[i] as HTMLElement;
-              const style = window.getComputedStyle(node);
-              
-              if (style.filter && style.filter !== "none") {
-                node.style.filter = "none";
-              }
+              node.style.filter = "none";
+              // Force HSL computed styles to be safer strings if they are still oklch
+              const currentStyle = window.getComputedStyle(node);
+              if (currentStyle.color.includes("oklab")) node.style.color = "#1f1d1b";
+              if (currentStyle.backgroundColor.includes("oklab")) node.style.backgroundColor = "transparent";
             }
           }
         }
@@ -1430,22 +1473,69 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          const rawHTML = clonedDoc.documentElement.innerHTML;
-          if (rawHTML.includes("oklch") || rawHTML.includes("oklab")) {
-            clonedDoc.documentElement.innerHTML = rawHTML
-              .replace(/oklch\([^)]+\)/g, "rgb(31, 29, 27)")
-              .replace(/oklab\([^)]+\)/g, "rgb(31, 29, 27)");
-          }
+          // 1. Clear problematic heads and links
+          const head = clonedDoc.head;
+          const links = Array.from(clonedDoc.getElementsByTagName("link"));
+          links.forEach(l => l.parentNode?.removeChild(l));
+          
+          // 2. Inject a Minimal, Safe CSS for Exporting (Everything in HSL/Hex)
+          const style = clonedDoc.createElement("style");
+          style.textContent = `
+            * { box-sizing: border-box; }
+            #export-container { 
+              background: #fdfaf3 !important; 
+              color: #1f1d1b !important;
+              font-family: sans-serif !important;
+            }
+            table { border-collapse: collapse; width: 100%; }
+            td { padding: 4px; border-bottom: 1px solid #e2e8f0; }
+            .bg-background { background-color: #fdfaf3 !important; }
+            .text-foreground { color: #1f1d1b !important; }
+            .text-primary { color: #6366f1 !important; }
+            .text-slate-500 { color: #64748b !important; }
+            .text-slate-300 { color: #cbd5e1 !important; }
+            .text-red-600 { color: #dc2626 !important; }
+            .text-red-500 { color: #ef4444 !important; }
+            .bg-red-50 { background-color: #fef2f2 !important; }
+            .border-slate-300 { border-color: #cbd5e1 !important; }
+            .font-bold { font-weight: 700 !important; }
+            .font-black { font-weight: 900 !important; }
+            .text-xs { font-size: 12px !important; }
+            .text-[11px] { font-size: 11px !important; }
+            .flex { display: flex !important; }
+            .flex-col { flex-direction: column !important; }
+            .items-center { align-items: center !important; }
+            .items-start { align-items: flex-start !important; }
+            .justify-center { justify-content: center !important; }
+            .gap-3 { gap: 12px !important; }
+            .gap-8 { gap: 32px !important; }
+            .mt-6 { margin-top: 24px !important; }
+            .space-x-\\[-180px\\] > * + * { margin-left: -180px !important; }
+          `;
+          head.appendChild(style);
 
+          // 3. Brute-force HTML sanitize
+          const body = clonedDoc.body;
+          body.innerHTML = body.innerHTML
+            .replace(/oklch\([^)]+\)/g, "rgb(31, 29, 27)")
+            .replace(/oklab\([^)]+\)/g, "rgb(31, 29, 27)");
+            
           const el = clonedDoc.getElementById("export-container");
           if (el) {
-            el.style.backgroundColor = "white";
+            el.style.backgroundColor = "#fdfaf3";
             el.style.padding = "100px 100px 40px 100px";
+            el.style.display = "flex";
+            el.style.opacity = "1";
+            el.style.visibility = "visible";
+            
+            // Further sanitize specific elements
             const allElements = el.getElementsByTagName("*");
             for (let i = 0; i < allElements.length; i++) {
               const node = allElements[i] as HTMLElement;
-              const style = window.getComputedStyle(node);
-              if (style.filter && style.filter !== "none") node.style.filter = "none";
+              node.style.filter = "none";
+              const currentStyle = window.getComputedStyle(node);
+              if (currentStyle.color.includes("oklab")) node.style.color = "#1f1d1b";
+              if (currentStyle.backgroundColor.includes("oklab")) node.style.backgroundColor = "transparent";
             }
           }
         }
@@ -1496,22 +1586,69 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          const rawHTML = clonedDoc.documentElement.innerHTML;
-          if (rawHTML.includes("oklch") || rawHTML.includes("oklab")) {
-            clonedDoc.documentElement.innerHTML = rawHTML
-              .replace(/oklch\([^)]+\)/g, "rgb(31, 29, 27)")
-              .replace(/oklab\([^)]+\)/g, "rgb(31, 29, 27)");
-          }
+          // 1. Clear problematic heads and links
+          const head = clonedDoc.head;
+          const links = Array.from(clonedDoc.getElementsByTagName("link"));
+          links.forEach(l => l.parentNode?.removeChild(l));
+          
+          // 2. Inject a Minimal, Safe CSS for Exporting (Everything in HSL/Hex)
+          const style = clonedDoc.createElement("style");
+          style.textContent = `
+            * { box-sizing: border-box; }
+            #export-container { 
+              background: #fdfaf3 !important; 
+              color: #1f1d1b !important;
+              font-family: sans-serif !important;
+            }
+            table { border-collapse: collapse; width: 100%; }
+            td { padding: 4px; border-bottom: 1px solid #e2e8f0; }
+            .bg-background { background-color: #fdfaf3 !important; }
+            .text-foreground { color: #1f1d1b !important; }
+            .text-primary { color: #6366f1 !important; }
+            .text-slate-500 { color: #64748b !important; }
+            .text-slate-300 { color: #cbd5e1 !important; }
+            .text-red-600 { color: #dc2626 !important; }
+            .text-red-500 { color: #ef4444 !important; }
+            .bg-red-50 { background-color: #fef2f2 !important; }
+            .border-slate-300 { border-color: #cbd5e1 !important; }
+            .font-bold { font-weight: 700 !important; }
+            .font-black { font-weight: 900 !important; }
+            .text-xs { font-size: 12px !important; }
+            .text-[11px] { font-size: 11px !important; }
+            .flex { display: flex !important; }
+            .flex-col { flex-direction: column !important; }
+            .items-center { align-items: center !important; }
+            .items-start { align-items: flex-start !important; }
+            .justify-center { justify-content: center !important; }
+            .gap-3 { gap: 12px !important; }
+            .gap-8 { gap: 32px !important; }
+            .mt-6 { margin-top: 24px !important; }
+            .space-x-\\[-180px\\] > * + * { margin-left: -180px !important; }
+          `;
+          head.appendChild(style);
 
+          // 3. Brute-force HTML sanitize
+          const body = clonedDoc.body;
+          body.innerHTML = body.innerHTML
+            .replace(/oklch\([^)]+\)/g, "rgb(31, 29, 27)")
+            .replace(/oklab\([^)]+\)/g, "rgb(31, 29, 27)");
+            
           const el = clonedDoc.getElementById("export-container");
           if (el) {
-            el.style.backgroundColor = "white";
+            el.style.backgroundColor = "#fdfaf3";
             el.style.padding = "100px 100px 40px 100px";
+            el.style.display = "flex";
+            el.style.opacity = "1";
+            el.style.visibility = "visible";
+            
+            // Further sanitize specific elements
             const allElements = el.getElementsByTagName("*");
             for (let i = 0; i < allElements.length; i++) {
               const node = allElements[i] as HTMLElement;
-              const style = window.getComputedStyle(node);
-              if (style.filter && style.filter !== "none") node.style.filter = "none";
+              node.style.filter = "none";
+              const currentStyle = window.getComputedStyle(node);
+              if (currentStyle.color.includes("oklab")) node.style.color = "#1f1d1b";
+              if (currentStyle.backgroundColor.includes("oklab")) node.style.backgroundColor = "transparent";
             }
           }
         }
