@@ -1375,8 +1375,10 @@ export default function CartEditor() {
         useCORS: true, 
         logging: true,
         backgroundColor: "#ffffff",
-        windowWidth: 2000,
-        windowHeight: 3000,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 2500,
+        windowHeight: 3500,
         onclone: (clonedDoc) => {
           const originalContainer = canvasRef.current;
           const clonedContainer = clonedDoc.getElementById("export-container");
@@ -1388,8 +1390,11 @@ export default function CartEditor() {
           resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
           clonedDoc.head.appendChild(resetStyle);
 
-          clonedDoc.body.style.width = "2000px";
-          clonedDoc.body.style.height = "3000px";
+          // Force a fixed wide white canvas in the clone
+          clonedDoc.body.style.margin = "0";
+          clonedDoc.body.style.padding = "0";
+          clonedDoc.body.style.width = "2500px";
+          clonedDoc.body.style.height = "3500px";
           clonedDoc.body.style.backgroundColor = "#ffffff";
           clonedDoc.body.innerHTML = "";
           clonedDoc.body.appendChild(clonedContainer);
@@ -1415,14 +1420,16 @@ export default function CartEditor() {
           };
           syncStyles(originalContainer, clonedContainer);
 
+          // Center the content in the 2500px wide body
           clonedContainer.style.backgroundColor = "#ffffff";
-          clonedContainer.style.boxSizing = "content-box";
-          clonedContainer.style.width = "auto";
-          clonedContainer.style.padding = "100px 180px 100px 180px";
+          clonedContainer.style.boxSizing = "border-box";
+          clonedContainer.style.width = "2500px";
+          clonedContainer.style.padding = "100px 300px"; 
           clonedContainer.style.display = "flex";
           clonedContainer.style.flexDirection = "row";
-          clonedContainer.style.justifyContent = "start";
+          clonedContainer.style.justifyContent = "center";
           clonedContainer.style.alignItems = "start";
+          clonedContainer.style.margin = "0";
         }
       });
       const dataUrl = canvas.toDataURL("image/png");
