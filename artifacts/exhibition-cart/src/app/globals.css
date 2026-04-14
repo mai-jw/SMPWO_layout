@@ -36,17 +36,17 @@
   --color-destructive-foreground: hsl(var(--destructive-foreground));
 
   /* Overriding standard color scales with HSL/RGB to avoid html2canvas oklch compatibility issues */
-  --color-sky-50: hex(#f0f9ff);
-  --color-sky-100: hex(#e0f2fe);
-  --color-sky-200: hex(#bae6fd);
-  --color-sky-400: hex(#38bdf8);
-  --color-sky-500: hex(#0ea5e9);
+  --color-sky-50: #f0f9ff;
+  --color-sky-100: #e0f2fe;
+  --color-sky-200: #bae6fd;
+  --color-sky-400: #38bdf8;
+  --color-sky-500: #0ea5e9;
   
-  --color-blue-50: hex(#eff6ff);
-  --color-blue-500: hex(#3b82f6);
-  --color-blue-600: hex(#2563eb);
-  --color-blue-700: hex(#1d4ed8);
-  --color-blue-800: hex(#1e40af);
+  --color-blue-50: #eff6ff;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-blue-800: #1e40af;
 
   --color-slate-50: #f8fafc;
   --color-slate-100: #f1f5f9;

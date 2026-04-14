@@ -1337,29 +1337,10 @@ export default function CartEditor() {
   };
 
   const saveFileWrapper = async (blob: Blob, suggestedName: string, mimeType?: string, extension?: string) => {
-    if ('showSaveFilePicker' in window) {
-      try {
-        const pickerOptions: any = { suggestedName };
-        if (mimeType && extension) {
-          pickerOptions.types = [{
-            description: 'Files',
-            accept: { [mimeType]: [extension] }
-          }];
-        }
-        const handle = await (window as any).showSaveFilePicker(pickerOptions);
-        const writable = await handle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-        return;
-      } catch (err: any) {
-        if (err.name === 'AbortError') return; // Cancelled by user
-        console.warn("[SaveFilePicker] Failed, falling back to classic download:", err);
-      }
-    }
-    
-    // Fallback: Use <a> tag download
+    // Classic approach: Use <a> tag download for maximum compatibility/reliability
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
+    a.style.display = "none";
     a.download = suggestedName;
     a.href = url;
     document.body.appendChild(a);
@@ -1395,13 +1376,23 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
+          // 1. Sanitize Style Tags (Remove oklch/oklab from CSS rules to prevent html2canvas parser crash)
+          const styleTags = clonedDoc.getElementsByTagName("style");
+          for (let i = 0; i < styleTags.length; i++) {
+            const tag = styleTags[i];
+            if (tag.textContent && (tag.textContent.includes("oklch") || tag.textContent.includes("oklab"))) {
+              tag.textContent = tag.textContent
+                .replace(/oklch\([^)]+\)/g, "rgb(0,0,0)")
+                .replace(/oklab\([^)]+\)/g, "rgb(0,0,0)");
+            }
+          }
+
           const el = clonedDoc.getElementById("export-container");
           if (el) {
             el.style.backgroundColor = "white";
             el.style.padding = "100px 100px 40px 100px";
             
-            // Critical Fix: html2canvas does not support modern color functions like oklch/oklab (default in Tailwind v4)
-            // We traverse and convert them to standard RGB
+            // 2. Sanitize Inline/Computed Styles
             const allElements = el.getElementsByTagName("*");
             for (let i = 0; i < allElements.length; i++) {
               const node = allElements[i] as HTMLElement;
@@ -1411,15 +1402,11 @@ export default function CartEditor() {
               props.forEach(prop => {
                 const val = (node.style as any)[prop] || style.getPropertyValue(prop);
                 if (val && (val.includes("oklch") || val.includes("oklab"))) {
-                  // Fallback: Strip the modern function and try to let html2canvas handle what's left, 
-                  // or force to a common safe color if it would otherwise crash.
-                  // Most reliable for html2canvas to avoid crash is to force a recognizable RGB value.
                   if (prop.includes("Color") && prop !== "color") node.style.setProperty(prop, "rgba(0,0,0,0)", "important");
-                  else node.style.setProperty(prop, "rgb(31, 29, 27)", "important"); // Default foreground
+                  else node.style.setProperty(prop, "rgb(31, 29, 27)", "important");
                 }
               });
 
-              // Strip filters that crash html2canvas
               if (style.filter && style.filter !== "none") {
                 node.style.filter = "none";
               }
@@ -1455,16 +1442,24 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
+          const styleTags = clonedDoc.getElementsByTagName("style");
+          for (let i = 0; i < styleTags.length; i++) {
+            const tag = styleTags[i];
+            if (tag.textContent && (tag.textContent.includes("oklch") || tag.textContent.includes("oklab"))) {
+              tag.textContent = tag.textContent
+                .replace(/oklch\([^)]+\)/g, "rgb(0,0,0)")
+                .replace(/oklab\([^)]+\)/g, "rgb(0,0,0)");
+            }
+          }
+
           const el = clonedDoc.getElementById("export-container");
           if (el) {
             el.style.backgroundColor = "white";
             el.style.padding = "100px 100px 40px 100px";
-            
             const allElements = el.getElementsByTagName("*");
             for (let i = 0; i < allElements.length; i++) {
               const node = allElements[i] as HTMLElement;
               const style = window.getComputedStyle(node);
-              
               const props = ["color", "backgroundColor", "borderColor", "borderTopColor", "borderBottomColor", "borderLeftColor", "borderRightColor"];
               props.forEach(prop => {
                 const val = (node.style as any)[prop] || style.getPropertyValue(prop);
@@ -1473,10 +1468,7 @@ export default function CartEditor() {
                   else node.style.setProperty(prop, "rgb(31, 29, 27)", "important");
                 }
               });
-
-              if (style.filter && style.filter !== "none") {
-                node.style.filter = "none";
-              }
+              if (style.filter && style.filter !== "none") node.style.filter = "none";
             }
           }
         }
@@ -1527,6 +1519,16 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
+          const styleTags = clonedDoc.getElementsByTagName("style");
+          for (let i = 0; i < styleTags.length; i++) {
+            const tag = styleTags[i];
+            if (tag.textContent && (tag.textContent.includes("oklch") || tag.textContent.includes("oklab"))) {
+              tag.textContent = tag.textContent
+                .replace(/oklch\([^)]+\)/g, "rgb(0,0,0)")
+                .replace(/oklab\([^)]+\)/g, "rgb(0,0,0)");
+            }
+          }
+
           const el = clonedDoc.getElementById("export-container");
           if (el) {
             el.style.backgroundColor = "white";
