@@ -1388,6 +1388,8 @@ export default function CartEditor() {
               "width", "height", "margin", "padding", "border",
               "backgroundColor", "color", "fontSize", "fontWeight", "fontFamily",
               "flexDirection", "alignItems", "justifyContent", "gap",
+              "transform", "borderRadius", "zIndex", "overflow", "boxShadow",
+              "flexGrow", "flexShrink", "objectFit",
               "textAlign", "lineHeight", "opacity", "visibility"
             ];
             props.forEach(p => {
@@ -1404,7 +1406,7 @@ export default function CartEditor() {
             }
           };
           syncStyles(originalContainer, clonedContainer);
-          clonedContainer.style.backgroundColor = "#fdfaf3";
+          clonedContainer.style.backgroundColor = "#ffffff";
           clonedContainer.style.padding = "100px 100px 40px 100px";
           clonedContainer.style.display = "flex";
         }
@@ -1441,7 +1443,15 @@ export default function CartEditor() {
           if (!originalContainer || !clonedContainer) return;
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
-            const props = ["display", "position", "top", "left", "right", "bottom", "width", "height", "margin", "padding", "border", "backgroundColor", "color", "fontSize", "fontWeight", "fontFamily", "flexDirection", "alignItems", "justifyContent", "gap", "textAlign", "lineHeight", "opacity", "visibility"];
+            const props = [
+              "display", "position", "top", "left", "right", "bottom",
+              "width", "height", "margin", "padding", "border",
+              "backgroundColor", "color", "fontSize", "fontWeight", "fontFamily",
+              "flexDirection", "alignItems", "justifyContent", "gap",
+              "transform", "borderRadius", "zIndex", "overflow", "boxShadow",
+              "flexGrow", "flexShrink", "objectFit",
+              "textAlign", "lineHeight", "opacity", "visibility"
+            ];
             props.forEach(p => {
               let val = (style as any)[p];
               if (val && (val.includes("oklch") || val.includes("oklab"))) val = (p === "backgroundColor" || p === "borderColor") ? "transparent" : "#1f1d1b";
@@ -1450,7 +1460,7 @@ export default function CartEditor() {
             for (let i = 0; i < orig.children.length; i++) { if (orig.children[i] && cloned.children[i]) syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement); }
           };
           syncStyles(originalContainer, clonedContainer);
-          clonedContainer.style.backgroundColor = "#fdfaf3";
+          clonedContainer.style.backgroundColor = "#ffffff";
           clonedContainer.style.padding = "100px 100px 40px 100px";
           clonedContainer.style.display = "flex";
         }
@@ -1496,7 +1506,15 @@ export default function CartEditor() {
           if (!originalContainer || !clonedContainer) return;
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
-            const props = ["display", "position", "top", "left", "right", "bottom", "width", "height", "margin", "padding", "border", "backgroundColor", "color", "fontSize", "fontWeight", "fontFamily", "flexDirection", "alignItems", "justifyContent", "gap", "textAlign", "lineHeight", "opacity", "visibility"];
+            const props = [
+              "display", "position", "top", "left", "right", "bottom",
+              "width", "height", "margin", "padding", "border",
+              "backgroundColor", "color", "fontSize", "fontWeight", "fontFamily",
+              "flexDirection", "alignItems", "justifyContent", "gap",
+              "transform", "borderRadius", "zIndex", "overflow", "boxShadow",
+              "flexGrow", "flexShrink", "objectFit",
+              "textAlign", "lineHeight", "opacity", "visibility"
+            ];
             props.forEach(p => {
               let val = (style as any)[p];
               if (val && (val.includes("oklch") || val.includes("oklab"))) val = (p === "backgroundColor" || p === "borderColor") ? "transparent" : "#1f1d1b";
@@ -1505,7 +1523,7 @@ export default function CartEditor() {
             for (let i = 0; i < orig.children.length; i++) { if (orig.children[i] && cloned.children[i]) syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement); }
           };
           syncStyles(originalContainer, clonedContainer);
-          clonedContainer.style.backgroundColor = "#fdfaf3";
+          clonedContainer.style.backgroundColor = "#ffffff";
           clonedContainer.style.padding = "100px 100px 40px 100px";
           clonedContainer.style.display = "flex";
         }
