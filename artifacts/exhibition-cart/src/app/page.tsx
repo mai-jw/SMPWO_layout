@@ -1416,7 +1416,7 @@ export default function CartEditor() {
           };
           syncStyles(originalContainer, clonedContainer);
           clonedContainer.style.backgroundColor = "#ffffff";
-          clonedContainer.style.padding = "100px 180px 40px 180px";
+          clonedContainer.style.padding = "100px 240px 40px 240px";
           clonedContainer.style.display = "flex";
         }
       });
