@@ -19,7 +19,9 @@ import {
   Monitor,
   LayoutDashboard,
   Tag,
-  Search
+  Search,
+  Check,
+  FileText
 } from "lucide-react";
 import { 
   CartId, 
@@ -38,8 +40,15 @@ import {
   GALLERY_FILTER_LABELS
 } from "@/lib/config";
 
+const COLORS = {
+  deepPurple: "#190933",
+  coral: "#EE9E8E",
+  peach: "#FFDBC3",
+  cream: "#FFF5E0",
+  white: "#FFFFFF",
+};
+
 interface MobileWizardProps {
-  // Data
   period: string;
   setPeriod: (p: string) => void;
   cartA: CartLayoutV2;
@@ -49,8 +58,6 @@ interface MobileWizardProps {
   items: Item[];
   itemMap: Record<string, Item>;
   layouts: { period: string; cart_a: CartLayoutV2; cart_b: CartLayoutV2 }[];
-  
-  // Handlers
   handleSave: () => Promise<void>;
   handleExportPng: () => Promise<void>;
   handleExportPdf: () => Promise<void>;
@@ -59,19 +66,11 @@ interface MobileWizardProps {
   onOpenUpload: () => void;
   executeDeleteLayoutForPeriod: (targetPeriod: string) => Promise<void>;
   loadLayoutForEdit: (targetPeriod: string) => void;
-  
-  // Status
   saveStatus: "idle" | "saving" | "saved" | "error";
   exporting: "png" | "pdf" | "xlsx" | null;
-  
-  // Wizard State
   step: "menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete";
   setStep: (s: "menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete") => void;
-  
-  // View Toggle
   onToggleStandard: () => void;
-
-  // New Creation helpers
   newMonth: number;
   setNewMonth: (m: number) => void;
   newHalf: "前半" | "後半";
@@ -109,94 +108,104 @@ export function MobileWizard({
   const currentShelf = activeShelfIdx < 3 ? currentCart.shelves[activeShelfIdx] : null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex flex-col overflow-hidden pt-safe" style={{ backgroundColor: COLORS.cream }}>
       <AnimatePresence mode="wait">
         {step === "menu" && (
           <motion.div 
             key="menu"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="flex flex-col h-full bg-[#fdfaf3] overflow-y-auto pb-20"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+            className="flex flex-col h-full overflow-hidden"
           >
-            <div className="p-6 pt-12 text-center">
-              <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                <LayoutDashboard className="w-10 h-10 text-primary" />
+            {/* Header with Wave Background (Image 3 style) */}
+            <div className="relative pt-12 pb-20 px-8">
+              <div 
+                className="absolute inset-0 z-0" 
+                style={{ background: `linear-gradient(135deg, ${COLORS.coral}, ${COLORS.peach})` }}
+              />
+              <svg className="absolute bottom-0 left-0 w-full text-cream" viewBox="0 0 1440 320" preserveAspectRatio="none">
+                <path fill="currentColor" d="M0,192L48,197.3C96,203,192,213,288,192C384,171,480,117,576,106.7C672,96,768,128,864,165.3C960,203,1056,245,1152,240C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+              </svg>
+              
+              <div className="relative z-10 flex flex-col gap-1">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30">
+                    <LayoutDashboard className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-black text-white tracking-widest leading-none">LAYOUT</h1>
+                    <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">Mobile Assistant</p>
+                  </div>
+                </div>
               </div>
-              <h1 className="text-2xl font-black text-slate-800 tracking-tight mb-2">何を作成しますか？</h1>
-              <p className="text-slate-500 text-sm font-bold">やりたいことを選んでください</p>
             </div>
 
-            <div className="px-6 space-y-4">
+            <div className="flex-1 px-8 -mt-6 relative z-20 overflow-y-auto space-y-4 pb-24 no-scrollbar">
+              <div className="grid grid-cols-2 gap-4">
+                <MenuCard 
+                  icon={<Plus className="w-8 h-8" />} 
+                  title="新規作成" 
+                  color={COLORS.peach}
+                  onClick={() => setStep("new")}
+                />
+                <MenuCard 
+                  icon={<Pencil className="w-8 h-8" />} 
+                  title="配置編集" 
+                  color={COLORS.white}
+                  onClick={() => setStep("select-edit")}
+                />
+              </div>
               <MenuCard 
-                icon={<Plus className="w-6 h-6" />} 
-                title="新規レイアウト作成" 
-                desc="新しい日付のレイアウトを作成します"
-                color="bg-emerald-50 text-emerald-600 border-emerald-100"
-                onClick={() => setStep("new")}
-              />
-              <MenuCard 
-                icon={<Pencil className="w-6 h-6" />} 
-                title="カートレイアウト編集" 
-                desc="現在のカートの中身を設定します"
-                color="bg-blue-50 text-blue-600 border-blue-100"
-                onClick={() => setStep("select-edit")}
-              />
-              <MenuCard 
-                icon={<Upload className="w-6 h-6" />} 
-                title="画像のアップロード" 
-                desc="新しいアイテムをライブラリに追加します"
-                color="bg-amber-50 text-amber-600 border-amber-100"
+                wide
+                icon={<Upload className="w-8 h-8" />} 
+                title="ライブラリに画像を追加" 
+                desc="新しい出版物やポスターを登録します"
+                color={COLORS.white}
                 onClick={onOpenUpload}
               />
               <MenuCard 
-                icon={<Trash2 className="w-6 h-6" />} 
-                title="レイアウト削除" 
-                desc="保存されているレイアウトを削除します"
-                color="bg-red-50 text-red-600 border-red-100"
+                wide
+                icon={<Trash2 className="w-8 h-8" />} 
+                title="過去データの削除" 
+                desc="保存済みのレイアウトを整理します"
+                color={COLORS.white}
                 onClick={() => setStep("select-delete")}
               />
-            </div>
 
-            <div className="mt-12 px-6">
-              <button 
-                onClick={onToggleStandard}
-                className="w-full py-4 rounded-2xl border-2 border-slate-200 bg-white text-slate-600 font-bold flex items-center justify-center gap-3 active:scale-95 transition-all"
-              >
-                <Monitor className="w-5 h-5" />
-                <span>標準表示（PC版と同じ）に切り替え</span>
-              </button>
+              <div className="pt-8">
+                <button 
+                  onClick={onToggleStandard}
+                  className="w-full py-5 rounded-[2.5rem] bg-white border-2 border-slate-100 shadow-sm flex items-center justify-center gap-3 active:scale-95 transition-all"
+                  style={{ color: COLORS.deepPurple }}
+                >
+                  <Monitor className="w-5 h-5 opacity-40" />
+                  <span className="font-black text-sm">標準表示（PC版）に切り替え</span>
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
 
+        {/* ... Other steps Select Edit / Select Delete ... */}
         {step === "select-edit" && (
-          <motion.div 
-            key="select-edit"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            className="flex flex-col h-full bg-white"
-          >
-            <WizardHeader title="編集するレイアウトを選択" onBack={() => setStep("menu")} />
-            <div className="flex-1 overflow-y-auto p-6 space-y-3">
+          <motion.div key="select-edit" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="flex flex-col h-full">
+            <WizardHeader title="配置を編集する" onBack={() => setStep("menu")} />
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-cream">
               {layouts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-48 text-slate-400">
-                  <p className="text-sm font-bold">保存済みのレイアウトがありません</p>
-                  <p className="text-xs mt-1">「新規レイアウト作成」から作成してください</p>
-                </div>
+                <EmptyState icon={<Search />} text="保存済みのデータはありません" sub="新規作成から始めてください" />
               ) : (
                 layouts.map(l => (
                   <button
                     key={l.period}
                     onClick={() => loadLayoutForEdit(l.period)}
-                    className="w-full flex items-center justify-between p-5 rounded-2xl border-2 border-slate-100 bg-slate-50 text-left active:scale-[0.97] transition-all hover:border-blue-200 hover:bg-blue-50"
+                    className="w-full flex items-center justify-between p-6 rounded-[2.5rem] bg-white shadow-lg shadow-black/5 text-left active:scale-[0.98] transition-all"
                   >
                     <div>
-                      <p className="font-black text-slate-800 text-base">{formatPeriodDisplay(l.period)}</p>
-                      <p className="text-xs text-slate-400 font-bold mt-0.5">タップして編集</p>
+                      <p className="font-black text-base" style={{ color: COLORS.deepPurple }}>{formatPeriodDisplay(l.period)}</p>
+                      <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest mt-1">Tap to start editing</p>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-blue-400 shrink-0" />
+                    <ChevronRight className="w-6 h-6 opacity-20" />
                   </button>
                 ))
               )}
@@ -205,19 +214,11 @@ export function MobileWizard({
         )}
 
         {step === "select-delete" && (
-          <motion.div 
-            key="select-delete"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            className="flex flex-col h-full bg-white"
-          >
-            <WizardHeader title="削除するレイアウトを選択" onBack={() => setStep("menu")} />
-            <div className="flex-1 overflow-y-auto p-6 space-y-3">
+          <motion.div key="select-delete" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="flex flex-col h-full">
+            <WizardHeader title="データを削除する" onBack={() => setStep("menu")} />
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-cream">
               {layouts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-48 text-slate-400">
-                  <p className="text-sm font-bold">保存済みのレイアウトがありません</p>
-                </div>
+                <EmptyState icon={<Trash2 />} text="削除できるデータはありません" />
               ) : (
                 layouts.map(l => (
                   <DeleteLayoutRow
@@ -233,42 +234,43 @@ export function MobileWizard({
         )}
 
         {step === "new" && (
-          <motion.div 
-            key="new"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            className="flex flex-col h-full bg-white"
-          >
-            <WizardHeader title="新規作成" onBack={() => setStep("menu")} />
-            <div className="flex-1 overflow-y-auto p-6 space-y-8">
-              <section className="space-y-4">
-                <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">1. 期間を選択</h3>
+          <motion.div key="new" initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="flex flex-col h-full">
+            <WizardHeader title="新規レイアウト" onBack={() => setStep("menu")} />
+            <div className="flex-1 overflow-y-auto p-8 space-y-12 bg-cream">
+              <section className="space-y-6">
+                <SectionLabel label="1. 期間を選ぶ" />
                 <div className="flex gap-4">
-                  <select value={newMonth} onChange={e => setNewMonth(Number(e.target.value))}
-                    className="flex-1 h-14 bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 font-bold text-lg outline-none focus:border-primary/30">
-                    {Array.from({length:12}, (_,i)=>i+1).map(m => <option key={m} value={m}>{m}月</option>)}
-                  </select>
-                  <select value={newHalf} onChange={e => setNewHalf(e.target.value as any)}
-                    className="flex-1 h-14 bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 font-bold text-lg outline-none focus:border-primary/30">
-                    <option value="前半">前半</option>
-                    <option value="後半">後半</option>
-                  </select>
+                  <div className="flex-1 relative">
+                    <select value={newMonth} onChange={e => setNewMonth(Number(e.target.value))}
+                      className="w-full h-16 bg-white rounded-[1.5rem] px-6 font-black text-lg outline-none shadow-sm appearance-none" style={{ color: COLORS.deepPurple }}>
+                      {Array.from({length:12}, (_,i)=>i+1).map(m => <option key={m} value={m}>{m}月</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-4 top-6 w-4 h-4 opacity-20 pointer-events-none" />
+                  </div>
+                  <div className="flex-1 relative">
+                    <select value={newHalf} onChange={e => setNewHalf(e.target.value as any)}
+                      className="w-full h-16 bg-white rounded-[1.5rem] px-6 font-black text-lg outline-none shadow-sm appearance-none" style={{ color: COLORS.deepPurple }}>
+                      <option value="前半">前半</option>
+                      <option value="後半">後半</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-6 w-4 h-4 opacity-20 pointer-events-none" />
+                  </div>
                 </div>
               </section>
 
-              <section className="space-y-4">
-                <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">2. 地点を選択</h3>
+              <section className="space-y-6">
+                <SectionLabel label="2. 地点を選ぶ" />
                 <div className="grid grid-cols-2 gap-3">
-                  <button 
-                    onClick={() => setNewLocations(["すべて"])}
-                    className={`p-4 rounded-2xl border-2 font-bold text-sm transition-all ${newLocations.includes("すべて") ? "bg-primary border-primary text-white" : "bg-slate-50 border-slate-100 text-slate-600"}`}
-                  >
-                    すべて
-                  </button>
+                  <LocationBtn 
+                    label="すべて" 
+                    active={newLocations.includes("すべて")} 
+                    onClick={() => setNewLocations(["すべて"])} 
+                  />
                   {locationsConfig.map(loc => (
-                    <button 
+                    <LocationBtn 
                       key={loc}
+                      label={loc}
+                      active={!newLocations.includes("すべて") && newLocations.includes(loc)}
                       onClick={() => {
                         setNewLocations(prev => {
                           const filtered = prev.filter(l => l !== "すべて");
@@ -279,60 +281,39 @@ export function MobileWizard({
                           return [...filtered, loc];
                         });
                       }}
-                      className={`p-4 rounded-2xl border-2 font-bold text-sm transition-all truncate ${!newLocations.includes("すべて") && newLocations.includes(loc) ? "bg-primary border-primary text-white" : "bg-slate-50 border-slate-100 text-slate-600"}`}
-                    >
-                      {loc}
-                    </button>
+                    />
                   ))}
                 </div>
               </section>
             </div>
-            <div className="p-6 border-t border-slate-100">
+            <div className="p-8 bg-white rounded-t-[3rem] shadow-2xl">
                <button 
                  onClick={handleCreateNew}
-                 className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-lg shadow-xl shadow-slate-200 active:scale-95 transition-all"
+                 className="w-full py-6 rounded-[2rem] font-black text-lg text-white shadow-xl shadow-coral/30 active:scale-95 transition-all"
+                 style={{ backgroundColor: COLORS.coral }}
                >
-                 レイアウトを作成する
+                 新しい配置を作成
                </button>
             </div>
           </motion.div>
         )}
 
         {step === "edit" && (
-          <motion.div 
-            key={`${activeCart}-${activeShelfIdx}`}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="flex flex-col h-full bg-white"
-          >
+           <motion.div key={`${activeCart}-${activeShelfIdx}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full">
             <WizardHeader 
-              title={`${activeCart === "A" ? "カートA" : "カートB"} — ${activeShelfIdx === 3 ? "ポスター" : ["上段","中段","下段"][activeShelfIdx]}`} 
+              title={`${activeCart} — ${activeShelfIdx === 3 ? "ポスター" : ["上段","中段","下段"][activeShelfIdx]}`} 
               onBack={() => {
                 if (activeShelfIdx === 0 && activeCart === "A") setStep("menu");
-                else if (activeShelfIdx === 0 && activeCart === "B") {
-                   setActiveCart("A");
-                   setActiveShelfIdx(3);
-                } else {
-                   setActiveShelfIdx(prev => prev - 1);
-                }
+                else if (activeShelfIdx === 0 && activeCart === "B") { setActiveCart("A"); setActiveShelfIdx(3); }
+                else setActiveShelfIdx(prev => prev - 1);
               }} 
             />
             
-            <div className="h-1.5 w-full bg-slate-100 flex">
-               {Array.from({length: 8}, (_, i) => {
-                 const currentFlat = (activeCart === "A" ? 0 : 4) + activeShelfIdx;
-                 return (
-                   <div key={i} className={`h-full flex-1 transition-all duration-500 ${i <= currentFlat ? "bg-primary" : "bg-transparent"}`} />
-                 );
-               })}
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-6 space-y-10 bg-cream pb-32">
               {activeShelfIdx < 3 ? (
-                <section className="space-y-8">
-                  <div className="space-y-4">
-                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest">段のレイアウトタイプ</p>
+                <>
+                  <section className="space-y-6">
+                    <SectionLabel label="レイアウトを選択" />
                     <div className="grid grid-cols-2 gap-3">
                        {(["booklet", "booklet_doc", "document", "bible", "pamphlet"] as ShelfLayoutType[]).map(t => (
                          <button key={t} 
@@ -343,282 +324,173 @@ export function MobileWizard({
                              });
                              activeCart === "A" ? setCartA(update) : setCartB(update);
                            }}
-                           className={`p-3 rounded-2xl border-2 font-bold text-xs transition-al flex flex-col items-center gap-1 ${currentShelf?.layout_type === t ? "bg-rose-50 border-rose-300 text-rose-700" : "bg-slate-50 border-slate-100 text-slate-500"}`}
+                           className={`p-4 h-24 rounded-[2rem] border-2 font-black text-[11px] flex items-center justify-center transition-all ${currentShelf?.layout_type === t ? "shadow-lg scale-105" : "bg-white border-transparent opacity-60"}`}
+                           style={{ 
+                             backgroundColor: currentShelf?.layout_type === t ? COLORS.peach : COLORS.white,
+                             borderColor: currentShelf?.layout_type === t ? COLORS.coral : "transparent",
+                             color: COLORS.deepPurple
+                           }}
                          >
                            <span className="whitespace-pre-line text-center">{GALLERY_FILTER_LABELS[t] || t}</span>
                          </button>
                        ))}
                     </div>
-                  </div>
+                  </section>
 
                   {currentShelf?.layout_type !== "none" && (
-                    <div className="space-y-4 pt-4 border-t border-slate-100">
-                      {(() => {
-                        const isRow1 = activeShelfIdx === 0;
-                        const isDocOrPamphlet = currentShelf?.layout_type === "document" || currentShelf?.layout_type === "pamphlet";
-                        const canLangTag = isRow1 || isDocOrPamphlet;
-                        const canFreeDist = isDocOrPamphlet;
-
-                        return (
-                          <>
-                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                              <Tag className="w-4 h-4" /> タグ設定
-                            </p>
-                            <div className="space-y-3">
-                              {!canLangTag && !canFreeDist ? (
-                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-[10px] font-bold text-slate-400 text-center">
-                                  この段ではタグの設定はできません
-                                </div>
-                              ) : (
-                                <>
-                                  <div className="flex gap-2">
-                                     <button 
-                                       onClick={() => {
-                                         const update = (prev: CartLayoutV2): CartLayoutV2 => ({
-                                           ...prev,
-                                           shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "none" as TagType, value: "" }, tag_2: { type: "none" as TagType, value: "" } } : s)
-                                         });
-                                         activeCart === "A" ? setCartA(update) : setCartB(update);
-                                       }}
-                                       className={`flex-1 py-3 rounded-xl border-2 font-bold text-xs transition-all ${currentShelf?.tag_1.type === "none" ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-slate-50 border-slate-100 text-slate-500"}`}
-                                     >
-                                       なし
-                                     </button>
-                                     {canLangTag && (
-                                       <button 
-                                         onClick={() => {
-                                           const update = (prev: CartLayoutV2): CartLayoutV2 => ({
-                                             ...prev,
-                                             shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang" as TagType, value: s.tag_1.type === "lang" ? s.tag_1.value : "" }, tag_2: { type: "none" as TagType, value: "" } } : s)
-                                           });
-                                           activeCart === "A" ? setCartA(update) : setCartB(update);
-                                         }}
-                                         className={`flex-1 py-3 rounded-xl border-2 font-bold text-xs transition-all ${currentShelf?.tag_1.type === "lang" ? "bg-red-600 text-white border-red-600 shadow-md" : "bg-red-50 border-red-100 text-red-600"}`}
-                                       >
-                                         言語表示
-                                       </button>
-                                     )}
-                                     {canFreeDist && (
-                                       <button 
-                                         onClick={() => {
-                                           const update = (prev: CartLayoutV2): CartLayoutV2 => ({
-                                             ...prev,
-                                             shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "free_dist" as TagType, value: "無料で差し上げています" }, tag_2: { type: "none" as TagType, value: "" } } : s)
-                                           });
-                                           activeCart === "A" ? setCartA(update) : setCartB(update);
-                                         }}
-                                         className={`flex-1 py-3 rounded-xl border-2 font-bold text-xs transition-all ${currentShelf?.tag_1.type === "free_dist" ? "bg-zinc-900 text-white border-zinc-900 shadow-md" : "bg-zinc-50 border-zinc-100 text-zinc-600"}`}
-                                       >
-                                         無料配布
-                                       </button>
-                                     )}
-                                  </div>
-                                  {currentShelf?.tag_1.type === "lang" && (
-                                     <div className="grid grid-cols-2 gap-3 p-4 bg-red-50 rounded-2xl border border-red-100">
-                                        <div className="space-y-1">
-                                          <label className="text-[10px] font-black text-red-700/60 uppercase">左タグ</label>
-                                          <select 
-                                            value={currentShelf.tag_1.value}
-                                            onChange={(e) => {
-                                              const update = (prev: CartLayoutV2): CartLayoutV2 => ({
-                                                ...prev,
-                                                shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang" as TagType, value: e.target.value } } : s)
-                                              });
-                                              activeCart === "A" ? setCartA(update) : setCartB(update);
-                                            }}
-                                            className="w-full h-10 bg-white border border-red-200 rounded-lg px-2 text-xs font-bold outline-none"
-                                          >
-                                            <option value="">選択...</option>
-                                            {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
-                                          </select>
-                                        </div>
-                                        <div className="space-y-1">
-                                          <label className="text-[10px] font-black text-red-700/60 uppercase">右タグ</label>
-                                          <select 
-                                            value={currentShelf.tag_2.value}
-                                            onChange={(e) => {
-                                              const update = (prev: CartLayoutV2): CartLayoutV2 => ({
-                                                ...prev,
-                                                shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_2: { type: (e.target.value ? "lang" : "none") as TagType, value: e.target.value } } : s)
-                                              });
-                                              activeCart === "A" ? setCartA(update) : setCartB(update);
-                                            }}
-                                            className="w-full h-10 bg-white border border-red-200 rounded-lg px-2 text-xs font-bold outline-none"
-                                          >
-                                            <option value="">なし</option>
-                                            {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
-                                          </select>
-                                        </div>
-                                     </div>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
+                    <section className="space-y-6">
+                      <SectionLabel label="タグ設定" />
+                      <div className="bg-white rounded-[2.5rem] p-6 shadow-xl space-y-4">
+                        <div className="flex gap-2">
+                           {/* Simplified Tag buttons */}
+                           <TagOptionBtn label="なし" active={currentShelf?.tag_1.type === "none"} 
+                             onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "none", value: "" }, tag_2: { type: "none", value: "" } } : s) }))} 
+                           />
+                           <TagOptionBtn label="言語" color={COLORS.coral} active={currentShelf?.tag_1.type === "lang"} 
+                             onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang", value: "" }, tag_2: { type: "none", value: "" } } : s) }))}
+                           />
+                           {currentShelf?.layout_type === "document" && (
+                             <TagOptionBtn label="無料配布" color={COLORS.deepPurple} active={currentShelf?.tag_1.type === "free_dist"} 
+                               onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "free_dist", value: "無料で差し上げています" }, tag_2: { type: "none", value: "" } } : s) }))}
+                             />
+                           )}
+                        </div>
+                        {currentShelf?.tag_1.type === "lang" && (
+                          <div className="grid grid-cols-2 gap-3 pt-2">
+                             <TagSelect value={currentShelf.tag_1.value} onChange={v => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang", value: v } } : s) }))} />
+                             <TagSelect value={currentShelf.tag_2.value} placeholder="なし" onChange={v => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_2: { type: v ? "lang" : "none", value: v } } : s) }))} />
+                          </div>
+                        )}
+                      </div>
+                    </section>
                   )}
 
                   {currentShelf?.layout_type !== "none" && (
-                    <div className="space-y-4">
-                      <p className="text-xs font-black text-slate-400 uppercase tracking-widest">画像を配置 ({currentShelf?.items.length}スロット)</p>
-                      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                        {currentShelf?.items.map((it, sIdx) => {
-                          const item = it ? itemMap[it] : null;
+                    <section className="space-y-6">
+                      <SectionLabel label="出版物を配置" />
+                      <div className="grid grid-cols-2 gap-4">
+                        {currentShelf?.items.map((itId, sIdx) => {
+                          const item = itId ? itemMap[itId] : null;
                           return (
-                            <div key={sIdx} className="shrink-0 space-y-2">
-                               <button 
-                                 onClick={() => { setActiveSlotIdx(sIdx); setSelectionMode("items"); }}
-                                 className={`w-32 h-44 rounded-2xl border-2 flex flex-col items-center justify-center relative overflow-hidden transition-all ${activeSlotIdx === sIdx && selectionMode === "items" ? "border-primary ring-4 ring-primary/10" : "border-dashed border-slate-200 bg-slate-50"}`}
-                               >
-                                  {item ? (
-                                    <>
-                                      <img src={item.url} className="w-full h-full object-cover" />
-                                      <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2">
-                                         <p className="text-[10px] text-white font-bold truncate">{item.name}</p>
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <div className="text-center p-4">
-                                      <Plus className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                                      <p className="text-[10px] text-slate-400 font-bold uppercase">スロット {sIdx+1}</p>
-                                    </div>
-                                  )}
-                               </button>
-                               {item && (
-                                  <button 
-                                    onClick={() => {
-                                       const update = (prev: CartLayoutV2): CartLayoutV2 => ({
-                                          ...prev,
-                                          shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, items: s.items.map((id, j) => j === sIdx ? null : id) } : s)
-                                       });
-                                       activeCart === "A" ? setCartA(update) : setCartB(update);
-                                    }}
-                                    className="w-full py-2 text-[10px] font-bold text-red-500 bg-red-50 rounded-lg"
-                                  >
-                                    クリア
-                                  </button>
-                               )}
-                            </div>
+                            <button 
+                              key={sIdx}
+                              onClick={() => { setActiveSlotIdx(sIdx); setSelectionMode("items"); }}
+                              className={`aspect-[1/1.4] rounded-[2.5rem] bg-white border-4 p-4 flex flex-col items-center justify-center transition-all ${activeSlotIdx === sIdx && selectionMode === "items" ? "shadow-2xl scale-105" : "border-slate-50 opacity-80"}`}
+                              style={{ borderColor: activeSlotIdx === sIdx && selectionMode === "items" ? COLORS.coral : COLORS.white }}
+                            >
+                              {item ? (
+                                <img src={item.url} className="w-full h-full object-contain drop-shadow-lg" />
+                              ) : (
+                                <div className="text-center">
+                                  <Plus className="w-10 h-10 opacity-10 mx-auto mb-2" />
+                                  <p className="text-[10px] font-black opacity-30 uppercase tracking-widest">S-{sIdx+1}</p>
+                                </div>
+                              )}
+                            </button>
                           );
                         })}
                       </div>
-                    </div>
+                    </section>
                   )}
-                </section>
+                </>
               ) : (
-                <section className="space-y-6">
-                  <p className="text-xs font-black text-slate-400 uppercase tracking-widest">ポスター画像を選択</p>
+                <section className="space-y-8">
+                  <SectionLabel label="ポスターを選択" />
                   <button 
-                    onClick={() => { setSelectionMode("items"); }}
-                    className="w-full aspect-[1/1.4] rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center overflow-hidden transition-all relative"
+                    onClick={() => setSelectionMode("items")}
+                    className="w-full aspect-[1/1.4] rounded-[3rem] bg-white shadow-xl flex flex-col items-center justify-center overflow-hidden border-4 border-white transition-all active:scale-95"
                   >
                     {currentCart.poster ? (
-                      <>
-                        <img src={itemMap[currentCart.poster]?.url} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center transition-opacity">
-                           <Plus className="w-12 h-12 text-white" />
-                        </div>
-                      </>
+                      <img src={itemMap[currentCart.poster]?.url} className="w-full h-full object-contain p-8" />
                     ) : (
                       <>
-                        <Plus className="w-12 h-12 text-slate-300 mb-4" />
-                        <p className="text-sm font-bold text-slate-400 uppercase">ポスターを選択してください</p>
+                        <Plus className="w-16 h-16 opacity-10 mb-4" />
+                        <p className="text-sm font-black opacity-30 uppercase tracking-widest">Select Poster</p>
                       </>
                     )}
                   </button>
-                  {currentCart.poster && (
-                     <button 
-                       onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, poster: null }))}
-                       className="w-full py-4 text-sm font-bold text-red-500 bg-red-50 rounded-2xl"
-                     >
-                       削除する
-                     </button>
-                  )}
                 </section>
               )}
             </div>
 
-            <div className="p-6 border-t border-slate-100 flex gap-4">
-               <button 
-                 onClick={() => {
-                   if (activeShelfIdx === 3) {
-                     if (activeCart === "A") {
-                       setActiveCart("B");
-                       setActiveShelfIdx(0);
-                     } else {
-                       setStep("preview");
-                     }
-                   } else {
-                     setActiveShelfIdx(prev => prev + 1);
-                   }
-                 }}
-                 className="flex-1 py-5 bg-slate-900 text-white rounded-2xl font-black text-lg shadow-xl shadow-slate-200 active:scale-95 transition-all flex items-center justify-center gap-2"
-               >
-                 <span>{activeShelfIdx === 3 && activeCart === "B" ? "完了してプレビューへ" : "次のステップへ"}</span>
-                 <ChevronRight className="w-5 h-5" />
-               </button>
+            <div className="p-8 bg-white rounded-t-[3rem] shadow-2xl flex gap-4">
+              <button 
+                onClick={() => {
+                  if (activeShelfIdx === 3) {
+                    if (activeCart === "A") { setActiveCart("B"); setActiveShelfIdx(0); }
+                    else setStep("preview");
+                  } else setActiveShelfIdx(prev => prev - 1); // This back logic might need careful check based on UI flow
+                }}
+                className="w-20 h-16 rounded-[1.5rem] bg-cream flex items-center justify-center active:scale-90 transition-all"
+              >
+                <ChevronLeft className="w-6 h-6" style={{ color: COLORS.deepPurple }} />
+              </button>
+              <button 
+                onClick={() => {
+                  if (activeShelfIdx === 3) {
+                    if (activeCart === "A") { setActiveCart("B"); setActiveShelfIdx(0); }
+                    else setStep("preview");
+                  } else setActiveShelfIdx(prev => prev + 1);
+                }}
+                className="flex-1 h-16 rounded-[1.5rem] font-black text-white shadow-lg shadow-coral/30 active:scale-95 transition-all flex items-center justify-center gap-2"
+                style={{ backgroundColor: COLORS.coral }}
+              >
+                <span>{activeShelfIdx === 3 && activeCart === "B" ? "プレビューへ" : "次へ進む"}</span>
+                <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
           </motion.div>
         )}
 
         {step === "preview" && (
-          <motion.div 
-            key="preview"
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            className="flex flex-col h-full bg-[#fdfaf3] overflow-y-auto"
-          >
+          <motion.div key="preview" initial={{ scale: 1.1, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col h-full overflow-y-auto bg-cream">
             <WizardHeader title="最終確認" onBack={() => setStep("edit")} />
-            
-            <div className="flex-1 p-6 space-y-6">
-               <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-black text-slate-400 text-xs uppercase tracking-widest">設定内容</h3>
-                    <span className="bg-primary/10 text-primary text-[10px] font-black px-2 py-1 rounded-lg">{formatPeriodDisplay(period)}</span>
+            <div className="p-8 space-y-8 pb-32">
+               <div className="bg-white rounded-[3rem] p-10 shadow-xl space-y-10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-2xl font-black" style={{ color: COLORS.deepPurple }}>{formatPeriodDisplay(period)}</h3>
+                      <p className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em] mt-1">Ready to Save</p>
+                    </div>
+                    <div className="w-14 h-14 rounded-3xl flex items-center justify-center bg-emerald-50 text-emerald-500">
+                      <Check className="w-8 h-8" />
+                    </div>
                   </div>
                   
-                  {([cartA, cartB] as CartLayoutV2[]).map((c, i) => (
-                    <div key={i} className="space-y-3">
-                       <div className="flex items-center justify-between">
-                         <p className="font-black text-sm text-slate-800">カート{i === 0 ? "A" : "B"}</p>
-                         <button onClick={() => { setActiveCart(i === 0 ? "A" : "B"); setActiveShelfIdx(0); setStep("edit"); }} className="text-[10px] font-bold text-primary underline">全再編集</button>
-                       </div>
-                       <div className="grid grid-cols-4 gap-2">
-                          <PreviewSquare item={c.poster ? itemMap[c.poster] : null} label="POS" onClick={() => { setActiveCart(i === 0 ? "A" : "B"); setActiveShelfIdx(3); setStep("edit"); }} />
-                          {c.shelves.map((s, si) => (
-                            <PreviewSquare key={si} item={s.items[0] ? itemMap[s.items[0]] : null} label={["上","中","下"][si]} onClick={() => { setActiveCart(i === 0 ? "A" : "B"); setActiveShelfIdx(si); setStep("edit"); }} />
-                          ))}
-                       </div>
-                    </div>
-                  ))}
+                  <div className="grid grid-cols-2 gap-6">
+                    {(["A", "B"] as CartId[]).map((cid, i) => (
+                      <div key={cid} className="space-y-4">
+                         <p className="font-black text-sm opacity-40 uppercase tracking-widest text-center">カート {cid}</p>
+                         <div className="aspect-[2/3] bg-cream rounded-[2rem] p-4 flex flex-col gap-2 shadow-inner">
+                            <div className="flex-1 bg-white rounded-xl shadow-sm overflow-hidden p-2">
+                               <img src={itemMap[(i === 0 ? cartA : cartB).poster]?.url} className="w-full h-full object-contain opacity-20" />
+                            </div>
+                            <div className="flex gap-1 h-10">
+                              <div className="flex-1 bg-white/50 rounded-lg" />
+                              <div className="flex-1 bg-white/50 rounded-lg" />
+                            </div>
+                         </div>
+                      </div>
+                    ))}
+                  </div>
                </div>
 
-               <div className="space-y-3 pt-4 pb-20">
+               <div className="space-y-4">
                  <button 
                    onClick={handleSave} 
                    disabled={saveStatus === "saving" || !period.trim()}
-                   className={`w-full py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl transition-all active:scale-95 ${saveStatus === "saved" ? "bg-emerald-500 text-white" : "bg-[#1b618d] text-white shadow-[#1b618d]/20"}`}
+                   className="w-full py-6 rounded-[2rem] font-black text-xl text-white shadow-xl shadow-slate-900/10 active:scale-95 transition-all flex items-center justify-center gap-3"
+                   style={{ backgroundColor: saveStatus === "saved" ? "#10b981" : COLORS.deepPurple }}
                  >
-                   {saveStatus === "saving" ? <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-6 h-6" />}
-                   <span>{saveStatus === "saved" ? "保存完了" : saveStatus === "saving" ? "保存中..." : "レイアウトを確定・保存"}</span>
+                   {saveStatus === "saving" ? <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" /> : <Save className="w-6 h-6" />}
+                   <span>{saveStatus === "saved" ? "保存済み" : "配置を保存する"}</span>
                  </button>
 
                  <div className="grid grid-cols-3 gap-3">
-                    <ExportBtn icon={<FileImage className="w-5 h-5"/> } active={exporting === "png"} onClick={handleExportPng} label="PNG" />
-                    <ExportBtn icon={<Download className="w-5 h-5"/> } active={exporting === "pdf"} onClick={handleExportPdf} label="PDF" />
-                    <ExportBtn icon={<FileSpreadsheet className="w-5 h-5"/> } active={exporting === "xlsx"} onClick={handleExportXlsx} label="Excel" />
+                    <ExportCircle icon={<FileImage />} onClick={handleExportPng} active={exporting === "png"} />
+                    <ExportCircle icon={<FileText />} onClick={handleExportPdf} active={exporting === "pdf"} />
+                    <ExportCircle icon={<FileSpreadsheet />} onClick={handleExportXlsx} active={exporting === "xlsx"} />
                  </div>
-
-                 <button 
-                   onClick={onToggleStandard}
-                   className="w-full py-4 text-xs font-bold text-slate-400 bg-transparent flex items-center justify-center gap-2 mt-8"
-                 >
-                   <Smartphone className="w-4 h-4" />
-                   標準表示に切り替える
-                 </button>
                </div>
             </div>
           </motion.div>
@@ -627,21 +499,16 @@ export function MobileWizard({
 
       <AnimatePresence>
         {selectionMode === "items" && (
-          <motion.div 
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            className="fixed inset-0 z-[200] bg-white flex flex-col"
-          >
-            <WizardHeader title="画像を選択" onBack={() => setSelectionMode("shelf-type")} />
-            <div className="p-4 border-b border-slate-100">
+          <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="fixed inset-0 z-[200] bg-cream flex flex-col">
+            <WizardHeader title="配置を選ぶ" onBack={() => setSelectionMode("shelf-type")} />
+            <div className="px-6 py-4">
                <div className="relative">
-                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 opacity-20" />
                  <input type="text" placeholder="名前で検索..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                   className="w-full h-12 bg-slate-50 rounded-xl pl-12 pr-4 font-bold outline-none focus:ring-2 focus:ring-primary/20" />
+                   className="w-full h-16 bg-white rounded-[1.5rem] pl-14 pr-6 font-black outline-none shadow-sm focus:ring-4 ring-coral/10" style={{ color: COLORS.deepPurple }} />
                </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            <div className="flex-1 overflow-y-auto p-6 space-y-2 no-scrollbar">
                {items
                  .filter(it => {
                     if (activeShelfIdx === 3) return it.category === "poster";
@@ -656,21 +523,18 @@ export function MobileWizard({
                       key={it.id}
                       onClick={() => {
                         const update = (prev: CartLayoutV2): CartLayoutV2 => {
-                          if (activeShelfIdx === 3) return { ...prev, poster: it.id!, posterType: it.poster_type || prev.posterType };
-                          return {
-                             ...prev,
-                             shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, items: s.items.map((id, j) => j === activeSlotIdx ? it.id! : id) } : s)
-                          };
+                           if (activeShelfIdx === 3) return { ...prev, poster: it.id!, posterType: it.poster_type || prev.posterType };
+                           return { ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, items: s.items.map((id, j) => j === activeSlotIdx ? it.id! : id) } : s) };
                         };
                         (activeCart === "A" ? setCartA : setCartB)(update);
                         setSelectionMode("shelf-type");
                       }}
-                      className="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-colors text-left"
+                      className="w-full flex items-center gap-5 p-4 rounded-[2rem] bg-white hover:shadow-lg transition-all active:scale-[0.98] text-left"
                     >
-                      <img src={it.url} className="w-12 h-12 object-cover rounded-xl shrink-0" />
+                      <img src={it.url} className="w-16 h-16 object-contain rounded-xl shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-slate-800 truncate">{it.name}</p>
-                        <p className="text-[10px] text-slate-400 font-black uppercase">
+                        <p className="text-sm font-black truncate" style={{ color: COLORS.deepPurple }}>{it.name}</p>
+                        <p className="text-[10px] font-bold opacity-30 uppercase tracking-widest mt-1">
                           {GALLERY_FILTER_LABELS[it.category as GalleryFilterType] || it.category}
                         </p>
                       </div>
@@ -684,90 +548,106 @@ export function MobileWizard({
   );
 }
 
-// Helper Components
-function MenuCard({ icon, title, desc, color, onClick }: any) {
+// ─── Refined Sub Components (Grid, Tile, Card) ───
+
+function MenuCard({ icon, title, desc, color, onClick, wide }: any) {
   return (
-    <button onClick={onClick} className={`w-full flex items-center gap-5 p-5 rounded-3xl border-2 transition-all active:scale-[0.97] active:shadow-inner ${color}`}>
-       <div className="shrink-0 w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-sm">
-         {icon}
+    <button onClick={onClick} className={`flex flex-col items-center justify-center p-8 rounded-[3rem] transition-all active:scale-95 shadow-xl shadow-black/5 ${wide ? "w-full text-center" : ""}`} style={{ backgroundColor: color }}>
+       <div className="w-20 h-20 rounded-[2rem] bg-cream flex items-center justify-center mb-6 shadow-inner">
+         <div style={{ color: COLORS.coral }}>{icon}</div>
        </div>
-       <div className="text-left">
-          <p className="text-lg font-black tracking-tight leading-tight mb-1">{title}</p>
-          <p className="text-xs font-bold opacity-70 leading-relaxed">{desc}</p>
+       <div>
+          <p className="text-xl font-black tracking-tight" style={{ color: COLORS.deepPurple }}>{title}</p>
+          {desc && <p className="text-[10px] font-bold opacity-30 tracking-widest uppercase mt-2">{desc}</p>}
        </div>
-       <ChevronRight className="ml-auto w-6 h-6 opacity-30" />
+    </button>
+  );
+}
+
+function SectionLabel({ label }: { label: string }) {
+  return (
+    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] opacity-30 ml-2" style={{ color: COLORS.deepPurple }}>{label}</h3>
+  );
+}
+
+function LocationBtn({ label, active, onClick }: any) {
+  return (
+    <button onClick={onClick} className={`p-5 rounded-[1.5rem] font-black text-sm transition-all border-4 ${active ? "shadow-lg scale-105" : "bg-white border-transparent opacity-60"}`}
+      style={{ backgroundColor: active ? COLORS.peach : COLORS.white, borderColor: active ? COLORS.coral : "transparent", color: COLORS.deepPurple }}>
+      {label}
+    </button>
+  );
+}
+
+function TagOptionBtn({ label, color, active, onClick }: any) {
+  return (
+    <button onClick={onClick} className={`flex-1 py-4 px-2 rounded-2xl border-4 font-black text-[10px] uppercase transition-all ${active ? "shadow-md" : "bg-cream/40 border-transparent opacity-40"}`}
+      style={{ backgroundColor: active ? (color || COLORS.peach) : "transparent", borderColor: active ? (color || COLORS.coral) : "transparent", color: active ? COLORS.white : COLORS.deepPurple }}>
+      {label}
+    </button>
+  );
+}
+
+function TagSelect({ value, onChange, placeholder }: any) {
+  return (
+    <div className="relative">
+      <select value={value} onChange={e => onChange(e.target.value)} className="w-full h-12 bg-cream/40 rounded-xl px-4 text-[11px] font-black outline-none appearance-none" style={{ color: COLORS.deepPurple }}>
+        <option value="">{placeholder || "選択..."}</option>
+        {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
+      </select>
+      <ChevronDown className="absolute right-3 top-4 w-3 h-3 opacity-20 pointer-events-none" />
+    </div>
+  );
+}
+
+function ExportCircle({ icon, active, onClick }: any) {
+  return (
+    <button onClick={onClick} disabled={active} className={`flex-1 aspect-square rounded-full flex items-center justify-center transition-all shadow-lg active:scale-90 ${active ? "bg-slate-100 opacity-50" : "bg-white"}`}>
+      {active ? <div className="w-6 h-6 border-4 border-slate-200 border-t-coral rounded-full animate-spin" /> : <div style={{ color: COLORS.coral }}>{React.cloneElement(icon, { className: "w-8 h-8" })}</div>}
     </button>
   );
 }
 
 function WizardHeader({ title, onBack }: any) {
   return (
-    <div className="shrink-0 h-16 border-b border-slate-100 px-4 flex items-center gap-4 bg-white z-[150]">
-       <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
-         <ChevronLeft className="w-6 h-6 text-slate-800" />
+    <div className="shrink-0 pt-16 pb-8 px-8 flex items-center gap-6 bg-white z-[150] rounded-b-[3rem] shadow-sm">
+       <button onClick={onBack} className="w-14 h-14 flex items-center justify-center bg-cream rounded-[1.5rem] active:scale-90 transition-all shadow-inner">
+         <ChevronLeft className="w-7 h-7" style={{ color: COLORS.deepPurple }} />
        </button>
-       <h2 className="text-lg font-black text-slate-800 tracking-tight">{title}</h2>
+       <h2 className="text-xl font-black tracking-tight" style={{ color: COLORS.deepPurple }}>{title}</h2>
     </div>
   );
 }
 
-function PreviewSquare({ item, label, onClick }: any) {
+function EmptyState({ icon, text, sub }: any) {
   return (
-    <button onClick={onClick} className="aspect-square bg-slate-50 rounded-xl border border-slate-100 overflow-hidden relative flex items-center justify-center">
-       {item ? <img src={item.url} className="w-full h-full object-cover" /> : <Plus className="w-4 h-4 text-slate-200" />}
-       <div className="absolute top-1 left-1 bg-white/80 rounded px-1 min-w-[12px] text-center">
-         <span className="text-[8px] font-black text-slate-600 uppercase">{label}</span>
-       </div>
-    </button>
-  )
-}
-
-function ExportBtn({ icon, active, onClick, label }: any) {
-  return (
-    <button 
-      onClick={onClick}
-      disabled={active}
-      className={`flex flex-col items-center justify-center gap-2 py-3 rounded-2xl border-2 transition-all active:scale-95 ${active ? "bg-slate-50 border-slate-100 text-slate-400" : "bg-white border-slate-100 text-slate-700 shadow-sm"}`}
-    >
-       {active ? <div className="w-5 h-5 border-2 border-slate-200 border-t-primary rounded-full animate-spin" /> : icon}
-       <span className="text-[10px] font-black">{label}</span>
-    </button>
-  )
+    <div className="flex flex-col items-center justify-center py-20 opacity-30">
+       {React.cloneElement(icon, { className: "w-16 h-16 mb-4" })}
+       <p className="font-black text-sm">{text}</p>
+       {sub && <p className="text-[10px] font-bold mt-1">{sub}</p>}
+    </div>
+  );
 }
 
 function DeleteLayoutRow({ period, displayName, onConfirm }: { period: string; displayName: string; onConfirm: () => void }) {
   const [confirming, setConfirming] = useState(false);
   return (
-    <div className="w-full rounded-2xl border-2 border-slate-100 overflow-hidden">
+    <div className="w-full rounded-[2rem] overflow-hidden shadow-lg shadow-black/5">
       {confirming ? (
-        <div className="bg-red-50 p-4 space-y-3">
-          <p className="text-sm font-black text-red-700">「{displayName}」を削除しますか？</p>
-          <p className="text-xs text-red-500 font-bold">この操作は元に戻せません。</p>
+        <div className="bg-red-50 p-6 space-y-4">
+          <p className="font-black text-sm text-red-700">「{displayName}」を削除しますか？</p>
           <div className="flex gap-3">
-            <button
-              onClick={onConfirm}
-              className="flex-1 py-3 bg-red-600 text-white font-black text-sm rounded-xl active:scale-95 transition-all"
-            >
-              削除する
-            </button>
-            <button
-              onClick={() => setConfirming(false)}
-              className="flex-1 py-3 bg-white border border-slate-200 text-slate-700 font-black text-sm rounded-xl active:scale-95 transition-all"
-            >
-              キャンセル
-            </button>
+            <button onClick={onConfirm} className="flex-1 py-4 bg-red-600 text-white font-black text-sm rounded-2xl active:scale-95">削除</button>
+            <button onClick={() => setConfirming(false)} className="flex-1 py-4 bg-white border border-red-100 text-red-400 font-black text-sm rounded-2xl">キャンセ</button>
           </div>
         </div>
       ) : (
-        <button
-          onClick={() => setConfirming(true)}
-          className="w-full flex items-center justify-between p-5 bg-white text-left active:scale-[0.97] transition-all hover:bg-red-50"
-        >
+        <button onClick={() => setConfirming(true)} className="w-full flex items-center justify-between p-6 bg-white text-left active:scale-[0.98] transition-all">
           <div>
-            <p className="font-black text-slate-800 text-base">{displayName}</p>
-            <p className="text-xs text-red-400 font-bold mt-0.5">タップして削除</p>
+            <p className="font-black text-base" style={{ color: COLORS.deepPurple }}>{displayName}</p>
+            <p className="text-[10px] text-red-400 font-black uppercase mt-1 tracking-widest">Tap to delete</p>
           </div>
-          <Trash2 className="w-5 h-5 text-red-400 shrink-0" />
+          <Trash2 className="w-6 h-6 text-red-200" />
         </button>
       )}
     </div>
