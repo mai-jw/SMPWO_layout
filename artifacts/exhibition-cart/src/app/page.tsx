@@ -1399,9 +1399,31 @@ export default function CartEditor() {
           if (el) {
             el.style.backgroundColor = "white";
             el.style.padding = "100px 100px 40px 100px";
-            // Strip filters that crash html2canvas
-            const filtered = el.querySelectorAll('[class*="drop-shadow"]');
-            filtered.forEach(item => (item as HTMLElement).style.filter = "none");
+            
+            // Critical Fix: html2canvas does not support modern color functions like oklch/oklab (default in Tailwind v4)
+            // We traverse and convert them to standard RGB
+            const allElements = el.getElementsByTagName("*");
+            for (let i = 0; i < allElements.length; i++) {
+              const node = allElements[i] as HTMLElement;
+              const style = window.getComputedStyle(node);
+              
+              const props = ["color", "backgroundColor", "borderColor", "borderTopColor", "borderBottomColor", "borderLeftColor", "borderRightColor"];
+              props.forEach(prop => {
+                const val = (node.style as any)[prop] || style.getPropertyValue(prop);
+                if (val && (val.includes("oklch") || val.includes("oklab"))) {
+                  // Fallback: Strip the modern function and try to let html2canvas handle what's left, 
+                  // or force to a common safe color if it would otherwise crash.
+                  // Most reliable for html2canvas to avoid crash is to force a recognizable RGB value.
+                  if (prop.includes("Color") && prop !== "color") node.style.setProperty(prop, "rgba(0,0,0,0)", "important");
+                  else node.style.setProperty(prop, "rgb(31, 29, 27)", "important"); // Default foreground
+                }
+              });
+
+              // Strip filters that crash html2canvas
+              if (style.filter && style.filter !== "none") {
+                node.style.filter = "none";
+              }
+            }
           }
         }
       });
@@ -1437,8 +1459,25 @@ export default function CartEditor() {
           if (el) {
             el.style.backgroundColor = "white";
             el.style.padding = "100px 100px 40px 100px";
-            const filtered = el.querySelectorAll('[class*="drop-shadow"]');
-            filtered.forEach(item => (item as HTMLElement).style.filter = "none");
+            
+            const allElements = el.getElementsByTagName("*");
+            for (let i = 0; i < allElements.length; i++) {
+              const node = allElements[i] as HTMLElement;
+              const style = window.getComputedStyle(node);
+              
+              const props = ["color", "backgroundColor", "borderColor", "borderTopColor", "borderBottomColor", "borderLeftColor", "borderRightColor"];
+              props.forEach(prop => {
+                const val = (node.style as any)[prop] || style.getPropertyValue(prop);
+                if (val && (val.includes("oklch") || val.includes("oklab"))) {
+                  if (prop.includes("Color") && prop !== "color") node.style.setProperty(prop, "rgba(0,0,0,0)", "important");
+                  else node.style.setProperty(prop, "rgb(31, 29, 27)", "important");
+                }
+              });
+
+              if (style.filter && style.filter !== "none") {
+                node.style.filter = "none";
+              }
+            }
           }
         }
       });
@@ -1492,8 +1531,25 @@ export default function CartEditor() {
           if (el) {
             el.style.backgroundColor = "white";
             el.style.padding = "100px 100px 40px 100px";
-            const filtered = el.querySelectorAll('[class*="drop-shadow"]');
-            filtered.forEach(item => (item as HTMLElement).style.filter = "none");
+            
+            const allElements = el.getElementsByTagName("*");
+            for (let i = 0; i < allElements.length; i++) {
+              const node = allElements[i] as HTMLElement;
+              const style = window.getComputedStyle(node);
+              
+              const props = ["color", "backgroundColor", "borderColor", "borderTopColor", "borderBottomColor", "borderLeftColor", "borderRightColor"];
+              props.forEach(prop => {
+                const val = (node.style as any)[prop] || style.getPropertyValue(prop);
+                if (val && (val.includes("oklch") || val.includes("oklab"))) {
+                  if (prop.includes("Color") && prop !== "color") node.style.setProperty(prop, "rgba(0,0,0,0)", "important");
+                  else node.style.setProperty(prop, "rgb(31, 29, 27)", "important");
+                }
+              });
+
+              if (style.filter && style.filter !== "none") {
+                node.style.filter = "none";
+              }
+            }
           }
         }
       });
