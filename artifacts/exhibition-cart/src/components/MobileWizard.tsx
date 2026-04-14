@@ -20,6 +20,7 @@ import {
   LayoutDashboard,
   Tag,
   Search,
+  ChevronDown,
   Check,
   FileText
 } from "lucide-react";
