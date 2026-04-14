@@ -1415,6 +1415,9 @@ export default function CartEditor() {
             }
           };
           syncStyles(originalContainer, clonedContainer);
+          // Allow the container to expand with the new padding
+          clonedContainer.style.width = "auto";
+          clonedContainer.style.height = "auto";
           clonedContainer.style.backgroundColor = "#ffffff";
           clonedContainer.style.padding = "100px 300px 40px 300px";
           clonedContainer.style.display = "flex";
@@ -1472,6 +1475,8 @@ export default function CartEditor() {
             for (let i = 0; i < orig.children.length; i++) { if (orig.children[i] && cloned.children[i]) syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement); }
           };
           syncStyles(originalContainer, clonedContainer);
+          clonedContainer.style.width = "auto";
+          clonedContainer.style.height = "auto";
           clonedContainer.style.backgroundColor = "#ffffff";
           clonedContainer.style.padding = "100px 300px 40px 300px";
           clonedContainer.style.display = "flex";
@@ -1538,6 +1543,8 @@ export default function CartEditor() {
             for (let i = 0; i < orig.children.length; i++) { if (orig.children[i] && cloned.children[i]) syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement); }
           };
           syncStyles(originalContainer, clonedContainer);
+          clonedContainer.style.width = "auto";
+          clonedContainer.style.height = "auto";
           clonedContainer.style.backgroundColor = "#ffffff";
           clonedContainer.style.padding = "100px 300px 40px 300px";
           clonedContainer.style.display = "flex";
