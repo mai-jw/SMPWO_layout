@@ -995,12 +995,7 @@ function GuidePanel() {
    ═══════════════════════════════════════════════════════ */
 
 export default function CartEditor() {
-  const [period, setPeriod] = useState(() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    return `${y}-${m}-${now.getDate() <= 15 ? "前半" : "後半"}`;
-  });
+  const [period, setPeriod] = useState("");
   const [cartA, setCartA] = useState<CartLayoutV2>(makeInitialCartLayoutV2);
   const [cartB, setCartB] = useState<CartLayoutV2>(makeInitialCartLayoutV2);
   const [activeTarget, setActiveTarget] = useState<ActiveTarget>(null);
@@ -1114,6 +1109,34 @@ export default function CartEditor() {
   const itemMap = useMemo(() => {
     return Object.fromEntries(items.filter((i) => i.id).map((i) => [i.id!, i]));
   }, [items]);
+
+  // 初期読み込み時、またはデータ更新時に現在の期間に該当するレイアウトを自動反映する
+  useEffect(() => {
+    if (layouts.length > 0 && period) {
+      const existing = layouts.find((l) => l.period === period);
+      if (existing) {
+        setCartA(existing.cart_a);
+        setCartB(existing.cart_b);
+      }
+    }
+  }, [layouts, period]);
+
+  // 最後に表示していた期間をLocalStorageから復元する
+  useEffect(() => {
+    if (!hasMounted) return;
+    
+    const saved = localStorage.getItem("smpwo-last-period");
+    if (saved) {
+      setPeriod(saved);
+    }
+  }, [hasMounted]);
+
+  // 選択中の期間をLocalStorageに保存
+  useEffect(() => {
+    if (hasMounted && period) {
+      localStorage.setItem("smpwo-last-period", period);
+    }
+  }, [hasMounted, period]);
 
   const getSetCart = useCallback((cart: CartId) => cart === "A" ? setCartA : setCartB, []);
 
@@ -1595,7 +1618,7 @@ export default function CartEditor() {
       )}
 
       {/* Wrap existing content in conditional to hide when showing wizard */}
-      <div className={`flex flex-col h-[calc(100vh-56px)] bg-background ${isMobileView && mobileViewType === "wizard" ? "hidden" : "flex"}`}>
+      <div className={`flex flex-col h-[calc(100vh-56px)] bg-background ${isMobileView && mobileViewType === "wizard" ? "opacity-0 pointer-events-none fixed inset-0 -z-10" : "flex"}`}>
       {/* Top Toolbar */}
       <div className="shrink-0 bg-white px-4 py-1.5 flex items-center gap-3 relative z-30">
         {/* Absolute border to stay on top of scaled logo */}
