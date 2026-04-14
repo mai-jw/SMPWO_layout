@@ -1254,6 +1254,8 @@ export default function CartEditor() {
 
   const handleSave = async () => {
     if (!period.trim() || saveStatus === "saving") return;
+
+    // 上書き保存の確認ダイアログを削除（直接実行）
     setSaveStatus("saving");
     try {
       await saveLayout.mutateAsync({ period, cart_a: cartA, cart_b: cartB });
@@ -1270,53 +1272,18 @@ export default function CartEditor() {
   
   const executeDeleteLayout = async () => {
     if (!period.trim() || !isExistingPeriod) return;
+    
     try {
       await deleteLayout.mutateAsync(period);
       alert("レイアウトを削除しました。");
       handleReset();
-      setPeriod(""); 
-      setActiveTarget(null);
+      setPeriod(""); // Clear selection
+      setActiveTarget(null); // Ensure target is cleared
       setLayoutDeleteConfirm(false);
     } catch (err: any) {
       console.error("[Delete Error] Failed to delete layout:", err);
       alert(`削除に失敗しました: ${err.message || "不明なエラー"}`);
     }
-  };
-
-  const saveFileWrapper = async (blob: Blob, suggestedName: string, mimeType?: string, extension?: string) => {
-    if (typeof window !== "undefined" && 'showSaveFilePicker' in window) {
-      try {
-        const pickerOptions: any = {
-          suggestedName,
-          types: [{
-            description: 'Files',
-            accept: { [mimeType || 'application/octet-stream']: [extension || ''] },
-          }],
-        };
-        const handle = await (window as any).showSaveFilePicker(pickerOptions);
-        const writable = await handle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-        return;
-      } catch (err: any) {
-        if (err.name === 'AbortError') return;
-        console.warn("[SaveFilePicker] Failed, falling back to classic download:", err);
-      }
-    }
-    
-    // Fallback: Classic download
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.style.display = "none";
-    a.download = suggestedName;
-    a.href = url;
-    document.body.appendChild(a);
-    a.click();
-    
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 2000);
   };
 
   // Mobile-specific: delete a specific period by key
@@ -1369,10 +1336,43 @@ export default function CartEditor() {
     setShowNewPanel(false);
   };
 
+  const saveFileWrapper = async (blob: Blob, suggestedName: string, mimeType?: string, extension?: string) => {
+    if ('showSaveFilePicker' in window) {
+      try {
+        const pickerOptions: any = { suggestedName };
+        if (mimeType && extension) {
+          pickerOptions.types = [{
+            description: 'Files',
+            accept: { [mimeType]: [extension] }
+          }];
+        }
+        const handle = await (window as any).showSaveFilePicker(pickerOptions);
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return;
+      } catch (err: any) {
+        if (err.name === 'AbortError') return; // Cancelled by user
+        console.warn("[SaveFilePicker] Failed, falling back to classic download:", err);
+      }
+    }
+    
+    // Fallback: Use <a> tag download
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.download = suggestedName;
+    a.href = url;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   const handleExportPng = async () => {
     if (!canvasRef.current) return;
     setExporting("png");
     try {
+      // Wait for all images to load before capturing
       const images = canvasRef.current.getElementsByTagName('img');
       await Promise.all(Array.from(images).map(img => {
         if (img.complete) return Promise.resolve();
@@ -1381,38 +1381,28 @@ export default function CartEditor() {
 
       const canvas = await html2canvas(canvasRef.current, { 
         scale: 2.5, 
-        useCORS: true,
-        logging: true,
+        useCORS: true, 
+        logging: true, // CORSや描画の問題を追跡しやすくする
         backgroundColor: "#ffffff",
-        scrollX: 0,
-        scrollY: 0,
-        x: 0,
-        y: 0,
         onclone: (clonedDoc) => {
           const el = clonedDoc.getElementById("export-container");
           if (el) {
             el.style.backgroundColor = "white";
-            el.style.padding = "40px 100px";
-            el.style.visibility = "visible";
-            el.style.display = "flex";
-            el.style.width = "1100px";
+            el.style.paddingLeft = "100px";
+            el.style.paddingRight = "100px";
+            el.style.paddingTop = "40px";
+            el.style.paddingBottom = "40px";
           }
         }
       });
-
-      const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob((b) => resolve(b), "image/png", 1.0);
-      });
+      const dataUrl = canvas.toDataURL("image/png");
       
-      if (blob) {
-        await saveFileWrapper(blob, "cart-layout.png", "image/png", ".png");
-        alert("PNG画像を保存しました。");
-      } else {
-        throw new Error("Canvas to Blob conversion failed");
-      }
-    } catch (err) {
-      console.error("PNG export error:", err);
-      alert("エクスポート中にエラーが発生しました。");
+      // Blob変換を経由することでWebViewでの拡張子なしUUIDファイル化を回避
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      
+      await saveFileWrapper(blob, "cart-layout.png", "image/png", ".png");
+      alert("PNG画像を保存しました。");
     } finally { setExporting(null); }
   };
 
@@ -1420,6 +1410,7 @@ export default function CartEditor() {
     if (!canvasRef.current) return;
     setExporting("pdf");
     try {
+      // Wait for all images to load before capturing
       const images = canvasRef.current.getElementsByTagName('img');
       await Promise.all(Array.from(images).map(img => {
         if (img.complete) return Promise.resolve();
@@ -1431,22 +1422,17 @@ export default function CartEditor() {
         useCORS: true, 
         logging: true,
         backgroundColor: "#ffffff",
-        scrollX: 0,
-        scrollY: 0,
-        x: 0,
-        y: 0,
         onclone: (clonedDoc) => {
           const el = clonedDoc.getElementById("export-container");
           if (el) {
             el.style.backgroundColor = "white";
-            el.style.padding = "40px 100px";
-            el.style.visibility = "visible";
-            el.style.display = "flex";
-            el.style.width = "1100px";
+            el.style.paddingLeft = "100px";
+            el.style.paddingRight = "100px";
+            el.style.paddingTop = "40px";
+            el.style.paddingBottom = "40px";
           }
         }
       });
-      
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pW = pdf.internal.pageSize.getWidth();
@@ -1456,21 +1442,21 @@ export default function CartEditor() {
       let imgW = pW - 20;
       let imgH = imgW / ratio;
       
+      // If height exceeds page (keeping bottom margin), scale down width too
       if (imgH > pH - 20) {
         imgH = pH - 20;
         imgW = imgH * ratio;
       }
       
+      // Center both horizontally and vertically
       const xOffset = (pW - imgW) / 2;
       const yOffset = (pH - imgH) / 2;
       pdf.addImage(imgData, "PNG", xOffset, yOffset, imgW, imgH);
       
       const blob = pdf.output("blob");
+      
       await saveFileWrapper(blob, "cart-layout.pdf", "application/pdf", ".pdf");
       alert("PDFドキュメントを保存しました。");
-    } catch (err) {
-      console.error("PDF export error:", err);
-      alert("PDF生成中にエラーが発生しました。");
     } finally { setExporting(null); }
   };
 
@@ -1485,23 +1471,20 @@ export default function CartEditor() {
         return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
       }));
 
+      // 1. Capture Main Cart Layout Image
       const cartCanvas = await html2canvas(canvasRef.current, { 
         scale: 2, 
         useCORS: true, 
         logging: true,
         backgroundColor: "#ffffff",
-        scrollX: 0,
-        scrollY: 0,
-        x: 0,
-        y: 0,
         onclone: (clonedDoc) => {
           const el = clonedDoc.getElementById("export-container");
           if (el) {
             el.style.backgroundColor = "white";
-            el.style.padding = "40px 100px";
-            el.style.visibility = "visible";
-            el.style.display = "flex";
-            el.style.width = "1100px";
+            el.style.paddingLeft = "100px";
+            el.style.paddingRight = "100px";
+            el.style.paddingTop = "40px";
+            el.style.paddingBottom = "40px";
           }
         }
       });
@@ -1635,7 +1618,7 @@ export default function CartEditor() {
       )}
 
       {/* Wrap existing content in conditional to hide when showing wizard */}
-      <div className={`flex flex-col h-[calc(100vh-56px)] bg-background ${isMobileView && mobileViewType === "wizard" ? "visible absolute -z-50 pointer-events-none w-[1200px]" : "flex"}`} style={isMobileView && mobileViewType === "wizard" ? { left: '-9999px', top: '-9999px' } : {}}>
+      <div className={`flex flex-col h-[calc(100vh-56px)] bg-background ${isMobileView && mobileViewType === "wizard" ? "opacity-0 pointer-events-none fixed inset-0 -z-10" : "flex"}`}>
       {/* Top Toolbar */}
       <div className="shrink-0 bg-white px-4 py-1.5 flex items-center gap-3 relative z-30">
         {/* Absolute border to stay on top of scaled logo */}
@@ -1978,7 +1961,7 @@ export default function CartEditor() {
             style={{ WebkitOverflowScrolling: "touch" }}
           >
             <motion.div layout className="shrink-0">
-              <div ref={canvasRef as any} id="export-container" className="flex flex-col items-center p-4 bg-transparent shrink-0" style={{ width: '1100px', minHeight: '800px' }}>
+              <div ref={canvasRef as any} id="export-container" className="flex flex-col items-center p-4 bg-background shrink-0">
                 <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
                   <CartPanel
                     cartId="A" layout={cartA} activeTarget={activeTarget}
@@ -2032,14 +2015,15 @@ export default function CartEditor() {
                                           {Array.from(new Set(shelfItems.map((item) => item?.name).filter(Boolean))).join("、") || "—"}
                                         </div>
                                         <div className="flex gap-3 mt-0.5 flex-wrap">
-                                          {(() => {
-                                            const langs = Array.from(new Set(shelfItems.map(item => {
-                                              if (!item) return null;
-                                              return item.language === "ja" ? "日本語" : item.language === "en" ? "英語" : item.language;
-                                            }).filter(Boolean)));
-                                            if (langs.length === 0) return null;
-                                            return <span className="text-red-600 font-bold">{langs.join("、")}</span>;
-                                          })()}
+                                          {shelf.tag_1.type === "lang" && shelf.tag_1.value && (
+                                            <span className="text-red-600 font-bold">{shelf.tag_1.value}</span>
+                                          )}
+                                          {shelf.tag_2.type === "lang" && shelf.tag_2.value && (
+                                            <span className="text-red-600 font-bold">{shelf.tag_2.value}</span>
+                                          )}
+                                          {shelf.tag_1.type === "free_dist" && (
+                                            <span className="text-zinc-600 font-bold">無料で差し上げています</span>
+                                          )}
                                         </div>
                                       </>
                                     )}
