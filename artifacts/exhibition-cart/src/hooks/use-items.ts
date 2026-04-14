@@ -83,7 +83,9 @@ export function useUploadItem() {
         .single();
 
       if (dbError) {
-        console.error("Supabase DB insert error:", dbError);
+        console.error("Supabase DB insert error. Cleaning up orphaned storage file...", dbError);
+        // Attempt to cleanup storage file if DB entry fails
+        await supabase.storage.from(STORAGE_BUCKET).remove([fileName]);
         throw new Error(`Failed to save record: ${dbError.message}`);
       }
 

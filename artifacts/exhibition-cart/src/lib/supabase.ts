@@ -116,6 +116,7 @@ export interface LayoutRecord {
   period: string;
   cart_a: CartLayoutV2;
   cart_b: CartLayoutV2;
+  notes?: string;
   created_at?: string;
   updated_at?: string;
 }
