@@ -1376,29 +1376,31 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          clonedDoc.head.innerHTML = "";
           const originalContainer = canvasRef.current;
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!originalContainer || !clonedContainer) return;
+
+          // Nuclear Isolation: Wipe everything else to prevent the parser from seeing problematic styles on unrelated UI elements
+          clonedDoc.head.innerHTML = "";
+          clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
+          clonedDoc.body.innerHTML = "";
+          clonedDoc.body.appendChild(clonedContainer);
 
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
             const rect = orig.getBoundingClientRect();
             
-            // Set physical dimensions explicitly
             cloned.style.width = `${rect.width}px`;
             cloned.style.height = `${rect.height}px`;
 
-            // Deep Clone: Iterate through ALL computed properties to ensure 100% fidelity
             for (let i = 0; i < style.length; i++) {
               const prop = style[i];
               let val = style.getPropertyValue(prop);
-              if (val && (val.includes("oklch") || val.includes("oklab"))) {
+              if (val && (val.toLowerCase().includes("oklch") || val.toLowerCase().includes("oklab"))) {
                 val = (prop.includes("background") || prop.includes("border")) ? "transparent" : "#1f1d1b";
               }
               cloned.style.setProperty(prop, val, "important");
             }
-
             for (let i = 0; i < orig.children.length; i++) {
               if (orig.children[i] && cloned.children[i]) {
                 syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement);
@@ -1437,10 +1439,13 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          clonedDoc.head.innerHTML = "";
           const originalContainer = canvasRef.current;
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!originalContainer || !clonedContainer) return;
+          clonedDoc.head.innerHTML = "";
+          clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
+          clonedDoc.body.innerHTML = "";
+          clonedDoc.body.appendChild(clonedContainer);
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
             const rect = orig.getBoundingClientRect();
@@ -1449,7 +1454,7 @@ export default function CartEditor() {
             for (let i = 0; i < style.length; i++) {
               const prop = style[i];
               let val = style.getPropertyValue(prop);
-              if (val && (val.includes("oklch") || val.includes("oklab"))) {
+              if (val && (val.toLowerCase().includes("oklch") || val.toLowerCase().includes("oklab"))) {
                 val = (prop.includes("background") || prop.includes("border")) ? "transparent" : "#1f1d1b";
               }
               cloned.style.setProperty(prop, val, "important");
@@ -1497,10 +1502,13 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          clonedDoc.head.innerHTML = "";
           const originalContainer = canvasRef.current;
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!originalContainer || !clonedContainer) return;
+          clonedDoc.head.innerHTML = "";
+          clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
+          clonedDoc.body.innerHTML = "";
+          clonedDoc.body.appendChild(clonedContainer);
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
             const rect = orig.getBoundingClientRect();
@@ -1509,7 +1517,7 @@ export default function CartEditor() {
             for (let i = 0; i < style.length; i++) {
               const prop = style[i];
               let val = style.getPropertyValue(prop);
-              if (val && (val.includes("oklch") || val.includes("oklab"))) {
+              if (val && (val.toLowerCase().includes("oklch") || val.toLowerCase().includes("oklab"))) {
                 val = (prop.includes("background") || prop.includes("border")) ? "transparent" : "#1f1d1b";
               }
               cloned.style.setProperty(prop, val, "important");
