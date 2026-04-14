@@ -1385,25 +1385,20 @@ export default function CartEditor() {
             const style = window.getComputedStyle(orig);
             const rect = orig.getBoundingClientRect();
             
-            // Critical Fix: Explicitly set pixel dimensions to bypass library's CSS parsing issues
+            // Set physical dimensions explicitly
             cloned.style.width = `${rect.width}px`;
             cloned.style.height = `${rect.height}px`;
 
-            const props = [
-              "display", "position", "top", "left", "right", "bottom",
-              "backgroundColor", "color", "fontSize", "fontWeight", "fontFamily",
-              "flexDirection", "alignItems", "justifyContent", "gap",
-              "transform", "borderRadius", "zIndex", "overflow", "boxShadow",
-              "flexGrow", "flexShrink", "objectFit",
-              "textAlign", "lineHeight", "opacity", "visibility"
-            ];
-            props.forEach(p => {
-              let val = (style as any)[p];
+            // Deep Clone: Iterate through ALL computed properties to ensure 100% fidelity
+            for (let i = 0; i < style.length; i++) {
+              const prop = style[i];
+              let val = style.getPropertyValue(prop);
               if (val && (val.includes("oklch") || val.includes("oklab"))) {
-                val = (p === "backgroundColor" || p === "borderColor") ? "transparent" : "#1f1d1b";
+                val = (prop.includes("background") || prop.includes("border")) ? "transparent" : "#1f1d1b";
               }
-              (cloned.style as any)[p] = val;
-            });
+              cloned.style.setProperty(prop, val, "important");
+            }
+
             for (let i = 0; i < orig.children.length; i++) {
               if (orig.children[i] && cloned.children[i]) {
                 syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement);
@@ -1451,12 +1446,14 @@ export default function CartEditor() {
             const rect = orig.getBoundingClientRect();
             cloned.style.width = `${rect.width}px`;
             cloned.style.height = `${rect.height}px`;
-            const props = ["display", "position", "top", "left", "right", "bottom", "backgroundColor", "color", "fontSize", "fontWeight", "fontFamily", "flexDirection", "alignItems", "justifyContent", "gap", "transform", "borderRadius", "zIndex", "overflow", "boxShadow", "flexGrow", "flexShrink", "objectFit", "textAlign", "lineHeight", "opacity", "visibility"];
-            props.forEach(p => {
-              let val = (style as any)[p];
-              if (val && (val.includes("oklch") || val.includes("oklab"))) val = (p === "backgroundColor" || p === "borderColor") ? "transparent" : "#1f1d1b";
-              (cloned.style as any)[p] = val;
-            });
+            for (let i = 0; i < style.length; i++) {
+              const prop = style[i];
+              let val = style.getPropertyValue(prop);
+              if (val && (val.includes("oklch") || val.includes("oklab"))) {
+                val = (prop.includes("background") || prop.includes("border")) ? "transparent" : "#1f1d1b";
+              }
+              cloned.style.setProperty(prop, val, "important");
+            }
             for (let i = 0; i < orig.children.length; i++) { if (orig.children[i] && cloned.children[i]) syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement); }
           };
           syncStyles(originalContainer, clonedContainer);
@@ -1509,12 +1506,14 @@ export default function CartEditor() {
             const rect = orig.getBoundingClientRect();
             cloned.style.width = `${rect.width}px`;
             cloned.style.height = `${rect.height}px`;
-            const props = ["display", "position", "top", "left", "right", "bottom", "backgroundColor", "color", "fontSize", "fontWeight", "fontFamily", "flexDirection", "alignItems", "justifyContent", "gap", "transform", "borderRadius", "zIndex", "overflow", "boxShadow", "flexGrow", "flexShrink", "objectFit", "textAlign", "lineHeight", "opacity", "visibility"];
-            props.forEach(p => {
-              let val = (style as any)[p];
-              if (val && (val.includes("oklch") || val.includes("oklab"))) val = (p === "backgroundColor" || p === "borderColor") ? "transparent" : "#1f1d1b";
-              (cloned.style as any)[p] = val;
-            });
+            for (let i = 0; i < style.length; i++) {
+              const prop = style[i];
+              let val = style.getPropertyValue(prop);
+              if (val && (val.includes("oklch") || val.includes("oklab"))) {
+                val = (prop.includes("background") || prop.includes("border")) ? "transparent" : "#1f1d1b";
+              }
+              cloned.style.setProperty(prop, val, "important");
+            }
             for (let i = 0; i < orig.children.length; i++) { if (orig.children[i] && cloned.children[i]) syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement); }
           };
           syncStyles(originalContainer, clonedContainer);
