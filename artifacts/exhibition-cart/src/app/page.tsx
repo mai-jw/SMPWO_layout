@@ -1375,75 +1375,39 @@ export default function CartEditor() {
         useCORS: true, 
         logging: true,
         backgroundColor: "#ffffff",
-        onclone: (clonedDoc) => {
-          // 1. Clear problematic heads and links
-          const head = clonedDoc.head;
-          const links = Array.from(clonedDoc.getElementsByTagName("link"));
-          links.forEach(l => l.parentNode?.removeChild(l));
-          
-          // 2. Inject a Minimal, Safe CSS for Exporting (Everything in HSL/Hex)
-          const style = clonedDoc.createElement("style");
-          style.textContent = `
-            * { box-sizing: border-box; }
-            #export-container { 
-              background: #fdfaf3 !important; 
-              color: #1f1d1b !important;
-              font-family: sans-serif !important;
-            }
-            table { border-collapse: collapse; width: 100%; }
-            td { padding: 4px; border-bottom: 1px solid #e2e8f0; }
-            .bg-background { background-color: #fdfaf3 !important; }
-            .text-foreground { color: #1f1d1b !important; }
-            .text-primary { color: #6366f1 !important; }
-            .text-slate-500 { color: #64748b !important; }
-            .text-slate-300 { color: #cbd5e1 !important; }
-            .text-red-600 { color: #dc2626 !important; }
-            .text-red-500 { color: #ef4444 !important; }
-            .bg-red-50 { background-color: #fef2f2 !important; }
-            .border-slate-300 { border-color: #cbd5e1 !important; }
-            .font-bold { font-weight: 700 !important; }
-            .font-black { font-weight: 900 !important; }
-            .text-xs { font-size: 12px !important; }
-            .text-[11px] { font-size: 11px !important; }
-            .flex { display: flex !important; }
-            .flex-col { flex-direction: column !important; }
-            .items-center { align-items: center !important; }
-            .items-start { align-items: flex-start !important; }
-            .justify-center { justify-content: center !important; }
-            .gap-3 { gap: 12px !important; }
-            .gap-8 { gap: 32px !important; }
-            .mt-6 { margin-top: 24px !important; }
-            .space-x-\\[-180px\\] > * + * { margin-left: -180px !important; }
-            /* ... add more essential layout helpers as needed ... */
-          `;
-          head.appendChild(style);
-
-          // 3. Brute-force HTML sanitize
-          const body = clonedDoc.body;
-          body.innerHTML = body.innerHTML
-            .replace(/oklch\([^)]+\)/g, "rgb(31, 29, 27)")
-            .replace(/oklab\([^)]+\)/g, "rgb(31, 29, 27)");
-            
+          // First-Principles Clean Fix: 
+          // 1. Target only the export element and its children
           const el = clonedDoc.getElementById("export-container");
-          if (el) {
-            el.style.backgroundColor = "#fdfaf3";
-            el.style.padding = "100px 100px 40px 100px";
-            el.style.display = "flex";
-            el.style.opacity = "1";
-            el.style.visibility = "visible";
+          if (!el) return;
+
+          // 2. Safety First: Reset backdrop filters and complex shadows that confuse html2canvas
+          el.style.backgroundColor = "#fdfaf3"; // Force clean theme background
+          el.style.padding = "100px 100px 40px 100px";
+
+          // 3. Recursive Color Sanitization:
+          // We translate modern browser colors (oklch/oklab) back to legacy RGB 
+          // just for the cloning document so html2canvas doesn't crash.
+          const allElements = el.getElementsByTagName("*");
+          for (let i = 0; i < allElements.length; i++) {
+            const node = allElements[i] as HTMLElement;
+            const style = window.getComputedStyle(node);
             
-            // Further sanitize specific elements
-            const allElements = el.getElementsByTagName("*");
-            for (let i = 0; i < allElements.length; i++) {
-              const node = allElements[i] as HTMLElement;
+            const colorProps = ["color", "backgroundColor", "borderColor"];
+            colorProps.forEach(prop => {
+              const val = (node.style as any)[prop] || style.getPropertyValue(prop.replace(/[A-Z]/g, m => "-" + m.toLowerCase()));
+              if (val && (val.includes("oklch") || val.includes("oklab"))) {
+                // If it's a modern color, force it to a safe standard color for the export
+                const isBg = prop === "backgroundColor";
+                const safeVal = isBg ? "transparent" : "#1f1d1b";
+                node.style.setProperty(prop === "backgroundColor" ? "background-color" : prop, safeVal, "important");
+              }
+            });
+
+            // Disable problematic filters
+            if (style.filter && style.filter !== "none") {
               node.style.filter = "none";
-              // Force HSL computed styles to be safer strings if they are still oklch
-              const currentStyle = window.getComputedStyle(node);
-              if (currentStyle.color.includes("oklab")) node.style.color = "#1f1d1b";
-              if (currentStyle.backgroundColor.includes("oklab")) node.style.backgroundColor = "transparent";
             }
           }
-        }
       });
       const dataUrl = canvas.toDataURL("image/png");
       const blob = dataURLtoBlob(dataUrl);
@@ -1460,7 +1424,6 @@ export default function CartEditor() {
     if (!canvasRef.current) return;
     setExporting("pdf");
     try {
-      // Wait for all images to load before capturing
       const images = canvasRef.current.getElementsByTagName('img');
       await Promise.all(Array.from(images).map(img => {
         if (img.complete) return Promise.resolve();
@@ -1473,70 +1436,24 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          // 1. Clear problematic heads and links
-          const head = clonedDoc.head;
-          const links = Array.from(clonedDoc.getElementsByTagName("link"));
-          links.forEach(l => l.parentNode?.removeChild(l));
-          
-          // 2. Inject a Minimal, Safe CSS for Exporting (Everything in HSL/Hex)
-          const style = clonedDoc.createElement("style");
-          style.textContent = `
-            * { box-sizing: border-box; }
-            #export-container { 
-              background: #fdfaf3 !important; 
-              color: #1f1d1b !important;
-              font-family: sans-serif !important;
-            }
-            table { border-collapse: collapse; width: 100%; }
-            td { padding: 4px; border-bottom: 1px solid #e2e8f0; }
-            .bg-background { background-color: #fdfaf3 !important; }
-            .text-foreground { color: #1f1d1b !important; }
-            .text-primary { color: #6366f1 !important; }
-            .text-slate-500 { color: #64748b !important; }
-            .text-slate-300 { color: #cbd5e1 !important; }
-            .text-red-600 { color: #dc2626 !important; }
-            .text-red-500 { color: #ef4444 !important; }
-            .bg-red-50 { background-color: #fef2f2 !important; }
-            .border-slate-300 { border-color: #cbd5e1 !important; }
-            .font-bold { font-weight: 700 !important; }
-            .font-black { font-weight: 900 !important; }
-            .text-xs { font-size: 12px !important; }
-            .text-[11px] { font-size: 11px !important; }
-            .flex { display: flex !important; }
-            .flex-col { flex-direction: column !important; }
-            .items-center { align-items: center !important; }
-            .items-start { align-items: flex-start !important; }
-            .justify-center { justify-content: center !important; }
-            .gap-3 { gap: 12px !important; }
-            .gap-8 { gap: 32px !important; }
-            .mt-6 { margin-top: 24px !important; }
-            .space-x-\\[-180px\\] > * + * { margin-left: -180px !important; }
-          `;
-          head.appendChild(style);
-
-          // 3. Brute-force HTML sanitize
-          const body = clonedDoc.body;
-          body.innerHTML = body.innerHTML
-            .replace(/oklch\([^)]+\)/g, "rgb(31, 29, 27)")
-            .replace(/oklab\([^)]+\)/g, "rgb(31, 29, 27)");
-            
           const el = clonedDoc.getElementById("export-container");
-          if (el) {
-            el.style.backgroundColor = "#fdfaf3";
-            el.style.padding = "100px 100px 40px 100px";
-            el.style.display = "flex";
-            el.style.opacity = "1";
-            el.style.visibility = "visible";
-            
-            // Further sanitize specific elements
-            const allElements = el.getElementsByTagName("*");
-            for (let i = 0; i < allElements.length; i++) {
-              const node = allElements[i] as HTMLElement;
-              node.style.filter = "none";
-              const currentStyle = window.getComputedStyle(node);
-              if (currentStyle.color.includes("oklab")) node.style.color = "#1f1d1b";
-              if (currentStyle.backgroundColor.includes("oklab")) node.style.backgroundColor = "transparent";
-            }
+          if (!el) return;
+          el.style.backgroundColor = "#fdfaf3";
+          el.style.padding = "100px 100px 40px 100px";
+          const allElements = el.getElementsByTagName("*");
+          for (let i = 0; i < allElements.length; i++) {
+            const node = allElements[i] as HTMLElement;
+            const style = window.getComputedStyle(node);
+            const colorProps = ["color", "backgroundColor", "borderColor"];
+            colorProps.forEach(prop => {
+              const val = (node.style as any)[prop] || style.getPropertyValue(prop.replace(/[A-Z]/g, m => "-" + m.toLowerCase()));
+              if (val && (val.includes("oklch") || val.includes("oklab"))) {
+                const isBg = prop === "backgroundColor";
+                const safeVal = isBg ? "transparent" : "#1f1d1b";
+                node.style.setProperty(prop === "backgroundColor" ? "background-color" : prop, safeVal, "important");
+              }
+            });
+            if (style.filter && style.filter !== "none") node.style.filter = "none";
           }
         }
       });
@@ -1544,22 +1461,14 @@ export default function CartEditor() {
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pW = pdf.internal.pageSize.getWidth();
       const pH = pdf.internal.pageSize.getHeight();
-      
       const ratio = canvas.width / canvas.height;
       let imgW = pW - 20;
       let imgH = imgW / ratio;
-      
-      if (imgH > pH - 20) {
-        imgH = pH - 20;
-        imgW = imgH * ratio;
-      }
-      
+      if (imgH > pH - 20) { imgH = pH - 20; imgW = imgH * ratio; }
       const xOffset = (pW - imgW) / 2;
       const yOffset = (pH - imgH) / 2;
       pdf.addImage(imgData, "PNG", xOffset, yOffset, imgW, imgH);
-      
       const blob = pdf.output("blob");
-      
       await saveFileWrapper(blob, "cart-layout.pdf", "application/pdf", ".pdf");
       alert("PDFドキュメントを保存しました。");
     } catch (err: any) {
@@ -1572,111 +1481,51 @@ export default function CartEditor() {
     if (!canvasRef.current) return;
     setExporting("xlsx");
     try {
-      // Wait for all images to load before capturing
       const images = canvasRef.current.getElementsByTagName('img');
       await Promise.all(Array.from(images).map(img => {
         if (img.complete) return Promise.resolve();
         return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
       }));
 
-      // 1. Capture Main Cart Layout Image
       const cartCanvas = await html2canvas(canvasRef.current, { 
         scale: 2, 
         useCORS: true, 
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          // 1. Clear problematic heads and links
-          const head = clonedDoc.head;
-          const links = Array.from(clonedDoc.getElementsByTagName("link"));
-          links.forEach(l => l.parentNode?.removeChild(l));
-          
-          // 2. Inject a Minimal, Safe CSS for Exporting (Everything in HSL/Hex)
-          const style = clonedDoc.createElement("style");
-          style.textContent = `
-            * { box-sizing: border-box; }
-            #export-container { 
-              background: #fdfaf3 !important; 
-              color: #1f1d1b !important;
-              font-family: sans-serif !important;
-            }
-            table { border-collapse: collapse; width: 100%; }
-            td { padding: 4px; border-bottom: 1px solid #e2e8f0; }
-            .bg-background { background-color: #fdfaf3 !important; }
-            .text-foreground { color: #1f1d1b !important; }
-            .text-primary { color: #6366f1 !important; }
-            .text-slate-500 { color: #64748b !important; }
-            .text-slate-300 { color: #cbd5e1 !important; }
-            .text-red-600 { color: #dc2626 !important; }
-            .text-red-500 { color: #ef4444 !important; }
-            .bg-red-50 { background-color: #fef2f2 !important; }
-            .border-slate-300 { border-color: #cbd5e1 !important; }
-            .font-bold { font-weight: 700 !important; }
-            .font-black { font-weight: 900 !important; }
-            .text-xs { font-size: 12px !important; }
-            .text-[11px] { font-size: 11px !important; }
-            .flex { display: flex !important; }
-            .flex-col { flex-direction: column !important; }
-            .items-center { align-items: center !important; }
-            .items-start { align-items: flex-start !important; }
-            .justify-center { justify-content: center !important; }
-            .gap-3 { gap: 12px !important; }
-            .gap-8 { gap: 32px !important; }
-            .mt-6 { margin-top: 24px !important; }
-            .space-x-\\[-180px\\] > * + * { margin-left: -180px !important; }
-          `;
-          head.appendChild(style);
-
-          // 3. Brute-force HTML sanitize
-          const body = clonedDoc.body;
-          body.innerHTML = body.innerHTML
-            .replace(/oklch\([^)]+\)/g, "rgb(31, 29, 27)")
-            .replace(/oklab\([^)]+\)/g, "rgb(31, 29, 27)");
-            
           const el = clonedDoc.getElementById("export-container");
-          if (el) {
-            el.style.backgroundColor = "#fdfaf3";
-            el.style.padding = "100px 100px 40px 100px";
-            el.style.display = "flex";
-            el.style.opacity = "1";
-            el.style.visibility = "visible";
-            
-            // Further sanitize specific elements
-            const allElements = el.getElementsByTagName("*");
-            for (let i = 0; i < allElements.length; i++) {
-              const node = allElements[i] as HTMLElement;
-              node.style.filter = "none";
-              const currentStyle = window.getComputedStyle(node);
-              if (currentStyle.color.includes("oklab")) node.style.color = "#1f1d1b";
-              if (currentStyle.backgroundColor.includes("oklab")) node.style.backgroundColor = "transparent";
-            }
+          if (!el) return;
+          el.style.backgroundColor = "#fdfaf3";
+          el.style.padding = "100px 100px 40px 100px";
+          const allElements = el.getElementsByTagName("*");
+          for (let i = 0; i < allElements.length; i++) {
+            const node = allElements[i] as HTMLElement;
+            const style = window.getComputedStyle(node);
+            const colorProps = ["color", "backgroundColor", "borderColor"];
+            colorProps.forEach(prop => {
+              const val = (node.style as any)[prop] || style.getPropertyValue(prop.replace(/[A-Z]/g, m => "-" + m.toLowerCase()));
+              if (val && (val.includes("oklch") || val.includes("oklab"))) {
+                const isBg = prop === "backgroundColor";
+                const safeVal = isBg ? "transparent" : "#1f1d1b";
+                node.style.setProperty(prop === "backgroundColor" ? "background-color" : prop, safeVal, "important");
+              }
+            });
+            if (style.filter && style.filter !== "none") node.style.filter = "none";
           }
         }
       });
       const cartImgBase64 = cartCanvas.toDataURL("image/png");
-
-      // 2. Construct Excel Workbook
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("配置レイアウト");
-
-      // Add Cart layout image
-      const cartImageId = workbook.addImage({
-        base64: cartImgBase64,
-        extension: "png",
-      });
-
+      const cartImageId = workbook.addImage({ base64: cartImgBase64, extension: "png" });
       const cartRatio = cartCanvas.width / cartCanvas.height;
-      const targetWidth = 800; // Reference width in Excel pixels
-
+      const targetWidth = 800;
       worksheet.addImage(cartImageId, {
         tl: { col: 1, row: 1 },
         ext: { width: targetWidth, height: targetWidth / cartRatio }
       });
-
-      // 3. Generate and Download
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-      
       await saveFileWrapper(blob, "cart-layout.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx");
       alert("Excelファイルを保存しました。");
     } catch (err: any) {
