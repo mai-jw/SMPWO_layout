@@ -707,9 +707,9 @@ function SelectionSidebar({
   const renderShelfSettings = () => {
     if (!shelf) return null;
     const isRow1 = shelfIdx === 0;
-    const isDocOrPamphlet = shelf.layout_type === "document" || shelf.layout_type === "pamphlet";
-    const canLangTag = isRow1 || isDocOrPamphlet;
-    const canFreeDist = isDocOrPamphlet;
+    const isSpecialTagLayout = shelf.layout_type === "document";
+    const canLangTag = isRow1 || isSpecialTagLayout;
+    const canFreeDist = isSpecialTagLayout;
     const mode = shelf.tag_1.type;
 
     const setMode = (newMode: "none" | "lang" | "free_dist") => {
@@ -1380,9 +1380,16 @@ export default function CartEditor() {
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!originalContainer || !clonedContainer) return;
 
-          // Nuclear Isolation: Wipe everything else to prevent the parser from seeing problematic styles on unrelated UI elements
+          // Nuclear Isolation: Wipe everything else to prevent the parser from seeing problematic styles
           clonedDoc.head.innerHTML = "";
           clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
+          
+          // CRITICAL: Re-inject basic box-sizing reset since Tailwind's global reset was wiped.
+          // This prevents cumulative pixel shifts from borders/padding.
+          const resetStyle = clonedDoc.createElement("style");
+          resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
+          clonedDoc.head.appendChild(resetStyle);
+
           clonedDoc.body.innerHTML = "";
           clonedDoc.body.appendChild(clonedContainer);
 
@@ -1409,7 +1416,7 @@ export default function CartEditor() {
           };
           syncStyles(originalContainer, clonedContainer);
           clonedContainer.style.backgroundColor = "#ffffff";
-          clonedContainer.style.padding = "100px 100px 40px 100px";
+          clonedContainer.style.padding = "100px 180px 40px 180px";
           clonedContainer.style.display = "flex";
         }
       });
@@ -1444,6 +1451,9 @@ export default function CartEditor() {
           if (!originalContainer || !clonedContainer) return;
           clonedDoc.head.innerHTML = "";
           clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
+          const resetStyle = clonedDoc.createElement("style");
+          resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
+          clonedDoc.head.appendChild(resetStyle);
           clonedDoc.body.innerHTML = "";
           clonedDoc.body.appendChild(clonedContainer);
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
@@ -1507,6 +1517,9 @@ export default function CartEditor() {
           if (!originalContainer || !clonedContainer) return;
           clonedDoc.head.innerHTML = "";
           clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
+          const resetStyle = clonedDoc.createElement("style");
+          resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
+          clonedDoc.head.appendChild(resetStyle);
           clonedDoc.body.innerHTML = "";
           clonedDoc.body.appendChild(clonedContainer);
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
