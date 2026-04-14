@@ -150,7 +150,7 @@ interface ItemSlotProps {
 function ItemSlot({ item, isActive, isSelecting, onClick, onClear, poster, layoutType }: ItemSlotProps) {
   const aspect = poster ? "aspect-[1/1.4]" 
     : (layoutType === "booklet" || layoutType === "booklet_doc") ? "aspect-[1/1.4]"
-    : layoutType === "document" ? "aspect-[1/1.1]"
+    : (layoutType === "document" || layoutType === "bible") ? "aspect-[1/1.1]"
     : "aspect-[1/3]";
 
   const bg = item ? "bg-transparent" : (poster ? "bg-white" : "bg-transparent");
@@ -240,7 +240,7 @@ function ShelfSection({
         <div 
           className={`absolute left-[35.0%] w-[30%] z-20 grid items-end ${
             shelf.layout_type === "pamphlet" ? "grid-cols-4 gap-0.5 px-0.5" : 
-            shelf.layout_type === "document" ? "grid-cols-3 gap-0.5 px-0.5" : 
+            (shelf.layout_type === "document" || shelf.layout_type === "bible") ? "grid-cols-3 gap-0.5 px-0.5" : 
             "grid-cols-2 gap-1 px-1"
           }`}
           style={{ top: coord.items, height: coord.itemsH }}
@@ -1375,35 +1375,31 @@ export default function CartEditor() {
         useCORS: true, 
         logging: true,
         backgroundColor: "#ffffff",
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 2500,
-        windowHeight: 3500,
         onclone: (clonedDoc) => {
           const originalContainer = canvasRef.current;
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!originalContainer || !clonedContainer) return;
 
+          // Nuclear Isolation: Wipe everything else to prevent the parser from seeing problematic styles
           clonedDoc.head.innerHTML = "";
           clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
+          
+          // CRITICAL: Re-inject basic box-sizing reset since Tailwind's global reset was wiped.
+          // This prevents cumulative pixel shifts from borders/padding.
           const resetStyle = clonedDoc.createElement("style");
           resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
           clonedDoc.head.appendChild(resetStyle);
 
-          // Force a fixed wide white canvas in the clone
-          clonedDoc.body.style.margin = "0";
-          clonedDoc.body.style.padding = "0";
-          clonedDoc.body.style.width = "2500px";
-          clonedDoc.body.style.height = "3500px";
-          clonedDoc.body.style.backgroundColor = "#ffffff";
           clonedDoc.body.innerHTML = "";
           clonedDoc.body.appendChild(clonedContainer);
 
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
             const rect = orig.getBoundingClientRect();
+            
             cloned.style.width = `${rect.width}px`;
             cloned.style.height = `${rect.height}px`;
+
             for (let i = 0; i < style.length; i++) {
               const prop = style[i];
               let val = style.getPropertyValue(prop);
@@ -1419,17 +1415,9 @@ export default function CartEditor() {
             }
           };
           syncStyles(originalContainer, clonedContainer);
-
-          // Center the content in the 2500px wide body
           clonedContainer.style.backgroundColor = "#ffffff";
-          clonedContainer.style.boxSizing = "border-box";
-          clonedContainer.style.width = "2500px";
-          clonedContainer.style.padding = "100px 300px"; 
+          clonedContainer.style.padding = "100px 180px 40px 180px";
           clonedContainer.style.display = "flex";
-          clonedContainer.style.flexDirection = "row";
-          clonedContainer.style.justifyContent = "center";
-          clonedContainer.style.alignItems = "start";
-          clonedContainer.style.margin = "0";
         }
       });
       const dataUrl = canvas.toDataURL("image/png");

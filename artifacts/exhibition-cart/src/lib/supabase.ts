@@ -105,7 +105,7 @@ export function maxCountV2(layout: CartLayoutV2): number {
   let n = 1;
   layout.shelves.forEach((s) => {
     const type = s.layout_type;
-    n += type === "booklet" || type === "booklet_doc" ? 2 : type === "document" ? 3 : type === "pamphlet" ? 4 : 0;
+    n += type === "booklet" || type === "booklet_doc" ? 2 : (type === "document" || type === "bible") ? 3 : type === "pamphlet" ? 4 : 0;
   });
   return n;
 }
