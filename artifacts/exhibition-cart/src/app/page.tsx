@@ -1375,39 +1375,39 @@ export default function CartEditor() {
         useCORS: true, 
         logging: true,
         backgroundColor: "#ffffff",
-          // First-Principles Clean Fix: 
-          // 1. Target only the export element and its children
-          const el = clonedDoc.getElementById("export-container");
-          if (!el) return;
+        onclone: (clonedDoc) => {
+          clonedDoc.head.innerHTML = "";
+          const originalContainer = canvasRef.current;
+          const clonedContainer = clonedDoc.getElementById("export-container");
+          if (!originalContainer || !clonedContainer) return;
 
-          // 2. Safety First: Reset backdrop filters and complex shadows that confuse html2canvas
-          el.style.backgroundColor = "#fdfaf3"; // Force clean theme background
-          el.style.padding = "100px 100px 40px 100px";
-
-          // 3. Recursive Color Sanitization:
-          // We translate modern browser colors (oklch/oklab) back to legacy RGB 
-          // just for the cloning document so html2canvas doesn't crash.
-          const allElements = el.getElementsByTagName("*");
-          for (let i = 0; i < allElements.length; i++) {
-            const node = allElements[i] as HTMLElement;
-            const style = window.getComputedStyle(node);
-            
-            const colorProps = ["color", "backgroundColor", "borderColor"];
-            colorProps.forEach(prop => {
-              const val = (node.style as any)[prop] || style.getPropertyValue(prop.replace(/[A-Z]/g, m => "-" + m.toLowerCase()));
+          const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
+            const style = window.getComputedStyle(orig);
+            const props = [
+              "display", "position", "top", "left", "right", "bottom",
+              "width", "height", "margin", "padding", "border",
+              "backgroundColor", "color", "fontSize", "fontWeight", "fontFamily",
+              "flexDirection", "alignItems", "justifyContent", "gap",
+              "textAlign", "lineHeight", "opacity", "visibility"
+            ];
+            props.forEach(p => {
+              let val = (style as any)[p];
               if (val && (val.includes("oklch") || val.includes("oklab"))) {
-                // If it's a modern color, force it to a safe standard color for the export
-                const isBg = prop === "backgroundColor";
-                const safeVal = isBg ? "transparent" : "#1f1d1b";
-                node.style.setProperty(prop === "backgroundColor" ? "background-color" : prop, safeVal, "important");
+                val = (p === "backgroundColor" || p === "borderColor") ? "transparent" : "#1f1d1b";
               }
+              (cloned.style as any)[p] = val;
             });
-
-            // Disable problematic filters
-            if (style.filter && style.filter !== "none") {
-              node.style.filter = "none";
+            for (let i = 0; i < orig.children.length; i++) {
+              if (orig.children[i] && cloned.children[i]) {
+                syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement);
+              }
             }
-          }
+          };
+          syncStyles(originalContainer, clonedContainer);
+          clonedContainer.style.backgroundColor = "#fdfaf3";
+          clonedContainer.style.padding = "100px 100px 40px 100px";
+          clonedContainer.style.display = "flex";
+        }
       });
       const dataUrl = canvas.toDataURL("image/png");
       const blob = dataURLtoBlob(dataUrl);
@@ -1429,32 +1429,30 @@ export default function CartEditor() {
         if (img.complete) return Promise.resolve();
         return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
       }));
-
       const canvas = await html2canvas(canvasRef.current, { 
         scale: 2, 
         useCORS: true, 
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          const el = clonedDoc.getElementById("export-container");
-          if (!el) return;
-          el.style.backgroundColor = "#fdfaf3";
-          el.style.padding = "100px 100px 40px 100px";
-          const allElements = el.getElementsByTagName("*");
-          for (let i = 0; i < allElements.length; i++) {
-            const node = allElements[i] as HTMLElement;
-            const style = window.getComputedStyle(node);
-            const colorProps = ["color", "backgroundColor", "borderColor"];
-            colorProps.forEach(prop => {
-              const val = (node.style as any)[prop] || style.getPropertyValue(prop.replace(/[A-Z]/g, m => "-" + m.toLowerCase()));
-              if (val && (val.includes("oklch") || val.includes("oklab"))) {
-                const isBg = prop === "backgroundColor";
-                const safeVal = isBg ? "transparent" : "#1f1d1b";
-                node.style.setProperty(prop === "backgroundColor" ? "background-color" : prop, safeVal, "important");
-              }
+          clonedDoc.head.innerHTML = "";
+          const originalContainer = canvasRef.current;
+          const clonedContainer = clonedDoc.getElementById("export-container");
+          if (!originalContainer || !clonedContainer) return;
+          const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
+            const style = window.getComputedStyle(orig);
+            const props = ["display", "position", "top", "left", "right", "bottom", "width", "height", "margin", "padding", "border", "backgroundColor", "color", "fontSize", "fontWeight", "fontFamily", "flexDirection", "alignItems", "justifyContent", "gap", "textAlign", "lineHeight", "opacity", "visibility"];
+            props.forEach(p => {
+              let val = (style as any)[p];
+              if (val && (val.includes("oklch") || val.includes("oklab"))) val = (p === "backgroundColor" || p === "borderColor") ? "transparent" : "#1f1d1b";
+              (cloned.style as any)[p] = val;
             });
-            if (style.filter && style.filter !== "none") node.style.filter = "none";
-          }
+            for (let i = 0; i < orig.children.length; i++) { if (orig.children[i] && cloned.children[i]) syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement); }
+          };
+          syncStyles(originalContainer, clonedContainer);
+          clonedContainer.style.backgroundColor = "#fdfaf3";
+          clonedContainer.style.padding = "100px 100px 40px 100px";
+          clonedContainer.style.display = "flex";
         }
       });
       const imgData = canvas.toDataURL("image/png");
@@ -1486,32 +1484,30 @@ export default function CartEditor() {
         if (img.complete) return Promise.resolve();
         return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
       }));
-
       const cartCanvas = await html2canvas(canvasRef.current, { 
         scale: 2, 
         useCORS: true, 
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          const el = clonedDoc.getElementById("export-container");
-          if (!el) return;
-          el.style.backgroundColor = "#fdfaf3";
-          el.style.padding = "100px 100px 40px 100px";
-          const allElements = el.getElementsByTagName("*");
-          for (let i = 0; i < allElements.length; i++) {
-            const node = allElements[i] as HTMLElement;
-            const style = window.getComputedStyle(node);
-            const colorProps = ["color", "backgroundColor", "borderColor"];
-            colorProps.forEach(prop => {
-              const val = (node.style as any)[prop] || style.getPropertyValue(prop.replace(/[A-Z]/g, m => "-" + m.toLowerCase()));
-              if (val && (val.includes("oklch") || val.includes("oklab"))) {
-                const isBg = prop === "backgroundColor";
-                const safeVal = isBg ? "transparent" : "#1f1d1b";
-                node.style.setProperty(prop === "backgroundColor" ? "background-color" : prop, safeVal, "important");
-              }
+          clonedDoc.head.innerHTML = "";
+          const originalContainer = canvasRef.current;
+          const clonedContainer = clonedDoc.getElementById("export-container");
+          if (!originalContainer || !clonedContainer) return;
+          const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
+            const style = window.getComputedStyle(orig);
+            const props = ["display", "position", "top", "left", "right", "bottom", "width", "height", "margin", "padding", "border", "backgroundColor", "color", "fontSize", "fontWeight", "fontFamily", "flexDirection", "alignItems", "justifyContent", "gap", "textAlign", "lineHeight", "opacity", "visibility"];
+            props.forEach(p => {
+              let val = (style as any)[p];
+              if (val && (val.includes("oklch") || val.includes("oklab"))) val = (p === "backgroundColor" || p === "borderColor") ? "transparent" : "#1f1d1b";
+              (cloned.style as any)[p] = val;
             });
-            if (style.filter && style.filter !== "none") node.style.filter = "none";
-          }
+            for (let i = 0; i < orig.children.length; i++) { if (orig.children[i] && cloned.children[i]) syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement); }
+          };
+          syncStyles(originalContainer, clonedContainer);
+          clonedContainer.style.backgroundColor = "#fdfaf3";
+          clonedContainer.style.padding = "100px 100px 40px 100px";
+          clonedContainer.style.display = "flex";
         }
       });
       const cartImgBase64 = cartCanvas.toDataURL("image/png");
