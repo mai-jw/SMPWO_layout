@@ -1382,7 +1382,6 @@ export default function CartEditor() {
       const canvas = await html2canvas(canvasRef.current, { 
         scale: 2.5, 
         useCORS: true,
-        allowTaint: true,
         logging: true,
         backgroundColor: "#ffffff",
         scrollX: 0,
@@ -1396,20 +1395,23 @@ export default function CartEditor() {
             el.style.padding = "40px 100px";
             el.style.visibility = "visible";
             el.style.display = "flex";
+            el.style.width = "1100px";
           }
         }
       });
 
-      canvas.toBlob(async (blob) => {
-        if (blob) {
-          await saveFileWrapper(blob, "cart-layout.png", "image/png", ".png");
-          alert("PNG画像を保存しました。");
-        } else {
-          throw new Error("Canvas to Blob conversion failed");
-        }
-      }, "image/png", 1.0);
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((b) => resolve(b), "image/png", 1.0);
+      });
+      
+      if (blob) {
+        await saveFileWrapper(blob, "cart-layout.png", "image/png", ".png");
+        alert("PNG画像を保存しました。");
+      } else {
+        throw new Error("Canvas to Blob conversion failed");
+      }
     } catch (err) {
-      console.error("PNG preview error:", err);
+      console.error("PNG export error:", err);
       alert("エクスポート中にエラーが発生しました。");
     } finally { setExporting(null); }
   };
@@ -1427,7 +1429,6 @@ export default function CartEditor() {
       const canvas = await html2canvas(canvasRef.current, { 
         scale: 2, 
         useCORS: true, 
-        allowTaint: true,
         logging: true,
         backgroundColor: "#ffffff",
         scrollX: 0,
@@ -1441,6 +1442,7 @@ export default function CartEditor() {
             el.style.padding = "40px 100px";
             el.style.visibility = "visible";
             el.style.display = "flex";
+            el.style.width = "1100px";
           }
         }
       });
@@ -1467,7 +1469,7 @@ export default function CartEditor() {
       await saveFileWrapper(blob, "cart-layout.pdf", "application/pdf", ".pdf");
       alert("PDFドキュメントを保存しました。");
     } catch (err) {
-      console.error("PDF preview error:", err);
+      console.error("PDF export error:", err);
       alert("PDF生成中にエラーが発生しました。");
     } finally { setExporting(null); }
   };
@@ -1486,7 +1488,6 @@ export default function CartEditor() {
       const cartCanvas = await html2canvas(canvasRef.current, { 
         scale: 2, 
         useCORS: true, 
-        allowTaint: true,
         logging: true,
         backgroundColor: "#ffffff",
         scrollX: 0,
@@ -1500,6 +1501,7 @@ export default function CartEditor() {
             el.style.padding = "40px 100px";
             el.style.visibility = "visible";
             el.style.display = "flex";
+            el.style.width = "1100px";
           }
         }
       });
