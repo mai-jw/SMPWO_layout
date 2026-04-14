@@ -1375,23 +1375,24 @@ export default function CartEditor() {
         useCORS: true, 
         logging: true,
         backgroundColor: "#ffffff",
+        windowWidth: 3000,
+        windowHeight: 4000,
         onclone: (clonedDoc) => {
           const originalContainer = canvasRef.current;
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!originalContainer || !clonedContainer) return;
 
-          // Nuclear Isolation: Wipe everything else to prevent the parser from seeing problematic styles
+          // Nuclear Isolation: Wipe everything else
           clonedDoc.head.innerHTML = "";
           clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
           
-          // CRITICAL: Re-inject basic box-sizing reset since Tailwind's global reset was wiped.
           const resetStyle = clonedDoc.createElement("style");
           resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
           clonedDoc.head.appendChild(resetStyle);
 
-          // PREVENT CLIPPING: Make the virtual body extremely large so margins aren't cut off
-          clonedDoc.body.style.width = "5000px";
-          clonedDoc.body.style.height = "5000px";
+          // Massive Virtual Body
+          clonedDoc.body.style.width = "3000px";
+          clonedDoc.body.style.height = "4000px";
           clonedDoc.body.style.backgroundColor = "#ffffff";
           clonedDoc.body.innerHTML = "";
           clonedDoc.body.appendChild(clonedContainer);
@@ -1417,12 +1418,15 @@ export default function CartEditor() {
           };
           syncStyles(originalContainer, clonedContainer);
 
-          // Force spacing and margins
+          // CENTERING & VAST MARGINS
           clonedContainer.style.backgroundColor = "#ffffff";
-          clonedContainer.style.boxSizing = "content-box";
-          clonedContainer.style.padding = "100px 300px 100px 300px";
+          clonedContainer.style.boxSizing = "border-box"; // Back to border-box for fixed width
+          clonedContainer.style.width = "2600px";
+          clonedContainer.style.padding = "150px 600px"; 
           clonedContainer.style.display = "flex";
-          clonedContainer.style.width = "max-content"; // Let it expand with content+padding
+          clonedContainer.style.flexDirection = "row";
+          clonedContainer.style.justifyContent = "center";
+          clonedContainer.style.alignItems = "start";
         }
       });
       const dataUrl = canvas.toDataURL("image/png");
