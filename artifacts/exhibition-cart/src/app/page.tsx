@@ -1978,7 +1978,7 @@ export default function CartEditor() {
             style={{ WebkitOverflowScrolling: "touch" }}
           >
             <motion.div layout className="shrink-0">
-              <div ref={canvasRef as any} id="export-container" className="flex flex-col items-center p-4 bg-white shrink-0" style={{ width: '1100px', minHeight: '800px' }}>
+              <div ref={canvasRef as any} id="export-container" className="flex flex-col items-center p-4 bg-transparent shrink-0" style={{ width: '1100px', minHeight: '800px' }}>
                 <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
                   <CartPanel
                     cartId="A" layout={cartA} activeTarget={activeTarget}
