@@ -1376,15 +1376,12 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          // 1. Sanitize Style Tags (Remove oklch/oklab from CSS rules to prevent html2canvas parser crash)
-          const styleTags = clonedDoc.getElementsByTagName("style");
-          for (let i = 0; i < styleTags.length; i++) {
-            const tag = styleTags[i];
-            if (tag.textContent && (tag.textContent.includes("oklch") || tag.textContent.includes("oklab"))) {
-              tag.textContent = tag.textContent
-                .replace(/oklch\([^)]+\)/g, "rgb(0,0,0)")
-                .replace(/oklab\([^)]+\)/g, "rgb(0,0,0)");
-            }
+          // Brute-force: Replace all oklch/oklab strings in the entire document HTML before parsing
+          const rawHTML = clonedDoc.documentElement.innerHTML;
+          if (rawHTML.includes("oklch") || rawHTML.includes("oklab")) {
+            clonedDoc.documentElement.innerHTML = rawHTML
+              .replace(/oklch\([^)]+\)/g, "rgb(31, 29, 27)")
+              .replace(/oklab\([^)]+\)/g, "rgb(31, 29, 27)");
           }
 
           const el = clonedDoc.getElementById("export-container");
@@ -1392,21 +1389,12 @@ export default function CartEditor() {
             el.style.backgroundColor = "white";
             el.style.padding = "100px 100px 40px 100px";
             
-            // 2. Sanitize Inline/Computed Styles
+            // Further sanitize specific elements just in case
             const allElements = el.getElementsByTagName("*");
             for (let i = 0; i < allElements.length; i++) {
               const node = allElements[i] as HTMLElement;
               const style = window.getComputedStyle(node);
               
-              const props = ["color", "backgroundColor", "borderColor", "borderTopColor", "borderBottomColor", "borderLeftColor", "borderRightColor"];
-              props.forEach(prop => {
-                const val = (node.style as any)[prop] || style.getPropertyValue(prop);
-                if (val && (val.includes("oklch") || val.includes("oklab"))) {
-                  if (prop.includes("Color") && prop !== "color") node.style.setProperty(prop, "rgba(0,0,0,0)", "important");
-                  else node.style.setProperty(prop, "rgb(31, 29, 27)", "important");
-                }
-              });
-
               if (style.filter && style.filter !== "none") {
                 node.style.filter = "none";
               }
@@ -1442,14 +1430,11 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          const styleTags = clonedDoc.getElementsByTagName("style");
-          for (let i = 0; i < styleTags.length; i++) {
-            const tag = styleTags[i];
-            if (tag.textContent && (tag.textContent.includes("oklch") || tag.textContent.includes("oklab"))) {
-              tag.textContent = tag.textContent
-                .replace(/oklch\([^)]+\)/g, "rgb(0,0,0)")
-                .replace(/oklab\([^)]+\)/g, "rgb(0,0,0)");
-            }
+          const rawHTML = clonedDoc.documentElement.innerHTML;
+          if (rawHTML.includes("oklch") || rawHTML.includes("oklab")) {
+            clonedDoc.documentElement.innerHTML = rawHTML
+              .replace(/oklch\([^)]+\)/g, "rgb(31, 29, 27)")
+              .replace(/oklab\([^)]+\)/g, "rgb(31, 29, 27)");
           }
 
           const el = clonedDoc.getElementById("export-container");
@@ -1460,14 +1445,6 @@ export default function CartEditor() {
             for (let i = 0; i < allElements.length; i++) {
               const node = allElements[i] as HTMLElement;
               const style = window.getComputedStyle(node);
-              const props = ["color", "backgroundColor", "borderColor", "borderTopColor", "borderBottomColor", "borderLeftColor", "borderRightColor"];
-              props.forEach(prop => {
-                const val = (node.style as any)[prop] || style.getPropertyValue(prop);
-                if (val && (val.includes("oklch") || val.includes("oklab"))) {
-                  if (prop.includes("Color") && prop !== "color") node.style.setProperty(prop, "rgba(0,0,0,0)", "important");
-                  else node.style.setProperty(prop, "rgb(31, 29, 27)", "important");
-                }
-              });
               if (style.filter && style.filter !== "none") node.style.filter = "none";
             }
           }
@@ -1519,38 +1496,22 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          const styleTags = clonedDoc.getElementsByTagName("style");
-          for (let i = 0; i < styleTags.length; i++) {
-            const tag = styleTags[i];
-            if (tag.textContent && (tag.textContent.includes("oklch") || tag.textContent.includes("oklab"))) {
-              tag.textContent = tag.textContent
-                .replace(/oklch\([^)]+\)/g, "rgb(0,0,0)")
-                .replace(/oklab\([^)]+\)/g, "rgb(0,0,0)");
-            }
+          const rawHTML = clonedDoc.documentElement.innerHTML;
+          if (rawHTML.includes("oklch") || rawHTML.includes("oklab")) {
+            clonedDoc.documentElement.innerHTML = rawHTML
+              .replace(/oklch\([^)]+\)/g, "rgb(31, 29, 27)")
+              .replace(/oklab\([^)]+\)/g, "rgb(31, 29, 27)");
           }
 
           const el = clonedDoc.getElementById("export-container");
           if (el) {
             el.style.backgroundColor = "white";
             el.style.padding = "100px 100px 40px 100px";
-            
             const allElements = el.getElementsByTagName("*");
             for (let i = 0; i < allElements.length; i++) {
               const node = allElements[i] as HTMLElement;
               const style = window.getComputedStyle(node);
-              
-              const props = ["color", "backgroundColor", "borderColor", "borderTopColor", "borderBottomColor", "borderLeftColor", "borderRightColor"];
-              props.forEach(prop => {
-                const val = (node.style as any)[prop] || style.getPropertyValue(prop);
-                if (val && (val.includes("oklch") || val.includes("oklab"))) {
-                  if (prop.includes("Color") && prop !== "color") node.style.setProperty(prop, "rgba(0,0,0,0)", "important");
-                  else node.style.setProperty(prop, "rgb(31, 29, 27)", "important");
-                }
-              });
-
-              if (style.filter && style.filter !== "none") {
-                node.style.filter = "none";
-              }
+              if (style.filter && style.filter !== "none") node.style.filter = "none";
             }
           }
         }
