@@ -1375,24 +1375,21 @@ export default function CartEditor() {
         useCORS: true, 
         logging: true,
         backgroundColor: "#ffffff",
-        windowWidth: 3000,
-        windowHeight: 4000,
+        windowWidth: 2000,
+        windowHeight: 3000,
         onclone: (clonedDoc) => {
           const originalContainer = canvasRef.current;
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!originalContainer || !clonedContainer) return;
 
-          // Nuclear Isolation: Wipe everything else
           clonedDoc.head.innerHTML = "";
           clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
-          
           const resetStyle = clonedDoc.createElement("style");
           resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
           clonedDoc.head.appendChild(resetStyle);
 
-          // Massive Virtual Body
-          clonedDoc.body.style.width = "3000px";
-          clonedDoc.body.style.height = "4000px";
+          clonedDoc.body.style.width = "2000px";
+          clonedDoc.body.style.height = "3000px";
           clonedDoc.body.style.backgroundColor = "#ffffff";
           clonedDoc.body.innerHTML = "";
           clonedDoc.body.appendChild(clonedContainer);
@@ -1418,14 +1415,13 @@ export default function CartEditor() {
           };
           syncStyles(originalContainer, clonedContainer);
 
-          // CENTERING & VAST MARGINS
           clonedContainer.style.backgroundColor = "#ffffff";
-          clonedContainer.style.boxSizing = "border-box"; // Back to border-box for fixed width
-          clonedContainer.style.width = "2600px";
-          clonedContainer.style.padding = "150px 600px"; 
+          clonedContainer.style.boxSizing = "content-box";
+          clonedContainer.style.width = "auto";
+          clonedContainer.style.padding = "100px 180px 100px 180px";
           clonedContainer.style.display = "flex";
           clonedContainer.style.flexDirection = "row";
-          clonedContainer.style.justifyContent = "center";
+          clonedContainer.style.justifyContent = "start";
           clonedContainer.style.alignItems = "start";
         }
       });
