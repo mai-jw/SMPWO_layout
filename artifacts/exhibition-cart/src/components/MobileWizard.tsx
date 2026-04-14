@@ -119,7 +119,6 @@ export function MobileWizard({
             exit={{ opacity: 0, y: -30 }}
             className="flex flex-col h-full overflow-hidden"
           >
-            {/* Header with Wave Background (Image 3 style) */}
             <div className="relative pt-12 pb-20 px-8">
               <div 
                 className="absolute inset-0 z-0" 
@@ -128,7 +127,6 @@ export function MobileWizard({
               <svg className="absolute bottom-0 left-0 w-full text-cream" viewBox="0 0 1440 320" preserveAspectRatio="none">
                 <path fill="currentColor" d="M0,192L48,197.3C96,203,192,213,288,192C384,171,480,117,576,106.7C672,96,768,128,864,165.3C960,203,1056,245,1152,240C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
               </svg>
-              
               <div className="relative z-10 flex flex-col gap-1">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30">
@@ -173,11 +171,10 @@ export function MobileWizard({
                 color={COLORS.white}
                 onClick={() => setStep("select-delete")}
               />
-
               <div className="pt-8">
                 <button 
                   onClick={onToggleStandard}
-                  className="w-full py-5 rounded-[2.5rem] bg-white border-2 border-slate-100 shadow-sm flex items-center justify-center gap-3 active:scale-95 transition-all"
+                  className="w-full py-5 rounded-[2.5rem] bg-white border-2 border-slate-100 shadow-sm flex items-center justify-center gap-3 active:scale-95 transition-all outline-none"
                   style={{ color: COLORS.deepPurple }}
                 >
                   <Monitor className="w-5 h-5 opacity-40" />
@@ -188,11 +185,10 @@ export function MobileWizard({
           </motion.div>
         )}
 
-        {/* ... Other steps Select Edit / Select Delete ... */}
         {step === "select-edit" && (
-          <motion.div key="select-edit" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="flex flex-col h-full">
+          <motion.div key="select-edit" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="flex flex-col h-full bg-cream">
             <WizardHeader title="配置を編集する" onBack={() => setStep("menu")} />
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-cream">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {layouts.length === 0 ? (
                 <EmptyState icon={<Search />} text="保存済みのデータはありません" sub="新規作成から始めてください" />
               ) : (
@@ -215,9 +211,9 @@ export function MobileWizard({
         )}
 
         {step === "select-delete" && (
-          <motion.div key="select-delete" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="flex flex-col h-full">
+          <motion.div key="select-delete" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="flex flex-col h-full bg-cream">
             <WizardHeader title="データを削除する" onBack={() => setStep("menu")} />
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-cream">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {layouts.length === 0 ? (
                 <EmptyState icon={<Trash2 />} text="削除できるデータはありません" />
               ) : (
@@ -235,9 +231,9 @@ export function MobileWizard({
         )}
 
         {step === "new" && (
-          <motion.div key="new" initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="flex flex-col h-full">
+          <motion.div key="new" initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="flex flex-col h-full bg-cream">
             <WizardHeader title="新規レイアウト" onBack={() => setStep("menu")} />
-            <div className="flex-1 overflow-y-auto p-8 space-y-12 bg-cream">
+            <div className="flex-1 overflow-y-auto p-8 space-y-12">
               <section className="space-y-6">
                 <SectionLabel label="1. 期間を選ぶ" />
                 <div className="flex gap-4">
@@ -261,17 +257,10 @@ export function MobileWizard({
 
               <section className="space-y-6">
                 <SectionLabel label="2. 地点を選ぶ" />
-                <div className="grid grid-cols-2 gap-3">
-                  <LocationBtn 
-                    label="すべて" 
-                    active={newLocations.includes("すべて")} 
-                    onClick={() => setNewLocations(["すべて"])} 
-                  />
+                <div className="grid grid-cols-2 gap-3 pb-8">
+                  <LocationBtn label="すべて" active={newLocations.includes("すべて")} onClick={() => setNewLocations(["すべて"])} />
                   {locationsConfig.map(loc => (
-                    <LocationBtn 
-                      key={loc}
-                      label={loc}
-                      active={!newLocations.includes("すべて") && newLocations.includes(loc)}
+                    <LocationBtn key={loc} label={loc} active={!newLocations.includes("すべて") && newLocations.includes(loc)}
                       onClick={() => {
                         setNewLocations(prev => {
                           const filtered = prev.filter(l => l !== "すべて");
@@ -288,11 +277,7 @@ export function MobileWizard({
               </section>
             </div>
             <div className="p-8 bg-white rounded-t-[3rem] shadow-2xl">
-               <button 
-                 onClick={handleCreateNew}
-                 className="w-full py-6 rounded-[2rem] font-black text-lg text-white shadow-xl shadow-coral/30 active:scale-95 transition-all"
-                 style={{ backgroundColor: COLORS.coral }}
-               >
+               <button onClick={handleCreateNew} className="w-full py-6 rounded-[2rem] font-black text-lg text-white shadow-xl shadow-coral/30 active:scale-95 transition-all" style={{ backgroundColor: COLORS.coral }}>
                  新しい配置を作成
                </button>
             </div>
@@ -300,50 +285,33 @@ export function MobileWizard({
         )}
 
         {step === "edit" && (
-           <motion.div key={`${activeCart}-${activeShelfIdx}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full">
-            <WizardHeader 
-              title={`${activeCart} — ${activeShelfIdx === 3 ? "ポスター" : ["上段","中段","下段"][activeShelfIdx]}`} 
-              onBack={() => {
+           <motion.div key={`${activeCart}-${activeShelfIdx}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col h-full bg-cream">
+            <WizardHeader title={`${activeCart} — ${activeShelfIdx === 3 ? "ポスター" : ["上段","中段","下段"][activeShelfIdx]}`} onBack={() => {
                 if (activeShelfIdx === 0 && activeCart === "A") setStep("menu");
                 else if (activeShelfIdx === 0 && activeCart === "B") { setActiveCart("A"); setActiveShelfIdx(3); }
                 else setActiveShelfIdx(prev => prev - 1);
-              }} 
-            />
-            
-            <div className="flex-1 overflow-y-auto p-6 space-y-10 bg-cream pb-32">
+            }} />
+            <div className="flex-1 overflow-y-auto p-6 space-y-10 pb-32">
               {activeShelfIdx < 3 ? (
                 <>
                   <section className="space-y-6">
                     <SectionLabel label="レイアウトを選択" />
                     <div className="grid grid-cols-2 gap-3">
                        {(["booklet", "booklet_doc", "document", "bible", "pamphlet"] as ShelfLayoutType[]).map(t => (
-                         <button key={t} 
-                           onClick={() => {
-                             const update = (prev: CartLayoutV2): CartLayoutV2 => ({
-                               ...prev,
-                               shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, layout_type: t, items: t === "document" || t === "bible" ? [null, null, null] : t === "pamphlet" ? [null, null, null, null] : [null, null] } : s)
-                             });
-                             activeCart === "A" ? setCartA(update) : setCartB(update);
-                           }}
+                         <button key={t} onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, layout_type: t, items: t === "document" || t === "bible" ? [null, null, null] : t === "pamphlet" ? [null, null, null, null] : [null, null] } : s) }))}
                            className={`p-4 h-24 rounded-[2rem] border-2 font-black text-[11px] flex items-center justify-center transition-all ${currentShelf?.layout_type === t ? "shadow-lg scale-105" : "bg-white border-transparent opacity-60"}`}
-                           style={{ 
-                             backgroundColor: currentShelf?.layout_type === t ? COLORS.peach : COLORS.white,
-                             borderColor: currentShelf?.layout_type === t ? COLORS.coral : "transparent",
-                             color: COLORS.deepPurple
-                           }}
+                           style={{ backgroundColor: currentShelf?.layout_type === t ? COLORS.peach : COLORS.white, borderColor: currentShelf?.layout_type === t ? COLORS.coral : "transparent", color: COLORS.deepPurple }}
                          >
                            <span className="whitespace-pre-line text-center">{GALLERY_FILTER_LABELS[t] || t}</span>
                          </button>
                        ))}
                     </div>
                   </section>
-
                   {currentShelf?.layout_type !== "none" && (
                     <section className="space-y-6">
                       <SectionLabel label="タグ設定" />
                       <div className="bg-white rounded-[2.5rem] p-6 shadow-xl space-y-4">
                         <div className="flex gap-2">
-                           {/* Simplified Tag buttons */}
                            <TagOptionBtn label="なし" active={currentShelf?.tag_1.type === "none"} 
                              onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "none", value: "" }, tag_2: { type: "none", value: "" } } : s) }))} 
                            />
@@ -358,14 +326,13 @@ export function MobileWizard({
                         </div>
                         {currentShelf?.tag_1.type === "lang" && (
                           <div className="grid grid-cols-2 gap-3 pt-2">
-                             <TagSelect value={currentShelf.tag_1.value} onChange={v => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang", value: v } } : s) }))} />
+                             <TagSelect value={currentShelf.tag_1.value} placeholder="なし" onChange={v => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang", value: v } } : s) }))} />
                              <TagSelect value={currentShelf.tag_2.value} placeholder="なし" onChange={v => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_2: { type: v ? "lang" : "none", value: v } } : s) }))} />
                           </div>
                         )}
                       </div>
                     </section>
                   )}
-
                   {currentShelf?.layout_type !== "none" && (
                     <section className="space-y-6">
                       <SectionLabel label="出版物を配置" />
@@ -373,20 +340,11 @@ export function MobileWizard({
                         {currentShelf?.items.map((itId, sIdx) => {
                           const item = itId ? itemMap[itId] : null;
                           return (
-                            <button 
-                              key={sIdx}
-                              onClick={() => { setActiveSlotIdx(sIdx); setSelectionMode("items"); }}
+                            <button key={sIdx} onClick={() => { setActiveSlotIdx(sIdx); setSelectionMode("items"); }}
                               className={`aspect-[1/1.4] rounded-[2.5rem] bg-white border-4 p-4 flex flex-col items-center justify-center transition-all ${activeSlotIdx === sIdx && selectionMode === "items" ? "shadow-2xl scale-105" : "border-slate-50 opacity-80"}`}
                               style={{ borderColor: activeSlotIdx === sIdx && selectionMode === "items" ? COLORS.coral : COLORS.white }}
                             >
-                              {item ? (
-                                <img src={item.url} className="w-full h-full object-contain drop-shadow-lg" />
-                              ) : (
-                                <div className="text-center">
-                                  <Plus className="w-10 h-10 opacity-10 mx-auto mb-2" />
-                                  <p className="text-[10px] font-black opacity-30 uppercase tracking-widest">S-{sIdx+1}</p>
-                                </div>
-                              )}
+                              {item ? <img src={item.url} className="w-full h-full object-contain drop-shadow-lg" /> : <div className="text-center"><Plus className="w-10 h-10 opacity-10 mx-auto mb-2" /><p className="text-[10px] font-black opacity-30 uppercase tracking-widest">S-{sIdx+1}</p></div>}
                             </button>
                           );
                         })}
@@ -397,45 +355,19 @@ export function MobileWizard({
               ) : (
                 <section className="space-y-8">
                   <SectionLabel label="ポスターを選択" />
-                  <button 
-                    onClick={() => setSelectionMode("items")}
-                    className="w-full aspect-[1/1.4] rounded-[3rem] bg-white shadow-xl flex flex-col items-center justify-center overflow-hidden border-4 border-white transition-all active:scale-95"
-                  >
-                    {currentCart.poster ? (
-                      <img src={itemMap[currentCart.poster]?.url} className="w-full h-full object-contain p-8" />
-                    ) : (
-                      <>
-                        <Plus className="w-16 h-16 opacity-10 mb-4" />
-                        <p className="text-sm font-black opacity-30 uppercase tracking-widest">Select Poster</p>
-                      </>
-                    )}
+                  <button onClick={() => setSelectionMode("items")} className="w-full aspect-[1/1.4] rounded-[3rem] bg-white shadow-xl flex flex-col items-center justify-center overflow-hidden border-4 border-white transition-all active:scale-95">
+                    {currentCart.poster ? <img src={itemMap[currentCart.poster]?.url} className="w-full h-full object-contain p-8" /> : <><Plus className="w-16 h-16 opacity-10 mb-4" /><p className="text-sm font-black opacity-30 uppercase tracking-widest">Select Poster</p></>}
                   </button>
                 </section>
               )}
             </div>
-
             <div className="p-8 bg-white rounded-t-[3rem] shadow-2xl flex gap-4">
-              <button 
-                onClick={() => {
-                  if (activeShelfIdx === 3) {
-                    if (activeCart === "A") { setActiveCart("B"); setActiveShelfIdx(0); }
-                    else setStep("preview");
-                  } else setActiveShelfIdx(prev => prev - 1); // This back logic might need careful check based on UI flow
-                }}
-                className="w-20 h-16 rounded-[1.5rem] bg-cream flex items-center justify-center active:scale-90 transition-all"
-              >
-                <ChevronLeft className="w-6 h-6" style={{ color: COLORS.deepPurple }} />
+              <button onClick={() => { if (activeShelfIdx === 0 && activeCart === "A") setStep("menu"); else if (activeShelfIdx === 0 && activeCart === "B") { setActiveCart("A"); setActiveShelfIdx(3); } else setActiveShelfIdx(prev => prev - 1); }}
+                className="w-20 h-16 rounded-[1.5rem] bg-cream flex items-center justify-center active:scale-90 transition-all font-black text-coral">
+                <ChevronLeft className="w-6 h-6" />
               </button>
-              <button 
-                onClick={() => {
-                  if (activeShelfIdx === 3) {
-                    if (activeCart === "A") { setActiveCart("B"); setActiveShelfIdx(0); }
-                    else setStep("preview");
-                  } else setActiveShelfIdx(prev => prev + 1);
-                }}
-                className="flex-1 h-16 rounded-[1.5rem] font-black text-white shadow-lg shadow-coral/30 active:scale-95 transition-all flex items-center justify-center gap-2"
-                style={{ backgroundColor: COLORS.coral }}
-              >
+              <button onClick={() => { if (activeShelfIdx === 3) { if (activeCart === "A") { setActiveCart("B"); setActiveShelfIdx(0); } else setStep("preview"); } else setActiveShelfIdx(prev => prev + 1); }}
+                className="flex-1 h-16 rounded-[1.5rem] font-black text-white shadow-lg shadow-coral/30 active:scale-95 transition-all flex items-center justify-center gap-2" style={{ backgroundColor: COLORS.coral }}>
                 <span>{activeShelfIdx === 3 && activeCart === "B" ? "プレビューへ" : "次へ進む"}</span>
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -453,40 +385,31 @@ export function MobileWizard({
                       <h3 className="text-2xl font-black" style={{ color: COLORS.deepPurple }}>{formatPeriodDisplay(period)}</h3>
                       <p className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em] mt-1">Ready to Save</p>
                     </div>
-                    <div className="w-14 h-14 rounded-3xl flex items-center justify-center bg-emerald-50 text-emerald-500">
-                      <Check className="w-8 h-8" />
-                    </div>
+                    <div className="w-14 h-14 rounded-3xl flex items-center justify-center bg-emerald-50 text-emerald-500"><Check className="w-8 h-8" /></div>
                   </div>
-                  
                   <div className="grid grid-cols-2 gap-6">
                     {(["A", "B"] as CartId[]).map((cid, i) => (
                       <div key={cid} className="space-y-4">
                          <p className="font-black text-sm opacity-40 uppercase tracking-widest text-center">カート {cid}</p>
                          <div className="aspect-[2/3] bg-cream rounded-[2rem] p-4 flex flex-col gap-2 shadow-inner">
                             <div className="flex-1 bg-white rounded-xl shadow-sm overflow-hidden p-2">
-                               <img src={itemMap[(i === 0 ? cartA : cartB).poster]?.url} className="w-full h-full object-contain opacity-20" />
+                               {(() => {
+                                 const pId = (i === 0 ? cartA : cartB).poster;
+                                 return pId ? <img src={itemMap[pId]?.url} className="w-full h-full object-contain opacity-20" /> : null;
+                               })()}
                             </div>
-                            <div className="flex gap-1 h-10">
-                              <div className="flex-1 bg-white/50 rounded-lg" />
-                              <div className="flex-1 bg-white/50 rounded-lg" />
-                            </div>
+                            <div className="flex gap-1 h-10"><div className="flex-1 bg-white/50 rounded-lg" /><div className="flex-1 bg-white/50 rounded-lg" /></div>
                          </div>
                       </div>
                     ))}
                   </div>
                </div>
-
                <div className="space-y-4">
-                 <button 
-                   onClick={handleSave} 
-                   disabled={saveStatus === "saving" || !period.trim()}
-                   className="w-full py-6 rounded-[2rem] font-black text-xl text-white shadow-xl shadow-slate-900/10 active:scale-95 transition-all flex items-center justify-center gap-3"
-                   style={{ backgroundColor: saveStatus === "saved" ? "#10b981" : COLORS.deepPurple }}
-                 >
+                 <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()} className="w-full py-6 rounded-[2rem] font-black text-xl text-white shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"
+                   style={{ backgroundColor: saveStatus === "saved" ? "#10b981" : COLORS.deepPurple }}>
                    {saveStatus === "saving" ? <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" /> : <Save className="w-6 h-6" />}
                    <span>{saveStatus === "saved" ? "保存済み" : "配置を保存する"}</span>
                  </button>
-
                  <div className="grid grid-cols-3 gap-3">
                     <ExportCircle icon={<FileImage />} onClick={handleExportPng} active={exporting === "png"} />
                     <ExportCircle icon={<FileText />} onClick={handleExportPdf} active={exporting === "pdf"} />
@@ -520,25 +443,10 @@ export function MobileWizard({
                     return allowed.includes(it.category) && it.name.toLowerCase().includes(searchQuery.toLowerCase());
                  })
                  .map(it => (
-                    <button 
-                      key={it.id}
-                      onClick={() => {
-                        const update = (prev: CartLayoutV2): CartLayoutV2 => {
-                           if (activeShelfIdx === 3) return { ...prev, poster: it.id!, posterType: it.poster_type || prev.posterType };
-                           return { ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, items: s.items.map((id, j) => j === activeSlotIdx ? it.id! : id) } : s) };
-                        };
-                        (activeCart === "A" ? setCartA : setCartB)(update);
-                        setSelectionMode("shelf-type");
-                      }}
-                      className="w-full flex items-center gap-5 p-4 rounded-[2rem] bg-white hover:shadow-lg transition-all active:scale-[0.98] text-left"
-                    >
+                    <button key={it.id} onClick={() => { (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => { if (activeShelfIdx === 3) return { ...prev, poster: it.id!, posterType: it.poster_type || prev.posterType }; return { ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, items: s.items.map((id, j) => j === activeSlotIdx ? it.id! : id) } : s) }; }); setSelectionMode("shelf-type"); }}
+                      className="w-full flex items-center gap-5 p-4 rounded-[2rem] bg-white hover:shadow-lg transition-all active:scale-[0.98] text-left">
                       <img src={it.url} className="w-16 h-16 object-contain rounded-xl shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-black truncate" style={{ color: COLORS.deepPurple }}>{it.name}</p>
-                        <p className="text-[10px] font-bold opacity-30 uppercase tracking-widest mt-1">
-                          {GALLERY_FILTER_LABELS[it.category as GalleryFilterType] || it.category}
-                        </p>
-                      </div>
+                      <div className="flex-1 min-w-0"><p className="text-sm font-black truncate" style={{ color: COLORS.deepPurple }}>{it.name}</p><p className="text-[10px] font-bold opacity-30 uppercase tracking-widest mt-1">{GALLERY_FILTER_LABELS[it.category as GalleryFilterType] || it.category}</p></div>
                     </button>
                  ))}
             </div>
@@ -549,108 +457,27 @@ export function MobileWizard({
   );
 }
 
-// ─── Refined Sub Components (Grid, Tile, Card) ───
-
 function MenuCard({ icon, title, desc, color, onClick, wide }: any) {
   return (
     <button onClick={onClick} className={`flex flex-col items-center justify-center p-8 rounded-[3rem] transition-all active:scale-95 shadow-xl shadow-black/5 ${wide ? "w-full text-center" : ""}`} style={{ backgroundColor: color }}>
-       <div className="w-20 h-20 rounded-[2rem] bg-cream flex items-center justify-center mb-6 shadow-inner">
-         <div style={{ color: COLORS.coral }}>{icon}</div>
-       </div>
-       <div>
-          <p className="text-xl font-black tracking-tight" style={{ color: COLORS.deepPurple }}>{title}</p>
-          {desc && <p className="text-[10px] font-bold opacity-30 tracking-widest uppercase mt-2">{desc}</p>}
-       </div>
+       <div className="w-20 h-20 rounded-[2rem] bg-cream flex items-center justify-center mb-6 shadow-inner"><div style={{ color: COLORS.coral }}>{icon}</div></div>
+       <div><p className="text-xl font-black tracking-tight" style={{ color: COLORS.deepPurple }}>{title}</p>{desc && <p className="text-[10px] font-bold opacity-30 tracking-widest uppercase mt-2">{desc}</p>}</div>
     </button>
   );
 }
-
-function SectionLabel({ label }: { label: string }) {
-  return (
-    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] opacity-30 ml-2" style={{ color: COLORS.deepPurple }}>{label}</h3>
-  );
-}
-
-function LocationBtn({ label, active, onClick }: any) {
-  return (
-    <button onClick={onClick} className={`p-5 rounded-[1.5rem] font-black text-sm transition-all border-4 ${active ? "shadow-lg scale-105" : "bg-white border-transparent opacity-60"}`}
-      style={{ backgroundColor: active ? COLORS.peach : COLORS.white, borderColor: active ? COLORS.coral : "transparent", color: COLORS.deepPurple }}>
-      {label}
-    </button>
-  );
-}
-
-function TagOptionBtn({ label, color, active, onClick }: any) {
-  return (
-    <button onClick={onClick} className={`flex-1 py-4 px-2 rounded-2xl border-4 font-black text-[10px] uppercase transition-all ${active ? "shadow-md" : "bg-cream/40 border-transparent opacity-40"}`}
-      style={{ backgroundColor: active ? (color || COLORS.peach) : "transparent", borderColor: active ? (color || COLORS.coral) : "transparent", color: active ? COLORS.white : COLORS.deepPurple }}>
-      {label}
-    </button>
-  );
-}
-
-function TagSelect({ value, onChange, placeholder }: any) {
-  return (
-    <div className="relative">
-      <select value={value} onChange={e => onChange(e.target.value)} className="w-full h-12 bg-cream/40 rounded-xl px-4 text-[11px] font-black outline-none appearance-none" style={{ color: COLORS.deepPurple }}>
-        <option value="">{placeholder || "選択..."}</option>
-        {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
-      </select>
-      <ChevronDown className="absolute right-3 top-4 w-3 h-3 opacity-20 pointer-events-none" />
-    </div>
-  );
-}
-
-function ExportCircle({ icon, active, onClick }: any) {
-  return (
-    <button onClick={onClick} disabled={active} className={`flex-1 aspect-square rounded-full flex items-center justify-center transition-all shadow-lg active:scale-90 ${active ? "bg-slate-100 opacity-50" : "bg-white"}`}>
-      {active ? <div className="w-6 h-6 border-4 border-slate-200 border-t-coral rounded-full animate-spin" /> : <div style={{ color: COLORS.coral }}>{React.cloneElement(icon, { className: "w-8 h-8" })}</div>}
-    </button>
-  );
-}
-
-function WizardHeader({ title, onBack }: any) {
-  return (
-    <div className="shrink-0 pt-16 pb-8 px-8 flex items-center gap-6 bg-white z-[150] rounded-b-[3rem] shadow-sm">
-       <button onClick={onBack} className="w-14 h-14 flex items-center justify-center bg-cream rounded-[1.5rem] active:scale-90 transition-all shadow-inner">
-         <ChevronLeft className="w-7 h-7" style={{ color: COLORS.deepPurple }} />
-       </button>
-       <h2 className="text-xl font-black tracking-tight" style={{ color: COLORS.deepPurple }}>{title}</h2>
-    </div>
-  );
-}
-
-function EmptyState({ icon, text, sub }: any) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 opacity-30">
-       {React.cloneElement(icon, { className: "w-16 h-16 mb-4" })}
-       <p className="font-black text-sm">{text}</p>
-       {sub && <p className="text-[10px] font-bold mt-1">{sub}</p>}
-    </div>
-  );
-}
-
+function SectionLabel({ label }: { label: string }) { return <h3 className="text-[11px] font-black uppercase tracking-[0.3em] opacity-30 ml-2" style={{ color: COLORS.deepPurple }}>{label}</h3>; }
+function LocationBtn({ label, active, onClick }: any) { return <button onClick={onClick} className={`p-5 rounded-[1.5rem] font-black text-sm transition-all border-4 ${active ? "shadow-lg scale-105" : "bg-white border-transparent opacity-60"}`} style={{ backgroundColor: active ? COLORS.peach : COLORS.white, borderColor: active ? COLORS.coral : "transparent", color: COLORS.deepPurple }}>{label}</button>; }
+function TagOptionBtn({ label, color, active, onClick }: any) { return <button onClick={onClick} className={`flex-1 py-4 px-2 rounded-2xl border-4 font-black text-[10px] uppercase transition-all ${active ? "shadow-md" : "bg-cream/40 border-transparent opacity-40"}`} style={{ backgroundColor: active ? (color || COLORS.peach) : "transparent", borderColor: active ? (color || COLORS.coral) : "transparent", color: active ? COLORS.white : COLORS.deepPurple }}>{label}</button>; }
+function TagSelect({ value, onChange, placeholder }: any) { return <div className="relative"><select value={value} onChange={e => onChange(e.target.value)} className="w-full h-12 bg-cream/40 rounded-xl px-4 text-[11px] font-black outline-none appearance-none" style={{ color: COLORS.deepPurple }}><option value="">{placeholder || "選択..."}</option>{LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}</select><ChevronDown className="absolute right-3 top-4 w-3 h-3 opacity-20 pointer-events-none" /></div>; }
+function ExportCircle({ icon, active, onClick }: any) { return <button onClick={onClick} disabled={active} className={`flex-1 aspect-square rounded-full flex items-center justify-center transition-all shadow-lg active:scale-90 ${active ? "bg-slate-100 opacity-50" : "bg-white"}`}>{active ? <div className="w-6 h-6 border-4 border-slate-200 border-t-coral rounded-full animate-spin" /> : <div style={{ color: COLORS.coral }}>{React.cloneElement(icon, { className: "w-8 h-8" })}</div>}</button>; }
+function WizardHeader({ title, onBack }: any) { return <div className="shrink-0 pt-16 pb-8 px-8 flex items-center gap-6 bg-white z-[150] rounded-b-[3rem] shadow-sm"><button onClick={onBack} className="w-14 h-14 flex items-center justify-center bg-cream rounded-[1.5rem] active:scale-90 transition-all shadow-inner"><ChevronLeft className="w-7 h-7" style={{ color: COLORS.deepPurple }} /></button><h2 className="text-xl font-black tracking-tight" style={{ color: COLORS.deepPurple }}>{title}</h2></div>; }
+function EmptyState({ icon, text, sub }: any) { return <div className="flex flex-col items-center justify-center py-20 opacity-30">{React.cloneElement(icon, { className: "w-16 h-16 mb-4" })}<p className="font-black text-sm">{text}</p>{sub && <p className="text-[10px] font-bold mt-1">{sub}</p>}</div>; }
 function DeleteLayoutRow({ period, displayName, onConfirm }: { period: string; displayName: string; onConfirm: () => void }) {
   const [confirming, setConfirming] = useState(false);
   return (
     <div className="w-full rounded-[2rem] overflow-hidden shadow-lg shadow-black/5">
-      {confirming ? (
-        <div className="bg-red-50 p-6 space-y-4">
-          <p className="font-black text-sm text-red-700">「{displayName}」を削除しますか？</p>
-          <div className="flex gap-3">
-            <button onClick={onConfirm} className="flex-1 py-4 bg-red-600 text-white font-black text-sm rounded-2xl active:scale-95">削除</button>
-            <button onClick={() => setConfirming(false)} className="flex-1 py-4 bg-white border border-red-100 text-red-400 font-black text-sm rounded-2xl">キャンセ</button>
-          </div>
-        </div>
-      ) : (
-        <button onClick={() => setConfirming(true)} className="w-full flex items-center justify-between p-6 bg-white text-left active:scale-[0.98] transition-all">
-          <div>
-            <p className="font-black text-base" style={{ color: COLORS.deepPurple }}>{displayName}</p>
-            <p className="text-[10px] text-red-400 font-black uppercase mt-1 tracking-widest">Tap to delete</p>
-          </div>
-          <Trash2 className="w-6 h-6 text-red-200" />
-        </button>
-      )}
+      {confirming ? ( <div className="bg-red-50 p-6 space-y-4"><p className="font-black text-sm text-red-700">「{displayName}」を削除しますか？</p><div className="flex gap-3"><button onClick={onConfirm} className="flex-1 py-4 bg-red-600 text-white font-black text-sm rounded-2xl active:scale-95">削除</button><button onClick={() => setConfirming(false)} className="flex-1 py-4 bg-white border border-red-100 text-red-400 font-black text-sm rounded-2xl">キャンセル</button></div></div>
+      ) : ( <button onClick={() => setConfirming(true)} className="w-full flex items-center justify-between p-6 bg-white text-left active:scale-[0.98] transition-all"><div><p className="font-black text-base" style={{ color: COLORS.deepPurple }}>{displayName}</p><p className="text-[10px] text-red-400 font-black uppercase mt-1 tracking-widest">Tap to delete</p></div><Trash2 className="w-6 h-6 text-red-200" /></button> )}
     </div>
   );
 }
