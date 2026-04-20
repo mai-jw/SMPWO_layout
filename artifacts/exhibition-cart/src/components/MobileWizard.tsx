@@ -129,7 +129,7 @@ export function MobileWizard({
                 {/* Subtle overlay to ensure text readability if needed */}
                 <div className="absolute inset-0 bg-black/10" />
               </div>
-              <div className="relative z-10 flex flex-col gap-1">
+              <div className="relative z-10 flex flex-col gap-1 pr-12">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30">
                     <LayoutDashboard className="w-6 h-6 text-white" />
@@ -140,9 +140,18 @@ export function MobileWizard({
                   </div>
                 </div>
               </div>
+
+              {/* Top-Right Toggle to PC View */}
+              <button 
+                onClick={onToggleStandard}
+                className="absolute top-10 right-8 z-[100] w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white active:scale-90 transition-all shadow-lg"
+                title="PC表示に切り替え"
+              >
+                <Monitor className="w-6 h-6" />
+              </button>
             </div>
 
-            <div className="flex-1 px-8 -mt-6 relative z-20 overflow-y-auto space-y-4 pb-24 no-scrollbar">
+            <div className="flex-1 px-8 -mt-6 relative z-20 space-y-4 pb-8 overflow-hidden">
               <div className="grid grid-cols-2 gap-4">
                 <MenuCard 
                   icon={<Plus className="w-8 h-8" />} 
@@ -161,7 +170,7 @@ export function MobileWizard({
                 wide
                 icon={<Upload className="w-8 h-8" />} 
                 title="ライブラリに画像を追加" 
-                desc="新しい出版物やポスターを登録します"
+                desc="新しい出版物やポスターを登録"
                 color={COLORS.white}
                 onClick={onOpenUpload}
               />
@@ -169,20 +178,10 @@ export function MobileWizard({
                 wide
                 icon={<Trash2 className="w-8 h-8" />} 
                 title="過去データの削除" 
-                desc="保存済みのレイアウトを整理します"
+                desc="保存済みのレイアウトを整理"
                 color={COLORS.white}
                 onClick={() => setStep("select-delete")}
               />
-              <div className="pt-8">
-                <button 
-                  onClick={onToggleStandard}
-                  className="w-full py-5 rounded-[2.5rem] bg-white border-2 border-slate-100 shadow-sm flex items-center justify-center gap-3 active:scale-95 transition-all outline-none"
-                  style={{ color: COLORS.deepPurple }}
-                >
-                  <Monitor className="w-5 h-5 opacity-40" />
-                  <span className="font-black text-sm">標準表示（PC版）に切り替え</span>
-                </button>
-              </div>
             </div>
           </motion.div>
         )}
@@ -461,9 +460,9 @@ export function MobileWizard({
 
 function MenuCard({ icon, title, desc, color, onClick, wide }: any) {
   return (
-    <button onClick={onClick} className={`flex flex-col items-center justify-center p-8 rounded-[3rem] transition-all active:scale-95 shadow-xl shadow-black/5 ${wide ? "w-full text-center" : ""}`} style={{ backgroundColor: color }}>
-       <div className="w-20 h-20 rounded-[2rem] bg-cream flex items-center justify-center mb-6 shadow-inner"><div style={{ color: COLORS.coral }}>{icon}</div></div>
-       <div><p className="text-xl font-black tracking-tight" style={{ color: COLORS.deepPurple }}>{title}</p>{desc && <p className="text-[10px] font-bold opacity-30 tracking-widest uppercase mt-2">{desc}</p>}</div>
+    <button onClick={onClick} className={`flex flex-col items-center justify-center p-6 rounded-[2.5rem] transition-all active:scale-95 shadow-xl shadow-black/5 ${wide ? "w-full text-center flex-row gap-6 p-5" : "aspect-square"}`} style={{ backgroundColor: color }}>
+       <div className={`${wide ? "w-14 h-14" : "w-16 h-16"} rounded-[1.5rem] bg-cream flex items-center justify-center ${wide ? "" : "mb-4"} shadow-inner shrink-0`}><div style={{ color: COLORS.coral }}>{React.cloneElement(icon as React.ReactElement, { className: wide ? "w-6 h-6" : "w-8 h-8" })}</div></div>
+       <div className={wide ? "text-left" : ""}><p className={`${wide ? "text-base" : "text-lg"} font-black tracking-tight`} style={{ color: COLORS.deepPurple }}>{title}</p>{desc && <p className="text-[9px] font-bold opacity-30 tracking-widest uppercase mt-1 line-clamp-1">{desc}</p>}</div>
     </button>
   );
 }
