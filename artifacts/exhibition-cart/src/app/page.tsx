@@ -1006,9 +1006,7 @@ export default function CartEditor() {
   const [newMonth, setNewMonth] = useState(() => new Date().getMonth() + 1);
   const [newHalf, setNewHalf] = useState<"前半" | "後半">(() => new Date().getDate() <= 15 ? "前半" : "後半");
   const [newLocations, setNewLocations] = useState<string[]>(["すべて"]);
-  const [concept, setConcept] = useState("");
-  const [commentA, setCommentA] = useState("");
-  const [commentB, setCommentB] = useState("");
+  const [notes, setNotes] = useState("外国語の出版物は、奉仕者が好きな位置に変更できます。\n自分の得意な言語や地点の特色を考えて、自由に動かしてください。");
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [isEditingLocations, setIsEditingLocations] = useState(false);
   const [locationEditInput, setLocationEditInput] = useState("");
@@ -1077,25 +1075,6 @@ export default function CartEditor() {
       if (existing) {
         setCartA(existing.cart_a);
         setCartB(existing.cart_b);
-        
-        // Populate notes if available
-        if (existing.notes) {
-          try {
-            const parsed = JSON.parse(existing.notes);
-            setConcept(parsed.concept || "");
-            setCommentA(parsed.commentA || "");
-            setCommentB(parsed.commentB || "");
-          } catch (e) {
-            // Fallback for legacy plain text notes
-            setConcept(existing.notes);
-            setCommentA("");
-            setCommentB("");
-          }
-        } else {
-          setConcept("");
-          setCommentA("");
-          setCommentB("");
-        }
       }
     }
   }, [layouts, period]);
@@ -1226,9 +1205,6 @@ export default function CartEditor() {
   const handleReset = () => {
     setCartA(makeInitialCartLayoutV2());
     setCartB(makeInitialCartLayoutV2());
-    setConcept("");
-    setCommentA("");
-    setCommentB("");
     setActiveTarget(null);
   };
 
@@ -1240,8 +1216,7 @@ export default function CartEditor() {
     // 上書き保存の確認ダイアログを削除（直接実行）
     setSaveStatus("saving");
     try {
-      const notesJson = JSON.stringify({ concept, commentA, commentB });
-      await saveLayout.mutateAsync({ period, cart_a: cartA, cart_b: cartB, notes: notesJson });
+      await saveLayout.mutateAsync({ period, cart_a: cartA, cart_b: cartB });
       setSaveStatus("saved");
       alert(`「${formatPeriodDisplay(period)}」の設定を保存しました。\n※お手元のパソコンに画像や表（PNG/PDF/Excel）として書き出したい場合は、右端のボタンをクリックしてください。`);
       setTimeout(() => setSaveStatus("idle"), 2500);
@@ -2109,75 +2084,42 @@ export default function CartEditor() {
                   })}
                 </div>
 
-                {/* Removed Supplementary Notes from here */}
+                {/* Supplementary Notes */}
+                <div className="w-full mt-4 max-w-[820px] mx-auto">
+                  {isEditingNotes ? (
+                    <div className="relative">
+                      <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        rows={3}
+                        autoFocus
+                        className="w-full text-xs text-foreground bg-white border border-slate-200 rounded-lg outline-none resize-none leading-relaxed font-medium p-3 focus:ring-2 focus:ring-primary/20"
+                        placeholder="補足事項を入力..."
+                      />
+                      <button
+                        onClick={() => setIsEditingNotes(false)}
+                        className="absolute top-2 right-2 text-[10px] font-bold bg-primary text-white px-2 py-0.5 rounded hover:bg-primary/90 transition-colors"
+                      >
+                        完了
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative group">
+                      <p className="text-xs text-foreground leading-relaxed font-medium whitespace-pre-wrap">{notes}</p>
+                      <button
+                        onClick={() => setIsEditingNotes(true)}
+                        className="absolute -top-1 -right-1 p-1 rounded-md bg-white border border-slate-200 text-slate-400 hover:text-primary hover:border-primary/40 opacity-0 group-hover:opacity-100 transition-all shadow-sm"
+                        title="補足事項を編集"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
           </div>
         </main>
-        
-        {/* Right Sidebar for Concept and Comments */}
-        {!isMobileView && (
-          <aside className="w-80 bg-white border-l border-slate-200 flex flex-col p-6 overflow-y-auto shrink-0 z-10 shadow-[-4px_0_12px_rgba(0,0,0,0.02)]">
-            <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Layout Memo</h2>
-            
-            <div className="space-y-8">
-              {/* Concept Section */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-slate-800">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  <span className="font-black text-sm">
-                    {(() => {
-                      if (!period) return "コンセプト";
-                      const match = period.match(/^(\d{4})-(\d{2})-(前半|後半)/);
-                      if (!match) return "コンセプト";
-                      return `${parseInt(match[2])}月${match[3]} コンセプト`;
-                    })()}
-                  </span>
-                </div>
-                <textarea
-                  value={concept}
-                  onChange={(e) => setConcept(e.target.value)}
-                  placeholder="今回のカート配置のコンセプトや狙いなど..."
-                  className="w-full text-xs font-bold p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/5 transition-all resize-none min-h-[140px] leading-relaxed text-slate-700"
-                />
-              </div>
-
-              {/* Cart A Comment */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-slate-800">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                  <span className="font-black text-sm">カートA コメント</span>
-                </div>
-                <textarea
-                  value={commentA}
-                  onChange={(e) => setCommentA(e.target.value)}
-                  placeholder="カートAに関する補足や注意点..."
-                  className="w-full text-xs font-bold p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:bg-white focus:border-blue-400/30 focus:ring-4 focus:ring-blue-500/5 transition-all resize-none min-h-[120px] leading-relaxed text-slate-700"
-                />
-              </div>
-
-              {/* Cart B Comment */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-slate-800">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span className="font-black text-sm">カートB コメント</span>
-                </div>
-                <textarea
-                  value={commentB}
-                  onChange={(e) => setCommentB(e.target.value)}
-                  placeholder="カートBに関する補足や注意点..."
-                  className="w-full text-xs font-bold p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:bg-white focus:border-emerald-400/30 focus:ring-4 focus:ring-emerald-500/5 transition-all resize-none min-h-[120px] leading-relaxed text-slate-700"
-                />
-              </div>
-            </div>
-
-            <div className="mt-12 pt-6 border-t border-slate-100">
-              <p className="text-[10px] text-slate-400 font-bold leading-relaxed italic">
-                 ※入力した内容は「保存」または「上書き保存」ボタンを押すことで記録されます。
-              </p>
-            </div>
-          </aside>
-        )}
 
         {/* Mobile Sidebar Overlay */}
         <AnimatePresence>
