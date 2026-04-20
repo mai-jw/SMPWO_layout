@@ -2417,6 +2417,51 @@ export default function CartEditor() {
                     </div>
                   </div>
 
+                  {/* Concept & Comments Section (Mobile) */}
+                  <div className="space-y-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-primary/20" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1 flex items-center gap-2">
+                      <Pencil className="w-3 h-3" /> その他の情報
+                    </p>
+                    
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-bold text-slate-500 px-1">コンセプト</label>
+                       <textarea 
+                         value={concept}
+                         onChange={(e) => setConcept(e.target.value)}
+                         placeholder="今期のコンセプトを入力..."
+                         className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 h-24 resize-none"
+                       />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-500 px-1 flex items-center gap-1.5">
+                          <span className="w-3 h-3 rounded bg-slate-800 text-white flex items-center justify-center text-[8px]">A</span>
+                          カートA コメント
+                        </label>
+                        <textarea 
+                          value={commentA}
+                          onChange={(e) => setCommentA(e.target.value)}
+                          placeholder="カートAへのコメント..."
+                          className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 h-16 resize-none"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-slate-500 px-1 flex items-center gap-1.5">
+                          <span className="w-3 h-3 rounded bg-slate-800 text-white flex items-center justify-center text-[8px]">B</span>
+                          カートB コメント
+                        </label>
+                        <textarea 
+                          value={commentB}
+                          onChange={(e) => setCommentB(e.target.value)}
+                          placeholder="カートBへのコメント..."
+                          className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 h-16 resize-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   {/* New Creation Section */}
                   <div className="space-y-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">新規レイアウト作成</p>
