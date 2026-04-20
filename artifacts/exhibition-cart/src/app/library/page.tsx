@@ -141,7 +141,7 @@ export default function LibraryPage() {
                 onChange={(e) => setLangFilter(e.target.value)}
                 className="text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-7 py-2 outline-none text-slate-600 focus:border-sky-400 transition-all appearance-none cursor-pointer"
               >
-                {LANG_FILTER_OPTIONS.map((opt) => (
+                {LANG_FILTER_OPTIONS.filter(opt => opt.key !== "sign_ja" || filter === "poster").map((opt) => (
                   <option key={opt.key} value={opt.key}>{opt.key === "all" ? "すべての言語" : opt.label}</option>
                 ))}
               </select>
@@ -274,7 +274,7 @@ export default function LibraryPage() {
                               onChange={(e) => setEditLanguage(e.target.value)}
                               className="text-[10px] font-bold border border-slate-200 rounded px-1 py-1 bg-white outline-none focus:border-sky-400"
                             >
-                              {LANG_FILTER_OPTIONS.filter(o => o.key !== "all" && o.key !== "foreign").map(o => (
+                              {LANG_FILTER_OPTIONS.filter(o => o.key !== "all" && o.key !== "foreign" && (o.key !== "sign_ja" || editCategory === "poster")).map(o => (
                                 <option key={o.key} value={o.key}>{o.label}</option>
                               ))}
                               <option value="other">その他外国語</option>

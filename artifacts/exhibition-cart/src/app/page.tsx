@@ -38,7 +38,7 @@ export type ActiveTarget =
   | null;
 type SidebarFilter = "all" | "poster" | "ja" | "foreign";
 const LANGUAGES = [
-  "日本語", "日本語手話", "外国語", "英語",
+  "日本語", "外国語", "英語",
   "中国語（簡体字）", "中国語（繁体字）",
   "韓国語", "ベトナム語", "タガログ語",
   "タイ語", "インドネシア語", "スペイン語",
@@ -512,7 +512,7 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
             onChange={(e) => setLangFilter(e.target.value)}
             className="w-full text-[11px] font-bold bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 outline-none text-slate-600 focus:border-sky-400 transition-all appearance-none cursor-pointer"
           >
-            {LANG_FILTER_OPTIONS.map((opt) => (
+            {LANG_FILTER_OPTIONS.filter(opt => opt.key !== "sign_ja" || filter === "poster").map((opt) => (
               <option key={opt.key} value={opt.key}>{opt.key === "all" ? "すべての言語" : opt.label}</option>
             ))}
           </select>
@@ -563,7 +563,7 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
                         className="text-[10px] font-black border border-slate-200 rounded px-1 py-1 bg-white outline-none focus:border-sky-400"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {LANG_FILTER_OPTIONS.filter(o => o.key !== "all" && o.key !== "foreign").map(o => (
+                        {LANG_FILTER_OPTIONS.filter(o => o.key !== "all" && o.key !== "foreign" && (o.key !== "sign_ja" || editCategory === "poster")).map(o => (
                           <option key={o.key} value={o.key}>{o.label}</option>
                         ))}
                         <option value="other">その他外国語</option>

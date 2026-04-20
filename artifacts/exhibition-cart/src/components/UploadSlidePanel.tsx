@@ -330,6 +330,7 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
                                 <option value="th">タイ語</option>
                                 <option value="id">インドネシア語</option>
                                 <option value="es">スペイン語</option>
+                                {file.category === "poster" && <option value="sign_ja">日本語手話</option>}
                               </select>
 
                               {file.category === "poster" && (

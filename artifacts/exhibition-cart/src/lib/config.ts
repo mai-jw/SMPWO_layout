@@ -72,8 +72,8 @@ export const LANG_FILTER_OPTIONS = [
   { key: "th", label: "タイ語" },
   { key: "id", label: "インドネシア語" },
   { key: "es", label: "スペイン語" },
-  { key: "jsl", label: "日本語手話" },
+  { key: "sign_ja", label: "日本語手話" },
   { key: "foreign", label: "外国語" },
 ];
 
-export const EXPLICIT_LANG_KEYS = ["ja", "en", "zh_hans", "zh_hant", "ko", "vi", "tl", "th", "id", "es", "jsl"];
+export const EXPLICIT_LANG_KEYS = ["ja", "en", "zh_hans", "zh_hant", "ko", "vi", "tl", "th", "id", "es", "sign_ja"];
