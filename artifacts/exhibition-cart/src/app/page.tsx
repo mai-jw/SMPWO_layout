@@ -1040,10 +1040,6 @@ export default function CartEditor() {
   const [activeWizardCart, setActiveWizardCart] = useState<CartId>("A");
   const [activeWizardShelf, setActiveWizardShelf] = useState<number>(0); 
 
-  // Prevent flicker/hydration mismatch: hide UI until device is detected
-  if (!hasMounted) {
-    return <div className="fixed inset-0 bg-[#fdfaf3] z-[9999]" />;
-  }
 
 
   const { data: locationsConfig = DEFAULT_LOCATIONS } = useLocationsConfig();
@@ -1587,6 +1583,10 @@ export default function CartEditor() {
 
   const totalA = filledCountV2(cartA);
   const totalB = filledCountV2(cartB);
+
+  if (!hasMounted) {
+    return <div className="fixed inset-0 bg-[#fdfaf3] z-[9999]" />;
+  }
 
   return (
     <>
