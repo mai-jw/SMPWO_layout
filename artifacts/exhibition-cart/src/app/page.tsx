@@ -1242,8 +1242,9 @@ export default function CartEditor() {
 
   const isExistingPeriod = useMemo(() => layouts.some(l => l.period === period), [layouts, period]);
 
-  const handleSave = async (isSilent: boolean = false) => {
-    if (!period.trim() || saveStatus === "saving") return;
+  const handleSave = async (isSilent: boolean = false, overridePeriod?: string) => {
+    const targetPeriod = overridePeriod || period;
+    if (!targetPeriod.trim() || saveStatus === "saving") return;
 
     setSaveStatus("saving");
     
@@ -1253,13 +1254,13 @@ export default function CartEditor() {
 
     try {
       await saveLayout.mutateAsync({ 
-        period, 
+        period: targetPeriod, 
         cart_a: finalCartA, 
         cart_b: finalCartB 
       });
       setSaveStatus("saved");
       if (!isSilent) {
-        alert(`「${formatPeriodDisplay(period)}」の設定を保存しました。\n※お手元のパソコンに画像や表（PNG/PDF/Excel）として書き出したい場合は、右端のボタンをクリックしてください。`);
+        alert(`「${formatPeriodDisplay(targetPeriod)}」の設定を保存しました。\n※お手元のパソコンに画像や表（PNG/PDF/Excel）として書き出したい場合は、右端のボタンをクリックしてください。`);
       }
       setTimeout(() => setSaveStatus("idle"), 2500);
     } catch (err: any) { 
@@ -1329,13 +1330,15 @@ export default function CartEditor() {
     setCommentB("");
     
     // カートA: 直近レイアウトを引き継ぐ / カートB: 常に白紙にリセット
-    if (layouts.length > 0) {
-      setCartA(layouts[0].cart_a);
-      setCartB(makeInitialCartLayoutV2());
-    } else {
-      setCartA(makeInitialCartLayoutV2());
-      setCartB(makeInitialCartLayoutV2());
-    }
+    const newCartA = layouts.length > 0 ? layouts[0].cart_a : makeInitialCartLayoutV2();
+    const newCartB = makeInitialCartLayoutV2();
+
+    setCartA(newCartA);
+    setCartB(newCartB);
+    
+    // Immediately trigger save for the new layout
+    handleSave(true, targetPeriod);
+    
     setShowNewPanel(false);
   };
 
@@ -2427,7 +2430,7 @@ export default function CartEditor() {
                   <div className="space-y-2">
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">レイアウトを保存</p>
                     <button 
-                      onClick={() => { handleSave(); setTimeout(() => setIsMobileActionMenuOpen(false), 800); }}
+                      onClick={() => { handleSave(); setTimeout(() => setIsMobileActionMenuOpen(false), 1200); }}
                       disabled={saveStatus === "saving" || !period.trim()}
                       className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold transition-all shadow-md active:scale-[0.98] ${
                         saveStatus === "saved" ? "bg-emerald-500 text-white" :
