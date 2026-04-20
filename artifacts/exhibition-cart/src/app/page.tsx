@@ -2202,10 +2202,10 @@ export default function CartEditor() {
 
         {/* Desktop Right Settings Sidebar (Concept & Comments) */}
         {!isMobileView && (
-          <aside className="w-[300px] h-full bg-white border-l border-border flex flex-col shrink-0 z-10 shadow-sm">
+          <aside className="w-[360px] h-full bg-white border-l border-border flex flex-col shrink-0 z-10 shadow-sm">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                <Settings className="w-4 h-4 text-primary" /> その他情報
+                <FileText className="w-4 h-4 text-primary" /> コンセプトとコメント
               </h3>
             </div>
             <div className="flex-1 overflow-y-auto p-5 space-y-8 scrollbar-hide">
@@ -2232,7 +2232,6 @@ export default function CartEditor() {
               <div className="space-y-4 pt-4 border-t border-slate-100">
                 <div className="space-y-2">
                   <div className="text-[11px] font-black text-slate-800 px-1 flex items-center gap-2">
-                    <span className="w-4 h-4 rounded bg-slate-800 text-white flex items-center justify-center text-[10px]">A</span>
                      ■ カートA
                   </div>
                   <div className="text-[10px] font-bold text-slate-400 px-1">コメント</div>
@@ -2249,7 +2248,6 @@ export default function CartEditor() {
               <div className="space-y-4 pt-4 border-t border-slate-100">
                 <div className="space-y-2">
                   <div className="text-[11px] font-black text-slate-800 px-1 flex items-center gap-2">
-                    <span className="w-4 h-4 rounded bg-slate-800 text-white flex items-center justify-center text-[10px]">B</span>
                      ■ カートB
                   </div>
                   <div className="text-[10px] font-bold text-slate-400 px-1">コメント</div>
@@ -2421,7 +2419,7 @@ export default function CartEditor() {
                   <div className="space-y-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group">
                     <div className="absolute top-0 left-0 w-1 h-full bg-primary/20" />
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1 flex items-center gap-2">
-                      <Pencil className="w-3 h-3" /> その他の情報
+                      <FileText className="w-3 h-3" /> コンセプトとコメント
                     </p>
                     
                     <div className="space-y-2">
@@ -2437,8 +2435,7 @@ export default function CartEditor() {
                     <div className="grid grid-cols-1 gap-3">
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold text-slate-500 px-1 flex items-center gap-1.5">
-                          <span className="w-3 h-3 rounded bg-slate-800 text-white flex items-center justify-center text-[8px]">A</span>
-                          カートA コメント
+                          ■ カートA コメント
                         </label>
                         <textarea 
                           value={commentA}
@@ -2449,8 +2446,7 @@ export default function CartEditor() {
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold text-slate-500 px-1 flex items-center gap-1.5">
-                          <span className="w-3 h-3 rounded bg-slate-800 text-white flex items-center justify-center text-[8px]">B</span>
-                          カートB コメント
+                          ■ カートB コメント
                         </label>
                         <textarea 
                           value={commentB}
