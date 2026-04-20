@@ -833,7 +833,7 @@ function SelectionSidebar({
                 </div>
               )}
 
-            {!isSpecialTagLayout && canFreeDist && (
+            {canFreeDist && (
               <button onClick={() => setMode("free_dist")}
                 className={`w-full text-left px-4 py-3 text-xs flex items-center justify-between rounded-xl transition-all border ${
                   mode === "free_dist" ? "bg-zinc-900 text-white font-black border-zinc-950 shadow-md scale-[1.02]" : "bg-zinc-50 text-zinc-500 border-transparent hover:bg-zinc-100"
