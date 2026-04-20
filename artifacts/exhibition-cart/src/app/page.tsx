@@ -712,7 +712,7 @@ function SelectionSidebar({
   const renderShelfSettings = () => {
     if (!shelf) return null;
     const isRow1 = shelfIdx === 0;
-    const isSpecialTagLayout = shelf.layout_type === "document";
+    const isSpecialTagLayout = shelf.layout_type === "document" || shelf.layout_type === "bible";
     const canLangTag = isRow1 || isSpecialTagLayout;
     const canFreeDist = isSpecialTagLayout;
     const mode = shelf.tag_1.type;
@@ -748,7 +748,7 @@ function SelectionSidebar({
                 }`}
               >
                 <span className="truncate w-full px-1 text-center font-black text-xs leading-[1.1] whitespace-pre-line tracking-tighter">
-                  {t === "booklet" ? "冊子類/雑誌" : 
+                  {t === "booklet" ? "冊子/雑誌類" : 
                    t === "booklet_doc" ? "書籍\n(冊子サイズ)" : 
                    t === "document" ? "書籍\n(文庫サイズ)" : 
                    t === "bible" ? "聖書" :
@@ -776,7 +776,7 @@ function SelectionSidebar({
               {mode === "none" && <CheckCircle2 className="w-4 h-4 text-primary" />}
             </button>
 
-            {shelf.layout_type === "document" && canFreeDist && (
+            {isSpecialTagLayout && canFreeDist && (
               <button onClick={() => setMode("free_dist")}
                 className={`w-full text-left px-4 py-3 text-xs flex items-center justify-between rounded-xl transition-all border ${
                   mode === "free_dist" ? "bg-zinc-900 text-white font-black border-zinc-950 shadow-md scale-[1.02]" : "bg-zinc-50 text-zinc-500 border-transparent hover:bg-zinc-100"
@@ -833,7 +833,7 @@ function SelectionSidebar({
                 </div>
               )}
 
-            {shelf.layout_type !== "document" && canFreeDist && (
+            {!isSpecialTagLayout && canFreeDist && (
               <button onClick={() => setMode("free_dist")}
                 className={`w-full text-left px-4 py-3 text-xs flex items-center justify-between rounded-xl transition-all border ${
                   mode === "free_dist" ? "bg-zinc-900 text-white font-black border-zinc-950 shadow-md scale-[1.02]" : "bg-zinc-50 text-zinc-500 border-transparent hover:bg-zinc-100"

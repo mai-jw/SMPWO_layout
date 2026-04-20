@@ -85,7 +85,7 @@ interface MobileWizardProps {
 
 const LANGUAGES = [
   "日本語", "外国語", "英語",
-  "中国語（簡体字）", "中国語（繁体字）",
+  "中国語",
   "韓国語", "ベトナム語", "タガログ語",
   "タイ語", "インドネシア語", "スペイン語",
   "その他",
@@ -303,7 +303,13 @@ export function MobileWizard({
                            className={`p-4 h-24 rounded-[2rem] border-2 font-black text-[11px] flex items-center justify-center transition-all ${currentShelf?.layout_type === t ? "shadow-lg scale-105" : "bg-white border-transparent opacity-60"}`}
                            style={{ backgroundColor: currentShelf?.layout_type === t ? COLORS.peach : COLORS.white, borderColor: currentShelf?.layout_type === t ? COLORS.coral : "transparent", color: COLORS.deepPurple }}
                          >
-                           <span className="whitespace-pre-line text-center">{GALLERY_FILTER_LABELS[t] || t}</span>
+                           <span className="whitespace-pre-line text-center">
+                             {t === "booklet" ? "冊子/雑誌類" : 
+                              t === "booklet_doc" ? "書籍\n(冊子サイズ)" : 
+                              t === "document" ? "書籍\n(文庫サイズ)" : 
+                              t === "bible" ? "聖書" :
+                              "パンフレット/\n招待状"}
+                           </span>
                          </button>
                        ))}
                     </div>
@@ -312,25 +318,37 @@ export function MobileWizard({
                     <section className="space-y-6">
                       <SectionLabel label="タグ設定" />
                       <div className="bg-white rounded-[2.5rem] p-6 shadow-xl space-y-4">
-                        <div className="flex gap-2">
-                           <TagOptionBtn label="なし" active={currentShelf?.tag_1.type === "none"} 
-                             onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "none", value: "" }, tag_2: { type: "none", value: "" } } : s) }))} 
-                           />
-                           <TagOptionBtn label="言語" color={COLORS.coral} active={currentShelf?.tag_1.type === "lang"} 
-                             onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang", value: "" }, tag_2: { type: "none", value: "" } } : s) }))}
-                           />
-                           {currentShelf?.layout_type === "document" && (
-                             <TagOptionBtn label="無料配布" color={COLORS.deepPurple} active={currentShelf?.tag_1.type === "free_dist"} 
-                               onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "free_dist", value: "無料で差し上げています" }, tag_2: { type: "none", value: "" } } : s) }))}
-                             />
-                           )}
-                        </div>
-                        {currentShelf?.tag_1.type === "lang" && (
-                          <div className="grid grid-cols-2 gap-3 pt-2">
-                             <TagSelect value={currentShelf.tag_1.value} placeholder="なし" onChange={v => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang", value: v } } : s) }))} />
-                             <TagSelect value={currentShelf.tag_2.value} placeholder="なし" onChange={v => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_2: { type: v ? "lang" : "none", value: v } } : s) }))} />
-                          </div>
-                        )}
+                        {(() => {
+                           const isSpecialTagLayout = currentShelf?.layout_type === "document" || currentShelf?.layout_type === "bible";
+                           const canLangTag = activeShelfIdx === 0 || isSpecialTagLayout;
+                           const canFreeDist = isSpecialTagLayout;
+
+                           return (
+                             <>
+                               <div className="flex gap-2">
+                                  <TagOptionBtn label="なし" active={currentShelf?.tag_1.type === "none"} 
+                                    onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "none", value: "" }, tag_2: { type: "none", value: "" } } : s) }))} 
+                                  />
+                                  {canLangTag && (
+                                    <TagOptionBtn label="言語" color={COLORS.coral} active={currentShelf?.tag_1.type === "lang"} 
+                                      onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang", value: "" }, tag_2: { type: "none", value: "" } } : s) }))}
+                                    />
+                                  )}
+                                  {canFreeDist && (
+                                    <TagOptionBtn label="無料配布" color={COLORS.deepPurple} active={currentShelf?.tag_1.type === "free_dist"} 
+                                      onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "free_dist", value: "無料で差し上げています" }, tag_2: { type: "none", value: "" } } : s) }))}
+                                    />
+                                  )}
+                               </div>
+                               {currentShelf?.tag_1.type === "lang" && (
+                                 <div className="grid grid-cols-2 gap-3 pt-2">
+                                    <TagSelect value={currentShelf.tag_1.value} placeholder="左タグ" onChange={v => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang", value: v } } : s) }))} />
+                                    <TagSelect value={currentShelf.tag_2.value} placeholder="右タグ" onChange={v => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_2: { type: v ? "lang" : "none", value: v } } : s) }))} />
+                                 </div>
+                               )}
+                             </>
+                           );
+                        })()}
                       </div>
                     </section>
                   )}
