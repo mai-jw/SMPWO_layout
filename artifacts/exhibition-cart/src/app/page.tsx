@@ -1325,10 +1325,10 @@ export default function CartEditor() {
 
     setPeriod(targetPeriod);
     
-    // Copy from the first layout or use empty
+    // カートA: 直近レイアウトを引き継ぐ / カートB: 常に白紙にリセット
     if (layouts.length > 0) {
       setCartA(layouts[0].cart_a);
-      setCartB(layouts[0].cart_b);
+      setCartB(makeInitialCartLayoutV2());
     } else {
       setCartA(makeInitialCartLayoutV2());
       setCartB(makeInitialCartLayoutV2());
