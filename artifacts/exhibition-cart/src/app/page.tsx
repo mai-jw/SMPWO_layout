@@ -1102,22 +1102,28 @@ export default function CartEditor() {
     }
   }, [layouts, period]);
 
-  // 最後に表示していた期間をLocalStorageから復元する
+  // 最後に表示していた期間とモバイル表示形式をLocalStorageから復元する
   useEffect(() => {
     if (!hasMounted) return;
     
-    const saved = localStorage.getItem("smpwo-last-period");
-    if (saved) {
-      setPeriod(saved);
+    const savedPeriod = localStorage.getItem("smpwo-last-period");
+    if (savedPeriod) {
+      setPeriod(savedPeriod);
+    }
+
+    const savedMobileType = localStorage.getItem("smpwo-mobile-view-type") as "standard" | "wizard" | null;
+    if (savedMobileType && (savedMobileType === "standard" || savedMobileType === "wizard")) {
+      setMobileViewType(savedMobileType);
     }
   }, [hasMounted]);
 
-  // 選択中の期間をLocalStorageに保存
+  // 選択中の期間と表示形式をLocalStorageに保存
   useEffect(() => {
-    if (hasMounted && period) {
-      localStorage.setItem("smpwo-last-period", period);
+    if (hasMounted) {
+      if (period) localStorage.setItem("smpwo-last-period", period);
+      localStorage.setItem("smpwo-mobile-view-type", mobileViewType);
     }
-  }, [hasMounted, period]);
+  }, [hasMounted, period, mobileViewType]);
 
   const getSetCart = useCallback((cart: CartId) => cart === "A" ? setCartA : setCartB, []);
 
@@ -2052,14 +2058,14 @@ export default function CartEditor() {
 
           <div 
             ref={cartScrollRef}
-            className={`flex-1 w-full flex flex-col items-center justify-center pb-8 pt-4 overflow-hidden select-none`}
+            className={`flex-1 w-full flex flex-col items-center justify-start pb-8 pt-0 overflow-hidden select-none`}
             style={{ WebkitOverflowScrolling: "touch" }}
           >
-            <motion.div layout className="shrink-0 flex items-center justify-center">
+            <motion.div layout className={`shrink-0 flex items-center justify-center ${isMobileView ? "mt-[-20px]" : ""}`}>
               <div 
                 ref={canvasRef as any} 
                 id="export-container" 
-                className={`flex flex-col items-center p-4 bg-background shrink-0 ${isMobileView ? "scale-[0.55] origin-center" : ""}`}
+                className={`flex flex-col items-center p-4 bg-background shrink-0 ${isMobileView ? "scale-[0.62] origin-top" : ""}`}
                 style={isMobileView ? { width: "820px" } : {}}
               >
                 <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
