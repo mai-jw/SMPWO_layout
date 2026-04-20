@@ -1242,10 +1242,9 @@ export default function CartEditor() {
 
   const isExistingPeriod = useMemo(() => layouts.some(l => l.period === period), [layouts, period]);
 
-  const handleSave = async () => {
+  const handleSave = async (isSilent: boolean = false) => {
     if (!period.trim() || saveStatus === "saving") return;
 
-    // 上書き保存の確認ダイアログを削除（直接実行）
     setSaveStatus("saving");
     
     // Merge metadata into JSON-based objects to avoid missing DB columns
@@ -1259,7 +1258,9 @@ export default function CartEditor() {
         cart_b: finalCartB 
       });
       setSaveStatus("saved");
-      alert(`「${formatPeriodDisplay(period)}」の設定を保存しました。\n※お手元のパソコンに画像や表（PNG/PDF/Excel）として書き出したい場合は、右端のボタンをクリックしてください。`);
+      if (!isSilent) {
+        alert(`「${formatPeriodDisplay(period)}」の設定を保存しました。\n※お手元のパソコンに画像や表（PNG/PDF/Excel）として書き出したい場合は、右端のボタンをクリックしてください。`);
+      }
       setTimeout(() => setSaveStatus("idle"), 2500);
     } catch (err: any) { 
       console.error("[Save Error] Failed to persist layout to Supabase:", err);
@@ -2226,11 +2227,11 @@ export default function CartEditor() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between px-1">
                     <label className="text-[10px] font-bold text-slate-400">コンセプト</label>
-                    <button onClick={handleSave} className="text-[10px] text-primary font-bold hover:underline">保存する</button>
                   </div>
                   <textarea 
                     value={concept}
                     onChange={(e) => setConcept(e.target.value)}
+                    onBlur={() => handleSave(true)}
                     placeholder="今期のコンセプトを入力してください..."
                     className="w-full text-xs font-medium border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none h-[120px]"
                   />
@@ -2242,12 +2243,12 @@ export default function CartEditor() {
                 <div className="space-y-2">
                   <div className="text-[11px] font-black text-slate-800 px-1 flex items-center justify-between">
                      <span>■ カートA</span>
-                     <button onClick={handleSave} className="text-[10px] text-primary font-bold hover:underline">保存する</button>
                   </div>
                   <div className="text-[10px] font-bold text-slate-400 px-1">コメント</div>
                   <textarea 
                     value={commentA}
                     onChange={(e) => setCommentA(e.target.value)}
+                    onBlur={() => handleSave(true)}
                     placeholder="カートAへのコメント..."
                     className="w-full text-xs font-medium border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none h-[100px]"
                   />
@@ -2259,12 +2260,12 @@ export default function CartEditor() {
                 <div className="space-y-2">
                   <div className="text-[11px] font-black text-slate-800 px-1 flex items-center justify-between">
                      <span>■ カートB</span>
-                     <button onClick={handleSave} className="text-[10px] text-primary font-bold hover:underline">保存する</button>
                   </div>
                   <div className="text-[10px] font-bold text-slate-400 px-1">コメント</div>
                   <textarea 
                     value={commentB}
                     onChange={(e) => setCommentB(e.target.value)}
+                    onBlur={() => handleSave(true)}
                     placeholder="カートBへのコメント..."
                     className="w-full text-xs font-medium border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none h-[100px]"
                   />
@@ -2273,21 +2274,6 @@ export default function CartEditor() {
               
               <div className="pt-4 opacity-30">
                 <p className="text-[9px] font-bold text-center text-slate-400">※ この情報は画像保存には含まれません</p>
-              </div>
-
-              <div className="pt-2">
-                <button 
-                  onClick={handleSave}
-                  disabled={saveStatus === "saving"}
-                  className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-black transition-all shadow-lg active:scale-95 ${
-                    saveStatus === "saved" ? "bg-emerald-500 text-white shadow-emerald-100" : "bg-[#1b618d] text-white shadow-[#1b618d]/20 hover:bg-[#154a6b]"
-                  }`}
-                >
-                  {saveStatus === "saved" ? <CheckCircle2 className="w-4 h-4" /> :
-                   saveStatus === "saving" ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> :
-                   <Save className="w-4 h-4" />}
-                  <span>{saveStatus === "saved" ? "保存しました" : "この内容を保存"}</span>
-                </button>
               </div>
             </div>
           </aside>
@@ -2453,6 +2439,7 @@ export default function CartEditor() {
                        <textarea 
                          value={concept}
                          onChange={(e) => setConcept(e.target.value)}
+                         onBlur={() => handleSave(true)}
                          placeholder="今期のコンセプトを入力..."
                          className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 h-24 resize-none"
                        />
@@ -2466,6 +2453,7 @@ export default function CartEditor() {
                         <textarea 
                           value={commentA}
                           onChange={(e) => setCommentA(e.target.value)}
+                          onBlur={() => handleSave(true)}
                           placeholder="カートAへのコメント..."
                           className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 h-16 resize-none"
                         />
@@ -2477,6 +2465,7 @@ export default function CartEditor() {
                         <textarea 
                           value={commentB}
                           onChange={(e) => setCommentB(e.target.value)}
+                          onBlur={() => handleSave(true)}
                           placeholder="カートBへのコメント..."
                           className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 h-16 resize-none"
                         />
