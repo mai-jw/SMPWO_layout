@@ -1693,16 +1693,6 @@ export default function CartEditor() {
           </button>
         )}
 
-        {/* Wizard/Standard Toggle for Mobile */}
-        {isMobileView && (
-          <button 
-            onClick={() => setMobileViewType(prev => prev === "wizard" ? "standard" : "wizard")}
-            className="flex items-center gap-1.5 text-[10px] px-2 py-1.5 rounded-xl border border-primary/20 bg-primary/5 text-primary font-black active:scale-95 transition-all shadow-sm"
-          >
-            {mobileViewType === "wizard" ? <LayoutGrid className="w-3.5 h-3.5" /> : <Settings className="w-3.5 h-3.5" />}
-            <span>{mobileViewType === "wizard" ? "通常表示" : "ウィザード"}</span>
-          </button>
-        )}
         
         <div className={`flex items-center gap-3 tracking-tight h-10 relative ${isMobileView ? "mr-2" : "mr-6"}`}>
           <div className="w-12 h-10 flex items-center justify-center relative mx-4 shrink-0">
@@ -1917,20 +1907,28 @@ export default function CartEditor() {
             </div>
           </>
         )}
-        {/* View Mode Toggle */}
+        {/* View Mode Toggle (PC) or Widget Toggle (Mobile) */}
         <div className="flex items-center gap-1 border-l border-border ml-1 pl-1">
-          <button
-            onClick={toggleViewMode}
-            className={`flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-md border font-bold transition-all active:scale-95 shadow-xs select-none ${
-              isMobileView 
-                ? "bg-slate-800 text-white border-slate-900" 
-                : "bg-white text-slate-700 border-slate-300"
-            }`}
-            title={isMobileView ? "PC版に切り替え" : "Mobile版に切り替え"}
-          >
-            {isMobileView ? <Monitor className="w-3.5 h-3.5" /> : <Smartphone className="w-3.5 h-3.5" />}
-            <span>{isMobileView ? "PC版" : "Mobile版"}</span>
-          </button>
+          {isMobileView ? (
+            /* Mobile Standard View -> Switch back to Widget (Wizard) */
+            <button
+              onClick={() => setMobileViewType("wizard")}
+              className="flex items-center justify-center w-10 h-8 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 shadow-sm active:scale-90 transition-all"
+              title="アシスタントモードに切り替え"
+            >
+              <Smartphone className="w-5 h-5" />
+            </button>
+          ) : (
+            /* Desktop View -> Switch to Mobile Preview */
+            <button
+              onClick={toggleViewMode}
+              className="flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-md border font-bold bg-white text-slate-700 border-slate-300 transition-all active:scale-95 shadow-xs select-none"
+              title="Mobile版に切り替え"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span>Mobile版</span>
+            </button>
+          )}
         </div>
       </div>
 
