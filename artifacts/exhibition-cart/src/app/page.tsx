@@ -1391,10 +1391,14 @@ export default function CartEditor() {
 
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
-            const rect = orig.getBoundingClientRect();
+            // Don't sync width/height for the root container as we'll set it manually
+            const isRoot = cloned.id === "export-container";
             
-            cloned.style.width = `${rect.width}px`;
-            cloned.style.height = `${rect.height}px`;
+            if (!isRoot) {
+              const rect = orig.getBoundingClientRect();
+              cloned.style.width = `${rect.width}px`;
+              cloned.style.height = `${rect.height}px`;
+            }
 
             for (let i = 0; i < style.length; i++) {
               const prop = style[i];
@@ -1412,13 +1416,15 @@ export default function CartEditor() {
           };
           syncStyles(originalContainer, clonedContainer);
 
-          clonedContainer.style.setProperty("width", "auto", "important");
+          // Force fixed width to match actual content (2 carts x 500px - 180px overlap = ~820px)
+          clonedContainer.style.setProperty("width", "820px", "important");
           clonedContainer.style.setProperty("height", "auto", "important");
           clonedContainer.style.setProperty("background-color", "#ffffff", "important");
-          clonedContainer.style.setProperty("padding", "100px 120px", "important");
+          clonedContainer.style.setProperty("padding", "80px 40px", "important");
           clonedContainer.style.setProperty("display", "flex", "important");
           clonedContainer.style.setProperty("flex-direction", "column", "important");
           clonedContainer.style.setProperty("align-items", "center", "important");
+          clonedContainer.style.setProperty("margin", "0", "important");
         }
       });
       const dataUrl = canvas.toDataURL("image/png");
