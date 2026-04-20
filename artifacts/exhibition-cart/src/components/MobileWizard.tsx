@@ -119,12 +119,17 @@ export function MobileWizard({
             exit={{ opacity: 0, y: -30 }}
             className="flex flex-col h-full overflow-hidden"
           >
-            <div className="relative pt-12 pb-20 px-8">
-              <div 
-                className="absolute inset-0 z-0" 
-                style={{ background: `linear-gradient(135deg, ${COLORS.coral}, ${COLORS.peach})` }}
-              />
-              <svg className="absolute bottom-0 left-0 w-full text-cream" viewBox="0 0 1440 320" preserveAspectRatio="none">
+            <div className="relative pt-12 pb-20 px-8 overflow-hidden">
+              <div className="absolute inset-0 z-0">
+                <img 
+                  src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/Mobile.png" 
+                  alt="Background" 
+                  className="w-full h-full object-cover"
+                />
+                {/* Subtle overlay to ensure text readability if needed */}
+                <div className="absolute inset-0 bg-black/10" />
+              </div>
+              <svg className="absolute bottom-0 left-0 w-full text-cream z-[5]" viewBox="0 0 1440 320" preserveAspectRatio="none">
                 <path fill="currentColor" d="M0,192L48,197.3C96,203,192,213,288,192C384,171,480,117,576,106.7C672,96,768,128,864,165.3C960,203,1056,245,1152,240C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
               </svg>
               <div className="relative z-10 flex flex-col gap-1">
