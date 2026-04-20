@@ -1039,8 +1039,6 @@ export default function CartEditor() {
   const [wizardStep, setWizardStep] = useState<"menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete">("menu");
   const [activeWizardCart, setActiveWizardCart] = useState<CartId>("A");
   const [activeWizardShelf, setActiveWizardShelf] = useState<number>(0); // 0, 1, 2
-  
-  if (!hasMounted) return <div className="fixed inset-0 bg-white" />;
 
 
   const { data: locationsConfig = DEFAULT_LOCATIONS } = useLocationsConfig();
@@ -1701,10 +1699,15 @@ export default function CartEditor() {
             <img 
               src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/samesame.gif" 
               alt="SMPWO Logo" 
-              className="w-full h-full object-contain transform-gpu scale-[1.6]" 
+              className={`w-full h-full object-contain transform-gpu ${isMobileView ? "scale-[1.3]" : "scale-[1.6]"}`} 
             />
           </div>
-          <span className="font-rounded font-black text-base sm:text-xl tracking-widest text-[#64748b] mt-0.5 relative z-10">SMPWO LAYOUT</span>
+          {!isMobileView && (
+            <span className="font-rounded font-black text-xl tracking-widest text-[#64748b] mt-0.5 relative z-10 hidden sm:inline">SMPWO LAYOUT</span>
+          )}
+          {isMobileView && (
+            <span className="font-rounded font-black text-lg tracking-widest text-[#64748b] mt-0.5 relative z-10">SMPWO LAYOUT</span>
+          )}
         </div>
 
         {/* Period selector: PC only */}
@@ -2039,21 +2042,23 @@ export default function CartEditor() {
 
           <div 
             ref={cartScrollRef}
-            className={`w-full ${isMobileView ? "overflow-hidden" : "overflow-x-auto"} pb-8 pt-2 flex scrollbar-hide active:cursor-grabbing select-none justify-center`}
+            className={`w-full overflow-x-auto pb-8 pt-2 flex scrollbar-hide active:cursor-grabbing select-none ${isMobileView ? "justify-center" : "justify-start"}`}
             style={{ WebkitOverflowScrolling: "touch" }}
           >
             <motion.div 
               layout 
               className="shrink-0"
-              style={isMobileView ? {
-                transform: `scale(${Math.min(0.75, (typeof window !== 'undefined' ? window.innerWidth - 80 : 300) / 820)})`,
+              style={isMobileView ? { 
+                transform: "scale(0.42)",
                 transformOrigin: "top center",
                 width: "820px",
-                margin: "0 auto"
+                height: "auto",
+                margin: "0 auto",
+                marginBottom: "-800px" // Compensate for scaled space
               } : {}}
             >
               <div ref={canvasRef as any} id="export-container" className="flex flex-col items-center p-4 bg-background shrink-0">
-                <div className="flex -space-x-[180px] items-start shrink-0">
+                <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
                   <CartPanel
                     cartId="A" layout={cartA} activeTarget={activeTarget}
                     isSelecting={false} itemMap={itemMap}
