@@ -1406,7 +1406,7 @@ export default function CartEditor() {
             }
             for (let i = 0; i < orig.children.length; i++) {
               if (orig.children[i] && cloned.children[i]) {
-                syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement, false);
+                syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement);
               }
             }
           };
