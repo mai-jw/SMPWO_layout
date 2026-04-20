@@ -67,6 +67,10 @@ export interface CartLayoutV2 {
   poster: string | null; // item ID
   posterType: string; // "マグポス" | "コルトン" | "その他" | ""
   shelves: ShelfData[]; // Fixed to 3 shelves
+  // Metadata for Concept/Comments (Stored in JSON to avoid missing DB columns)
+  comment?: string;
+  concept?: string;
+  supplementary?: string;
 }
 
 export const DEFAULT_TAG: TagData = { type: "none", value: "" };
@@ -116,7 +120,6 @@ export interface LayoutRecord {
   period: string;
   cart_a: CartLayoutV2;
   cart_b: CartLayoutV2;
-  notes?: string;
   created_at?: string;
   updated_at?: string;
 }

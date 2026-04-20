@@ -47,6 +47,9 @@ function hydrateLayout(raw: unknown): CartLayoutV2 {
     poster: typeof r.poster === "string" ? r.poster : null,
     posterType: typeof r.posterType === "string" ? r.posterType : "",
     shelves: shelves as ShelfData[],
+    comment: typeof r.comment === "string" ? r.comment : "",
+    concept: typeof r.concept === "string" ? r.concept : "",
+    supplementary: typeof r.supplementary === "string" ? r.supplementary : "",
   };
 }
 
@@ -89,10 +92,10 @@ export function useLayouts() {
 export function useSaveLayout() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ period, cart_a, cart_b, notes }: { period: string; cart_a: CartLayoutV2; cart_b: CartLayoutV2; notes?: string }): Promise<LayoutRecord> => {
+    mutationFn: async ({ period, cart_a, cart_b }: { period: string; cart_a: CartLayoutV2; cart_b: CartLayoutV2 }): Promise<LayoutRecord> => {
       const { data, error } = await supabase
         .from(LAYOUTS_TABLE)
-        .upsert({ period, cart_a, cart_b, notes, updated_at: new Date().toISOString() }, { onConflict: "period" })
+        .upsert({ period, cart_a, cart_b, updated_at: new Date().toISOString() }, { onConflict: "period" })
         .select()
         .single();
       if (error) throw new Error(error.message);

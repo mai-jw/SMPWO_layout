@@ -1079,26 +1079,11 @@ export default function CartEditor() {
         setCartA(existing.cart_a);
         setCartB(existing.cart_b);
         
-        // Load multi-notes from JSON if available
-        try {
-          if (existing.notes && existing.notes.trim().startsWith("{")) {
-            const parsed = JSON.parse(existing.notes);
-            setNotes(parsed.supplementary || "");
-            setConcept(parsed.concept || "");
-            setCommentA(parsed.commentA || "");
-            setCommentB(parsed.commentB || "");
-          } else {
-            setNotes(existing.notes || "外国語の出版物は、奉仕者が好きな位置に変更できます。\n自分の得意な言語や地点の特色を考えて、自由に動かしてください。");
-            setConcept("");
-            setCommentA("");
-            setCommentB("");
-          }
-        } catch (e) {
-          setNotes(existing.notes || "外国語の出版物は、奉仕者が好きな位置に変更できます。\n自分の得意な言語や地点の特色を考えて、自由に動かしてください。");
-          setConcept("");
-          setCommentA("");
-          setCommentB("");
-        }
+        // Extract multi-notes from JSON-based cart objects
+        setNotes(existing.cart_a.supplementary || "外国語の出版物は、奉仕者が好きな位置に変更できます。\n自分の得意な言語や地点の特色を考えて、自由に動かしてください。");
+        setConcept(existing.cart_a.concept || "");
+        setCommentA(existing.cart_a.comment || "");
+        setCommentB(existing.cart_b.comment || "");
       }
     }
   }, [layouts, period]);
@@ -1242,16 +1227,17 @@ export default function CartEditor() {
 
     // 上書き保存の確認ダイアログを削除（直接実行）
     setSaveStatus("saving");
-    // Combine notes into JSON
-    const notesJson = JSON.stringify({
-      supplementary: notes,
-      concept,
-      commentA,
-      commentB
-    });
+    
+    // Merge metadata into JSON-based objects to avoid missing DB columns
+    const finalCartA = { ...cartA, concept, comment: commentA, supplementary: notes };
+    const finalCartB = { ...cartB, comment: commentB };
 
     try {
-      await saveLayout.mutateAsync({ period, cart_a: cartA, cart_b: cartB, notes: notesJson });
+      await saveLayout.mutateAsync({ 
+        period, 
+        cart_a: finalCartA, 
+        cart_b: finalCartB 
+      });
       setSaveStatus("saved");
       alert(`「${formatPeriodDisplay(period)}」の設定を保存しました。\n※お手元のパソコンに画像や表（PNG/PDF/Excel）として書き出したい場合は、右端のボタンをクリックしてください。`);
       setTimeout(() => setSaveStatus("idle"), 2500);
