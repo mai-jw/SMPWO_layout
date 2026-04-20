@@ -1389,19 +1389,12 @@ export default function CartEditor() {
           clonedDoc.body.innerHTML = "";
           clonedDoc.body.appendChild(clonedContainer);
 
-          const syncStyles = (orig: HTMLElement, cloned: HTMLElement, isRoot: boolean = false) => {
+          const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
             const rect = orig.getBoundingClientRect();
             
-            // Critical fix: Use scrollWidth/Height for the root to capture content 
-            // that might be clipped by overflow containers in the UI.
-            if (isRoot) {
-              cloned.style.width = `${orig.scrollWidth}px`;
-              cloned.style.height = `${orig.scrollHeight}px`;
-            } else {
-              cloned.style.width = `${rect.width}px`;
-              cloned.style.height = `${rect.height}px`;
-            }
+            cloned.style.width = `${rect.width}px`;
+            cloned.style.height = `${rect.height}px`;
 
             for (let i = 0; i < style.length; i++) {
               const prop = style[i];
@@ -1413,17 +1406,16 @@ export default function CartEditor() {
             }
             for (let i = 0; i < orig.children.length; i++) {
               if (orig.children[i] && cloned.children[i]) {
-                syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement, false);
+                syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement);
               }
             }
           };
-          syncStyles(originalContainer, clonedContainer, true);
+          syncStyles(originalContainer, clonedContainer);
 
-          // Reset positioning to allow the container to use its natural calculated size
           clonedContainer.style.setProperty("width", "auto", "important");
           clonedContainer.style.setProperty("height", "auto", "important");
-          clonedContainer.style.setProperty("position", "relative", "important");
-          clonedContainer.style.setProperty("padding", "60px 100px", "important"); // Moderate, balanced padding
+          clonedContainer.style.setProperty("background-color", "#ffffff", "important");
+          clonedContainer.style.setProperty("padding", "100px 300px 40px 300px", "important");
           clonedContainer.style.setProperty("display", "flex", "important");
           clonedContainer.style.setProperty("flex-direction", "column", "important");
           clonedContainer.style.setProperty("align-items", "center", "important");
