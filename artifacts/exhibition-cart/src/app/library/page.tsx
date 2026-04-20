@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { UploadSlidePanel } from "@/components/UploadSlidePanel";
 import { GALLERY_FILTER_LABELS, GALLERY_FILTER_ICONS, LANG_FILTER_OPTIONS, EXPLICIT_LANG_KEYS } from "@/lib/config";
 import type { GalleryFilterType } from "@/app/page";
 
@@ -18,7 +17,7 @@ export default function LibraryPage() {
   const { data: items = [], isLoading } = useItems();
   const updateMutation = useUpdateItem();
   const deleteMutation = useDeleteItem();
-  const { openUploadPanel, isUploadPanelOpen, closeUploadPanel } = useUI();
+  const { openUploadPanel } = useUI();
 
   const [filter, setFilter] = useState<GalleryFilterType>("all");
   const [langFilter, setLangFilter] = useState<string>("all");
@@ -74,8 +73,6 @@ export default function LibraryPage() {
 
   return (
     <>
-      <UploadSlidePanel isOpen={isUploadPanelOpen} onClose={closeUploadPanel} />
-
       <div className="min-h-screen bg-[#fdfaf3] flex flex-col">
         {/* Header */}
         <div className="bg-[#64748b] shadow-md sticky top-0 z-20">
