@@ -2058,14 +2058,14 @@ export default function CartEditor() {
 
           <div 
             ref={cartScrollRef}
-            className={`flex-1 w-full flex flex-col items-center justify-start pb-8 pt-0 overflow-hidden select-none`}
+            className={`flex-1 w-full flex flex-col items-center justify-center pb-12 pt-4 overflow-hidden select-none`}
             style={{ WebkitOverflowScrolling: "touch" }}
           >
-            <motion.div layout className={`shrink-0 flex items-center justify-center ${isMobileView ? "mt-[-20px]" : ""}`}>
+            <motion.div layout className="shrink-0 flex items-center justify-center">
               <div 
                 ref={canvasRef as any} 
                 id="export-container" 
-                className={`flex flex-col items-center p-4 bg-background shrink-0 ${isMobileView ? "scale-[0.62] origin-top" : ""}`}
+                className={`flex flex-col items-center p-4 bg-background shrink-0 ${isMobileView ? "scale-[0.6] origin-center" : ""}`}
                 style={isMobileView ? { width: "820px" } : {}}
               >
                 <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
@@ -2126,20 +2126,23 @@ export default function CartEditor() {
                                     {shelf.layout_type === "none" ? (
                                       <span className="text-slate-300">—</span>
                                     ) : (
-                                      <>
-                                        <div className="font-bold text-foreground">
-                                          {Array.from(new Set(shelfItems.map((item) => item.name))).join("、") || "—"}
-                                        </div>
-                                        {hasItems && (
-                                          <div className="flex gap-3 mt-0.5 flex-wrap">
-                                            {languages.map(lang => (
-                                              <span key={lang} className="text-red-600 font-bold">
-                                                {LANG_FILTER_OPTIONS.find(o => o.key === lang)?.label || lang}
-                                              </span>
-                                            ))}
-                                          </div>
+                                      <div className="space-y-1.5">
+                                        {shelfItems.length === 0 ? (
+                                          <span className="text-slate-300">—</span>
+                                        ) : (
+                                          shelfItems.map((item, i) => {
+                                            const langLabel = LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language;
+                                            return (
+                                              <div key={i} className="flex flex-col">
+                                                <div className="font-bold text-foreground leading-tight">{item.name}</div>
+                                                <div className="text-red-600 font-bold text-[9px] leading-tight">
+                                                  {langLabel}
+                                                </div>
+                                              </div>
+                                            );
+                                          })
                                         )}
-                                      </>
+                                      </div>
                                     )}
                                   </td>
                                 </tr>
