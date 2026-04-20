@@ -1389,12 +1389,19 @@ export default function CartEditor() {
           clonedDoc.body.innerHTML = "";
           clonedDoc.body.appendChild(clonedContainer);
 
-          const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
+          const syncStyles = (orig: HTMLElement, cloned: HTMLElement, isRoot: boolean = false) => {
             const style = window.getComputedStyle(orig);
             const rect = orig.getBoundingClientRect();
             
-            cloned.style.width = `${rect.width}px`;
-            cloned.style.height = `${rect.height}px`;
+            // Critical fix: Use scrollWidth/Height for the root to capture content 
+            // that might be clipped by overflow containers in the UI.
+            if (isRoot) {
+              cloned.style.width = `${orig.scrollWidth}px`;
+              cloned.style.height = `${orig.scrollHeight}px`;
+            } else {
+              cloned.style.width = `${rect.width}px`;
+              cloned.style.height = `${rect.height}px`;
+            }
 
             for (let i = 0; i < style.length; i++) {
               const prop = style[i];
@@ -1406,22 +1413,17 @@ export default function CartEditor() {
             }
             for (let i = 0; i < orig.children.length; i++) {
               if (orig.children[i] && cloned.children[i]) {
-                syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement);
+                syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement, false);
               }
             }
           };
-          syncStyles(originalContainer, clonedContainer);
+          syncStyles(originalContainer, clonedContainer, true);
 
-          // Ensure the cloned body doesn't constrain the container
-          clonedDoc.body.style.width = "5000px";
-          clonedDoc.body.style.backgroundColor = "#ffffff";
-
-          // Allow the container to expand with generous padding
+          // Reset positioning to allow the container to use its natural calculated size
           clonedContainer.style.setProperty("width", "auto", "important");
           clonedContainer.style.setProperty("height", "auto", "important");
-          clonedContainer.style.setProperty("min-width", "2500px", "important");
-          clonedContainer.style.setProperty("padding", "100px 400px", "important");
-          clonedContainer.style.setProperty("background-color", "#ffffff", "important");
+          clonedContainer.style.setProperty("position", "relative", "important");
+          clonedContainer.style.setProperty("padding", "60px 100px", "important"); // Moderate, balanced padding
           clonedContainer.style.setProperty("display", "flex", "important");
           clonedContainer.style.setProperty("flex-direction", "column", "important");
           clonedContainer.style.setProperty("align-items", "center", "important");
