@@ -2052,14 +2052,14 @@ export default function CartEditor() {
 
           <div 
             ref={cartScrollRef}
-            className={`w-full ${isMobileView ? "overflow-y-auto min-h-[600px] h-[650px] max-h-[80vh]" : "overflow-x-auto h-auto"} pb-8 pt-4 flex scrollbar-hide active:cursor-grabbing select-none justify-center`}
+            className={`flex-1 w-full flex flex-col items-center justify-center pb-8 pt-4 overflow-hidden select-none`}
             style={{ WebkitOverflowScrolling: "touch" }}
           >
             <motion.div layout className="shrink-0 flex items-center justify-center">
               <div 
                 ref={canvasRef as any} 
                 id="export-container" 
-                className={`flex flex-col items-center p-4 bg-background shrink-0 ${isMobileView ? "scale-[0.42] origin-top " : ""}`}
+                className={`flex flex-col items-center p-4 bg-background shrink-0 ${isMobileView ? "scale-[0.42] origin-center" : ""}`}
                 style={isMobileView ? { width: "820px" } : {}}
               >
                 <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
