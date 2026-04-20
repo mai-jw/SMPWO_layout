@@ -2204,7 +2204,10 @@ export default function CartEditor() {
                   </span>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-400 px-1">コンセプト</label>
+                  <div className="flex items-center justify-between px-1">
+                    <label className="text-[10px] font-bold text-slate-400">コンセプト</label>
+                    <button onClick={handleSave} className="text-[10px] text-primary font-bold hover:underline">保存する</button>
+                  </div>
                   <textarea 
                     value={concept}
                     onChange={(e) => setConcept(e.target.value)}
@@ -2217,8 +2220,9 @@ export default function CartEditor() {
               {/* Cart A Comment */}
               <div className="space-y-4 pt-4 border-t border-slate-100">
                 <div className="space-y-2">
-                  <div className="text-[11px] font-black text-slate-800 px-1 flex items-center gap-2">
-                     ■ カートA
+                  <div className="text-[11px] font-black text-slate-800 px-1 flex items-center justify-between">
+                     <span>■ カートA</span>
+                     <button onClick={handleSave} className="text-[10px] text-primary font-bold hover:underline">保存する</button>
                   </div>
                   <div className="text-[10px] font-bold text-slate-400 px-1">コメント</div>
                   <textarea 
@@ -2233,8 +2237,9 @@ export default function CartEditor() {
               {/* Cart B Comment */}
               <div className="space-y-4 pt-4 border-t border-slate-100">
                 <div className="space-y-2">
-                  <div className="text-[11px] font-black text-slate-800 px-1 flex items-center gap-2">
-                     ■ カートB
+                  <div className="text-[11px] font-black text-slate-800 px-1 flex items-center justify-between">
+                     <span>■ カートB</span>
+                     <button onClick={handleSave} className="text-[10px] text-primary font-bold hover:underline">保存する</button>
                   </div>
                   <div className="text-[10px] font-bold text-slate-400 px-1">コメント</div>
                   <textarea 
@@ -2248,6 +2253,21 @@ export default function CartEditor() {
               
               <div className="pt-4 opacity-30">
                 <p className="text-[9px] font-bold text-center text-slate-400">※ この情報は画像保存には含まれません</p>
+              </div>
+
+              <div className="pt-2">
+                <button 
+                  onClick={handleSave}
+                  disabled={saveStatus === "saving"}
+                  className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-black transition-all shadow-lg active:scale-95 ${
+                    saveStatus === "saved" ? "bg-emerald-500 text-white shadow-emerald-100" : "bg-[#1b618d] text-white shadow-[#1b618d]/20 hover:bg-[#154a6b]"
+                  }`}
+                >
+                  {saveStatus === "saved" ? <CheckCircle2 className="w-4 h-4" /> :
+                   saveStatus === "saving" ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> :
+                   <Save className="w-4 h-4" />}
+                  <span>{saveStatus === "saved" ? "保存しました" : "この内容を保存"}</span>
+                </button>
               </div>
             </div>
           </aside>
