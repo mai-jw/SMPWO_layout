@@ -953,14 +953,7 @@ function SelectionSidebar({
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
                 </div>
 
-                {activeTarget.section === "shelf" && shelf && (
-                  <p className="text-[10px] font-bold text-muted-foreground bg-slate-50 rounded-lg px-3 py-2 border border-slate-100 italic">
-                    {shelf.layout_type === "booklet" ? "冊子類・雑誌" : 
-                     shelf.layout_type === "booklet_doc" ? "書籍 (冊子サイズ)" : 
-                     (shelf.layout_type === "document" || shelf.layout_type === "bible") ? "書籍 (文庫サイズ)/聖書" : 
-                     "パンフレット/招待状"} の画像を表示中
-                  </p>
-                )}
+                {/* Category label removed as requested */}
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5">
