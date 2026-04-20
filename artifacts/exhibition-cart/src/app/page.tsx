@@ -1038,7 +1038,6 @@ export default function CartEditor() {
   const [mobileViewType, setMobileViewType] = useState<"standard" | "wizard">("wizard");
   const [wizardStep, setWizardStep] = useState<"menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete">("menu");
   const [activeWizardCart, setActiveWizardCart] = useState<CartId>("A");
-  const [activeWizardCart, setActiveWizardCart] = useState<CartId>("A");
   const [activeWizardShelf, setActiveWizardShelf] = useState<number>(0); 
 
   // Prevent flicker/hydration mismatch: hide UI until device is detected
