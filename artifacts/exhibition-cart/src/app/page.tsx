@@ -1700,35 +1700,9 @@ export default function CartEditor() {
         {!isMobileView && (
           <div className="relative" ref={newPanelRef}>
             <button onClick={() => setShowNewPanel((v) => !v)}
-              className="flex items-center gap-1.5 text-sm px-2 sm:px-3 py-1 rounded-none border border-border bg-white hover:bg-muted font-bold text-foreground transition-all shadow-xs active:scale-95 select-none">
+              className="flex items-center gap-1.5 text-sm px-2 sm:px-3 py-0.5 rounded-none border border-border bg-white hover:bg-muted font-bold text-foreground transition-all shadow-xs active:scale-95 select-none">
               {isMobileView ? "新規" : "新規作成"}<ChevronDown className="w-3 h-3" />
             </button>
-            
-            {!isMobileView && (
-              <>
-                <div className="w-px h-6 bg-border mx-1" />
-                {/* LIBRARY link */}
-                <Link
-                  href="/library"
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-bold border border-[#64748b] bg-white text-[#64748b] hover:bg-[#64748b] hover:text-white transition-all shadow-sm select-none"
-                >
-                  <Library className="w-3.5 h-3.5 shrink-0" />
-                  <span className="hidden lg:inline">LIBRARY</span>
-                </Link>
-
-                {/* Upload button */}
-                <button
-                  onClick={openUploadPanel}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-bold bg-[#ffd76d] text-zinc-800 hover:opacity-90 transition-all shadow-sm active:scale-95 select-none"
-                  title="画像をアップロード"
-                >
-                  <Upload className="w-4 h-4 shrink-0" />
-                  <span className="hidden lg:inline">アップロード</span>
-                </button>
-
-              </>
-            )}
-
             <AnimatePresence>
               {showNewPanel && (
                 <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
@@ -1829,17 +1803,37 @@ export default function CartEditor() {
         )}
         <div className="flex-1" />
         {!isMobileView && (
-          <div className="flex items-center gap-2">
+          <>
+            {/* LIBRARY link */}
+            <Link
+              href="/library"
+              className="flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-bold border border-[#64748b] bg-white text-[#64748b] hover:bg-[#64748b] hover:text-white transition-all shadow-xs select-none"
+            >
+              <Library className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">LIBRARY</span>
+            </Link>
+            {/* Upload button (HOME) */}
+            <button
+              onClick={openUploadPanel}
+              className="flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-bold bg-[#ffd76d] text-zinc-800 hover:opacity-90 transition-all shadow-xs active:scale-95 select-none"
+              title="画像をアップロード"
+            >
+              <Upload className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">アップロード</span>
+            </button>
             <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()}
-              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 min-h-[32px] rounded-lg font-bold transition-all select-none disabled:opacity-60 shadow-sm ${
+              className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-medium transition-all select-none disabled:opacity-60 ${
                 saveStatus === "saved" ? "bg-emerald-500 text-white" :
-                saveStatus === "error" ? "bg-red-500 text-white" : "bg-[#1b618d] text-white hover:opacity-90"
+                saveStatus === "error" ? "bg-red-500 text-white" : "bg-[#1b618d] text-white hover:opacity-90 shadow-sm"
               }`}>
-              {saveStatus === "saved" ? <CheckCircle2 className="w-4 h-4 shrink-0" /> :
-              saveStatus === "saving" ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" /> :
-              <Save className="w-4 h-4 shrink-0" />}
+              {saveStatus === "saved" ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> :
+              saveStatus === "saving" ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" /> :
+              <Save className="w-3.5 h-3.5 shrink-0" />}
               <span className="hidden sm:inline">
                 {saveStatus === "saved" ? "保存済み" : saveStatus === "error" ? "エラー" : saveStatus === "saving" ? "保存中…" : (isExistingPeriod ? "上書き保存" : "保存")}
+              </span>
+              <span className="sm:hidden">
+                {saveStatus === "saved" ? "OK" : saveStatus === "saving" ? "…" : "保存"}
               </span>
             </button>
 
@@ -1866,7 +1860,7 @@ export default function CartEditor() {
                 ) : (
                   <button 
                     onClick={(e) => { e.stopPropagation(); setLayoutDeleteConfirm(true); }}
-                    className="flex items-center justify-center text-red-500 hover:bg-red-50 w-8 h-8 rounded-lg transition-all border border-slate-200 hover:border-red-200 relative z-50 shadow-sm active:scale-90 select-none"
+                    className="flex items-center justify-center text-red-500 hover:bg-red-50 w-8 h-8 rounded-md transition-all border border-slate-200 hover:border-red-200 relative z-50 ml-1 shadow-sm active:scale-90 select-none"
                     title="この期間のデータを完全に削除"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -1874,24 +1868,24 @@ export default function CartEditor() {
                 )}
               </div>
             )}
-
-            <div className="w-px h-6 bg-border mx-1" />
-
-            <div className="flex items-center gap-1.5">
+            {/* Compact Export Buttons for Mobile */}
+            <div className="flex items-center gap-1 px-1 border-l border-border ml-1">
               {[
-                { key: "png" as const, label: "PNG", icon: <FileImage className="w-4 h-4" />, cls: "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold" },
-                { key: "pdf" as const, label: "PDF", icon: <Download className="w-4 h-4" />, cls: "border-red-400 bg-red-50 text-red-700 hover:bg-red-100 font-bold" },
-                { key: "xlsx" as const, label: "Excel", icon: <FileSpreadsheet className="w-4 h-4" />, cls: "border-green-400 bg-green-50 text-green-700 hover:bg-green-100 font-bold" },
+                { key: "png" as const, label: "PNG", icon: <FileImage className="w-3.5 h-3.5" />, cls: "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold shadow-xs" },
+                { key: "pdf" as const, label: "PDF", icon: <Download className="w-3.5 h-3.5" />, cls: "border-red-400 bg-red-50 text-red-700 hover:bg-red-100 font-bold shadow-xs" },
+                { key: "xlsx" as const, label: "Excel", icon: <FileSpreadsheet className="w-3.5 h-3.5" />, cls: "border-green-400 bg-green-50 text-green-700 hover:bg-green-100 font-bold shadow-xs" },
               ].map(({ key, label, icon, cls }) => (
                 <button key={key} disabled={!!exporting}
                   onClick={key === "png" ? handleExportPng : key === "pdf" ? handleExportPdf : handleExportXlsx}
-                  className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border disabled:opacity-50 transition-all active:scale-95 select-none shadow-sm ${cls}`}>
-                  {exporting === key ? <div className="w-4 h-4 border-2 border-current/30 border-t-white rounded-full animate-spin" /> : icon}
-                  <span className="hidden lg:inline">{label}</span>
+                  className={`flex items-center gap-1 text-[10px] px-1.5 sm:px-2 py-0.5 rounded-md border disabled:opacity-50 transition-all active:scale-95 select-none ${cls}`}>
+                  {exporting === key ? <div className="w-3.5 h-3.5 border-2 border-current/30 border-t-white rounded-full animate-spin" /> : icon}
+                  <span className="hidden sm:inline">{label}</span>
+                  {key === "xlsx" && <span className="sm:hidden">Excel</span>}
+                  {key !== "xlsx" && <span className="sm:hidden uppercase">{key}</span>}
                 </button>
               ))}
             </div>
-          </div>
+          </>
         )}
         {/* View Mode Toggle */}
         <div className="flex items-center gap-1 border-l border-border ml-1 pl-1">
@@ -1913,19 +1907,6 @@ export default function CartEditor() {
       {/* Main Content: Left Gallery + Carts + Side Panel */}
       <div className={`flex flex-1 overflow-hidden relative ${isMobileView ? "pb-16" : ""}`}>
         
-        {/* Desktop LIBRARY Sidebar */}
-        {!isMobileView && (
-          <LeftGallery 
-            items={items} 
-            onOpenUpload={openUploadPanel} 
-            width={320} 
-            cartA={cartA}
-            setCartA={setCartA}
-            cartB={cartB}
-            setCartB={setCartB}
-          />
-        )}
-
         {/* Mobile Gallery Overlay */}
         <AnimatePresence>
           {isMobileGalleryOpen && isMobileView && (
@@ -1963,8 +1944,6 @@ export default function CartEditor() {
             </div>
           )}
         </AnimatePresence>
-
-
 
 
         
