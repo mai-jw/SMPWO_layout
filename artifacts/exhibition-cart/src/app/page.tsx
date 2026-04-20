@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useMemo, useEffect } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingCart, Image as ImageIcon, X, Download, FileSpreadsheet,
@@ -62,7 +62,7 @@ interface TagDisplayProps {
   onClick: () => void;
 }
 
-const TagDisplay = React.memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayProps) => {
+const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayProps) => {
   const layout = shelf.layout_type;
   const mode = shelf.tag_1.type;
   
@@ -277,7 +277,7 @@ interface CartPanelProps {
   onTagClick: (cart: CartId, shelfIdx: number) => void;
 }
 
-const CartPanel = React.memo(({
+const CartPanel = memo(({
   cartId, layout, activeTarget, isSelecting, itemMap,
   onSlotClick, onClear, onTagClick,
 }: CartPanelProps) => {
