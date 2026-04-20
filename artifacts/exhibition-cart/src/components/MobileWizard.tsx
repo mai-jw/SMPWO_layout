@@ -461,7 +461,7 @@ export function MobileWizard({
 function MenuCard({ icon, title, desc, color, onClick, wide }: any) {
   return (
     <button onClick={onClick} className={`flex flex-col items-center justify-center p-6 rounded-[2.5rem] transition-all active:scale-95 shadow-xl shadow-black/5 ${wide ? "w-full text-center flex-row gap-6 p-5" : "aspect-square"}`} style={{ backgroundColor: color }}>
-       <div className={`${wide ? "w-14 h-14" : "w-16 h-16"} rounded-[1.5rem] bg-cream flex items-center justify-center ${wide ? "" : "mb-4"} shadow-inner shrink-0`}><div style={{ color: COLORS.coral }}>{React.cloneElement(icon as React.ReactElement, { className: wide ? "w-6 h-6" : "w-8 h-8" })}</div></div>
+       <div className={`${wide ? "w-14 h-14" : "w-16 h-16"} rounded-[1.5rem] bg-cream flex items-center justify-center ${wide ? "" : "mb-4"} shadow-inner shrink-0`}><div style={{ color: COLORS.coral }}>{React.cloneElement(icon as React.ReactElement, { className: wide ? "w-6 h-6" : "w-8 h-8" } as any)}</div></div>
        <div className={wide ? "text-left" : ""}><p className={`${wide ? "text-base" : "text-lg"} font-black tracking-tight`} style={{ color: COLORS.deepPurple }}>{title}</p>{desc && <p className="text-[9px] font-bold opacity-30 tracking-widest uppercase mt-1 line-clamp-1">{desc}</p>}</div>
     </button>
   );
