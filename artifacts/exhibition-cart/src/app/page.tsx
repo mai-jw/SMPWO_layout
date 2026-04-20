@@ -1080,6 +1080,15 @@ export default function CartEditor() {
   const saveLayout = useSaveLayout();
   const deleteLayout = useDeleteLayout();
 
+  if (!hasMounted) {
+    return (
+      <div className="fixed inset-0 bg-[#fdfaf3] z-[999] flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        <p className="text-xs font-bold text-primary/60 tracking-widest uppercase animate-pulse">Loading...</p>
+      </div>
+    );
+  }
+
   const itemMap = useMemo(() => {
     return Object.fromEntries(items.filter((i) => i.id).map((i) => [i.id!, i]));
   }, [items]);
@@ -2041,14 +2050,14 @@ export default function CartEditor() {
 
           <div 
             ref={cartScrollRef}
-            className={`w-full ${isMobileView ? "overflow-hidden h-[450px]" : "overflow-x-auto h-auto"} pb-8 pt-2 flex scrollbar-hide active:cursor-grabbing select-none justify-center`}
+            className={`w-full ${isMobileView ? "overflow-y-auto overflow-x-hidden h-[calc(100vh-280px)]" : "overflow-x-auto h-auto"} pb-8 pt-2 flex scrollbar-hide active:cursor-grabbing select-none justify-center`}
             style={{ WebkitOverflowScrolling: "touch" }}
           >
-            <motion.div layout className="shrink-0 flex items-center justify-center">
+            <motion.div layout className="shrink-0 flex flex-col items-center">
               <div 
                 ref={canvasRef as any} 
                 id="export-container" 
-                className={`flex flex-col items-center p-4 bg-background shrink-0 ${isMobileView ? "scale-[0.42] origin-top " : ""}`}
+                className={`flex flex-col items-center p-4 bg-background shrink-0 ${isMobileView ? "scale-[0.42] origin-top my-4" : ""}`}
                 style={isMobileView ? { width: "820px" } : {}}
               >
                 <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
