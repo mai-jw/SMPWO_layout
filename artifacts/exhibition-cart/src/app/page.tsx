@@ -2232,7 +2232,7 @@ export default function CartEditor() {
                     value={concept}
                     onChange={(e) => setConcept(e.target.value)}
                     onBlur={() => handleSave(true)}
-                    placeholder="今期のコンセプトを入力してください..."
+                    placeholder="コンセプトを入力してください"
                     className="w-full text-xs font-medium border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none h-[120px]"
                   />
                 </div>
@@ -2249,7 +2249,7 @@ export default function CartEditor() {
                     value={commentA}
                     onChange={(e) => setCommentA(e.target.value)}
                     onBlur={() => handleSave(true)}
-                    placeholder="カートAへのコメント..."
+                    placeholder="カートAのコメントを入力してください"
                     className="w-full text-xs font-medium border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none h-[100px]"
                   />
                 </div>
@@ -2266,7 +2266,7 @@ export default function CartEditor() {
                     value={commentB}
                     onChange={(e) => setCommentB(e.target.value)}
                     onBlur={() => handleSave(true)}
-                    placeholder="カートBへのコメント..."
+                    placeholder="カートBのコメントを入力してください"
                     className="w-full text-xs font-medium border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none h-[100px]"
                   />
                 </div>
@@ -2440,7 +2440,7 @@ export default function CartEditor() {
                          value={concept}
                          onChange={(e) => setConcept(e.target.value)}
                          onBlur={() => handleSave(true)}
-                         placeholder="今期のコンセプトを入力..."
+                         placeholder="コンセプトを入力してください"
                          className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 h-24 resize-none"
                        />
                     </div>
@@ -2454,7 +2454,7 @@ export default function CartEditor() {
                           value={commentA}
                           onChange={(e) => setCommentA(e.target.value)}
                           onBlur={() => handleSave(true)}
-                          placeholder="カートAへのコメント..."
+                          placeholder="カートAのコメントを入力してください"
                           className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 h-16 resize-none"
                         />
                       </div>
@@ -2466,7 +2466,7 @@ export default function CartEditor() {
                           value={commentB}
                           onChange={(e) => setCommentB(e.target.value)}
                           onBlur={() => handleSave(true)}
-                          placeholder="カートBへのコメント..."
+                          placeholder="カートBのコメントを入力してください"
                           className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 h-16 resize-none"
                         />
                       </div>
