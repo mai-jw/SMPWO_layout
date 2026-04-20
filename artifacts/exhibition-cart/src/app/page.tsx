@@ -1043,48 +1043,6 @@ export default function CartEditor() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const newPanelRef = useRef<HTMLDivElement>(null);
 
-  // Resizable Sidebar State
-  const [galleryWidth, setGalleryWidth] = useState(320); // Initial 320px
-  const [isResizing, setIsResizing] = useState(false);
-
-  const startResizing = useCallback(() => {
-    setIsResizing(true);
-  }, []);
-
-  const stopResizing = useCallback(() => {
-    setIsResizing(false);
-  }, []);
-
-  const resize = useCallback((e: MouseEvent) => {
-    if (isResizing) {
-      // Minimum width is 320px as per user request
-      const newWidth = Math.max(320, e.clientX);
-      setGalleryWidth(prev => {
-        // Only update if difference is meaningful to prevent excessive re-renders
-        if (Math.abs(prev - newWidth) > 1) return newWidth;
-        return prev;
-      });
-    }
-  }, [isResizing]);
-
-  useEffect(() => {
-    if (isResizing) {
-      window.addEventListener("mousemove", resize);
-      window.addEventListener("mouseup", stopResizing);
-      // Change cursor globally during resize
-      document.body.style.cursor = "col-resize";
-      document.body.style.userSelect = "none";
-    } else {
-      window.removeEventListener("mousemove", resize);
-      window.removeEventListener("mouseup", stopResizing);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    }
-    return () => {
-      window.removeEventListener("mousemove", resize);
-      window.removeEventListener("mouseup", stopResizing);
-    };
-  }, [isResizing, resize, stopResizing]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -1846,6 +1804,23 @@ export default function CartEditor() {
         <div className="flex-1" />
         {!isMobileView && (
           <>
+            {/* LIBRARY link */}
+            <Link
+              href="/library"
+              className="flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-bold border border-[#64748b] bg-white text-[#64748b] hover:bg-[#64748b] hover:text-white transition-all shadow-xs select-none"
+            >
+              <Library className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">LIBRARY</span>
+            </Link>
+            {/* Upload button (HOME) */}
+            <button
+              onClick={openUploadPanel}
+              className="flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-bold bg-[#ffd76d] text-zinc-800 hover:opacity-90 transition-all shadow-xs active:scale-95 select-none"
+              title="画像をアップロード"
+            >
+              <Upload className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">アップロード</span>
+            </button>
             <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()}
               className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-medium transition-all select-none disabled:opacity-60 ${
                 saveStatus === "saved" ? "bg-emerald-500 text-white" :
@@ -1970,27 +1945,7 @@ export default function CartEditor() {
           )}
         </AnimatePresence>
 
-        {!isMobileView && (
-          <div className="shrink-0 h-full relative">
-            <LeftGallery 
-              items={items} 
-              onOpenUpload={openUploadPanel} 
-              width={galleryWidth} 
-              cartA={cartA}
-              setCartA={setCartA}
-              cartB={cartB}
-              setCartB={setCartB}
-            />
-            {/* Resize Handle */}
-            <div 
-              onMouseDown={startResizing}
-              className={`
-                absolute top-0 right-0 w-1.5 h-full cursor-col-resize z-50 hover:bg-primary/20 transition-colors
-                ${isResizing ? "bg-primary/40" : "bg-transparent"}
-              `}
-            />
-          </div>
-        )}
+
         
         <main className="flex-1 overflow-auto p-3 sm:p-5 h-full bg-[#fdfaf3]">
           <div className="flex items-center justify-between mb-4">
