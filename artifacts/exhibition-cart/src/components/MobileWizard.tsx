@@ -134,9 +134,9 @@ export function MobileWizard({
                   <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30">
                     <LayoutDashboard className="w-6 h-6 text-white" />
                   </div>
-                  <div>
+                  <div className="flex flex-col">
                     <h1 className="text-2xl font-black text-white tracking-widest leading-none uppercase">SMPWO</h1>
-                    <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">LAYOUT</p>
+                    <h1 className="text-2xl font-black text-white/90 tracking-widest leading-none uppercase mt-1">LAYOUT</h1>
                   </div>
                 </div>
               </div>

@@ -1039,6 +1039,8 @@ export default function CartEditor() {
   const [wizardStep, setWizardStep] = useState<"menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete">("menu");
   const [activeWizardCart, setActiveWizardCart] = useState<CartId>("A");
   const [activeWizardShelf, setActiveWizardShelf] = useState<number>(0); // 0, 1, 2
+  
+  if (!hasMounted) return <div className="fixed inset-0 bg-white" />;
 
 
   const { data: locationsConfig = DEFAULT_LOCATIONS } = useLocationsConfig();
@@ -2044,9 +2046,10 @@ export default function CartEditor() {
               layout 
               className="shrink-0"
               style={isMobileView ? {
-                transform: `scale(${Math.min(1, (typeof window !== 'undefined' ? window.innerWidth - 32 : 360) / 820)})`,
+                transform: `scale(${Math.min(0.75, (typeof window !== 'undefined' ? window.innerWidth - 80 : 300) / 820)})`,
                 transformOrigin: "top center",
-                width: "820px"
+                width: "820px",
+                margin: "0 auto"
               } : {}}
             >
               <div ref={canvasRef as any} id="export-container" className="flex flex-col items-center p-4 bg-background shrink-0">
