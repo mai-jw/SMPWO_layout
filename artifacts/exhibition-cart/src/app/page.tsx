@@ -1666,48 +1666,50 @@ export default function CartEditor() {
       {/* Wrap existing content in conditional to hide when showing wizard */}
       <div className={`flex flex-col h-[calc(100vh-56px)] bg-background ${isMobileView && mobileViewType === "wizard" ? "pointer-events-none fixed inset-0 -z-10" : "flex"}`}>
       {/* Top Toolbar */}
-      <div className="shrink-0 bg-white px-4 py-1.5 flex items-center gap-3 relative z-30">
-        {/* Absolute border to stay on top of scaled logo */}
-        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-border z-50 pointer-events-none" />
-
-        {/* Mobile: Hamburger menu button at top-left */}
-        {isMobileView && (
-          <button
-            onClick={() => setIsMobileActionMenuOpen(true)}
-            className={`flex items-center justify-center w-9 h-9 rounded-xl border transition-all active:scale-95 shrink-0 select-none ${
-              isMobileActionMenuOpen
-                ? "bg-primary text-white border-primary shadow-md"
-                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-            }`}
-            title="メニューを開く"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-        )}
-
-        {/* Wizard/Standard Toggle for Mobile */}
-        {isMobileView && (
-          <button 
-            onClick={() => setMobileViewType(prev => prev === "wizard" ? "standard" : "wizard")}
-            className="flex items-center gap-1.5 text-[10px] px-2 py-1.5 rounded-xl border border-primary/20 bg-primary/5 text-primary font-black active:scale-95 transition-all shadow-sm"
-          >
-            {mobileViewType === "wizard" ? <LayoutGrid className="w-3.5 h-3.5" /> : <Settings className="w-3.5 h-3.5" />}
-            <span>{mobileViewType === "wizard" ? "通常表示" : "ウィザード"}</span>
-          </button>
-        )}
-        
-        <div className={`flex items-center gap-3 tracking-tight h-10 relative ${isMobileView ? "mr-2" : "mr-6"}`}>
-          <div className="w-12 h-10 flex items-center justify-center relative mx-4 shrink-0">
+      <div className={`shrink-0 bg-white relative z-30 ${isMobileView ? "h-[60px] overflow-hidden" : "px-4 py-1.5 flex items-center gap-3"}`}>
+        {isMobileView ? (
+          <>
             <img 
-              src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/samesame.gif" 
-              alt="SMPWO Logo" 
-              className="w-full h-full object-contain transform-gpu scale-[1.6]" 
+              src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/Mobile.png" 
+              alt="Mobile header" 
+              className="w-full h-full object-cover"
             />
-          </div>
-          {!isMobileView && (
-            <span className="font-rounded font-black text-xl tracking-widest text-[#64748b] mt-0.5 relative z-10 hidden sm:inline">SMPWO LAYOUT</span>
-          )}
-        </div>
+            {/* Functional Overlays */}
+            <div className="absolute inset-0 flex items-center justify-between px-3">
+              <button
+                onClick={() => setIsMobileActionMenuOpen(true)}
+                className="w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-xl active:scale-95 shadow-sm border border-white/30"
+              >
+                <Menu className="w-6 h-6 text-slate-800" />
+              </button>
+              
+              <button 
+                onClick={() => setMobileViewType(prev => prev === "wizard" ? "standard" : "wizard")}
+                className="w-10 h-10 flex items-center justify-center bg-white/20 backdrop-blur-sm rounded-xl active:scale-95 shadow-sm border border-white/30"
+              >
+                {mobileViewType === "wizard" ? <LayoutGrid className="w-5 h-5 text-slate-800" /> : <Settings className="w-5 h-5 text-slate-800" />}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Absolute border to stay on top of scaled logo */}
+            <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-border z-50 pointer-events-none" />
+
+            <div className={`flex items-center gap-3 tracking-tight h-10 relative ${isMobileView ? "mr-2" : "mr-6"}`}>
+              <div className="w-12 h-10 flex items-center justify-center relative mx-4 shrink-0">
+                <img 
+                  src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/samesame.gif" 
+                  alt="SMPWO Logo" 
+                  className="w-full h-full object-contain transform-gpu scale-[1.6]" 
+                />
+              </div>
+              {!isMobileView && (
+                <span className="font-rounded font-black text-xl tracking-widest text-[#64748b] mt-0.5 relative z-10 hidden sm:inline">SMPWO LAYOUT</span>
+              )}
+            </div>
+          </>
+        )}
 
         {/* Period selector: PC only */}
         {!isMobileView && (
