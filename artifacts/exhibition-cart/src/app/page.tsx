@@ -2059,7 +2059,7 @@ export default function CartEditor() {
               <div 
                 ref={canvasRef as any} 
                 id="export-container" 
-                className={`flex flex-col items-center p-4 bg-background shrink-0 ${isMobileView ? "scale-[0.42] origin-center" : ""}`}
+                className={`flex flex-col items-center p-4 bg-background shrink-0 ${isMobileView ? "scale-[0.55] origin-center" : ""}`}
                 style={isMobileView ? { width: "820px" } : {}}
               >
                 <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
@@ -2301,14 +2301,11 @@ export default function CartEditor() {
       {isMobileView && (
         <div className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-border flex items-center px-4 z-[90] shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
           <button 
-            onClick={() => setIsMobileGalleryOpen(true)}
+            onClick={() => setIsMobileSidebarOpen(true)}
             className="flex-1 flex flex-col items-center justify-center gap-1 text-slate-500 hover:text-primary transition-colors"
           >
-            <div className="relative">
-              <Library className="w-6 h-6" />
-              <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
-            </div>
-            <span className="text-[10px] font-black tracking-widest uppercase">Library</span>
+            <LayoutDashboard className="w-6 h-6" />
+            <span className="text-[10px] font-black tracking-widest uppercase">Layout</span>
           </button>
           
           <button 
@@ -2317,8 +2314,8 @@ export default function CartEditor() {
                  const scrollWidth = cartScrollRef.current.scrollWidth;
                  const clientWidth = cartScrollRef.current.clientWidth;
                  cartScrollRef.current.scrollTo({
-                   left: (scrollWidth - clientWidth) / 2,
-                   behavior: "smooth"
+                    left: (scrollWidth - clientWidth) / 2,
+                    behavior: "smooth"
                  });
               }
             }}
@@ -2331,11 +2328,14 @@ export default function CartEditor() {
 
 
           <button 
-            onClick={() => setIsMobileSidebarOpen(true)}
+            onClick={() => setIsMobileGalleryOpen(true)}
             className="flex-1 flex flex-col items-center justify-center gap-1 text-slate-500 hover:text-primary transition-colors"
           >
-            <LayoutDashboard className="w-6 h-6" />
-            <span className="text-[10px] font-black tracking-widest uppercase">Layout</span>
+            <div className="relative">
+              <Library className="w-6 h-6" />
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
+            </div>
+            <span className="text-[10px] font-black tracking-widest uppercase">Library</span>
           </button>
         </div>
       )}
