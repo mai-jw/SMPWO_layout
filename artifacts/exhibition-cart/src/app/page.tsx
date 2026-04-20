@@ -1039,6 +1039,7 @@ export default function CartEditor() {
   const [wizardStep, setWizardStep] = useState<"menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete">("menu");
   const [activeWizardCart, setActiveWizardCart] = useState<CartId>("A");
   const [activeWizardShelf, setActiveWizardShelf] = useState<number>(0); 
+  const [showCreationSuccess, setShowCreationSuccess] = useState(false);
 
 
 
@@ -1340,6 +1341,11 @@ export default function CartEditor() {
     handleSave(true, targetPeriod);
     
     setShowNewPanel(false);
+    
+    // Show success modal on mobile
+    if (isMobileView) {
+      setShowCreationSuccess(true);
+    }
   };
 
   const saveFileWrapper = async (blob: Blob, suggestedName: string, mimeType?: string, extension?: string) => {
@@ -1599,6 +1605,45 @@ export default function CartEditor() {
 
   return (
     <>
+      {/* Mobile Creation Success Modal */}
+      <AnimatePresence>
+        {showCreationSuccess && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm flex flex-col items-center text-center gap-6"
+            >
+              <div className="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center shadow-inner">
+                <Check className="w-10 h-10" strokeWidth={3} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-black text-slate-800">作成が完了しました！</h3>
+                <p className="text-sm font-bold text-slate-500 leading-relaxed">新しい配置レイアウトを作成しました。<br/>そのまま配置の編集に進みますか？</p>
+              </div>
+              <div className="flex flex-col w-full gap-3">
+                <button 
+                  onClick={() => {
+                    setShowCreationSuccess(false);
+                    setMobileViewType("standard");
+                    setIsMobileActionMenuOpen(false);
+                  }}
+                  className="w-full bg-[#1b618d] text-white py-4 rounded-2xl font-black text-base shadow-lg shadow-[#1b618d]/20 active:scale-[0.98] transition-all"
+                >
+                  配置編集に進む
+                </button>
+                <button 
+                  onClick={() => setShowCreationSuccess(false)}
+                  className="w-full bg-slate-100 text-slate-600 py-4 rounded-2xl font-bold text-sm active:scale-[0.98] transition-all"
+                >
+                  今は閉じる
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {isEditingLocations && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
