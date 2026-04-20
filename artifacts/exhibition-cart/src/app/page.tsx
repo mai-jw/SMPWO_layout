@@ -1413,13 +1413,20 @@ export default function CartEditor() {
 
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
-            // Don't sync width/height for the root container as we'll set it manually
             const isRoot = cloned.id === "export-container";
             
+            // Calculate sizes based on viewport scale (mobile is 0.6x)
+            const scaleFactor = isMobileView ? 0.6 : 1.0;
+            const rect = orig.getBoundingClientRect();
+            
             if (!isRoot) {
-              const rect = orig.getBoundingClientRect();
-              cloned.style.width = `${rect.width}px`;
-              cloned.style.height = `${rect.height}px`;
+              cloned.style.width = `${rect.width / scaleFactor}px`;
+              cloned.style.height = `${rect.height / scaleFactor}px`;
+            } else {
+              // Ensure root in clone is full size and unscaled
+              cloned.style.transform = "none";
+              cloned.style.scale = "none";
+              cloned.style.width = "820px";
             }
 
             for (let i = 0; i < style.length; i++) {
@@ -1487,9 +1494,18 @@ export default function CartEditor() {
           clonedDoc.body.appendChild(clonedContainer);
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
+            const isRoot = cloned.id === "export-container";
+            const scaleFactor = isMobileView ? 0.6 : 1.0;
             const rect = orig.getBoundingClientRect();
-            cloned.style.width = `${rect.width}px`;
-            cloned.style.height = `${rect.height}px`;
+            
+            cloned.style.width = `${rect.width / scaleFactor}px`;
+            cloned.style.height = `${rect.height / scaleFactor}px`;
+            
+            if (isRoot) {
+              cloned.style.transform = "none";
+              cloned.style.scale = "none";
+            }
+
             for (let i = 0; i < style.length; i++) {
               const prop = style[i];
               let val = style.getPropertyValue(prop);
@@ -1555,9 +1571,18 @@ export default function CartEditor() {
           clonedDoc.body.appendChild(clonedContainer);
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
+            const isRoot = cloned.id === "export-container";
+            const scaleFactor = isMobileView ? 0.6 : 1.0;
             const rect = orig.getBoundingClientRect();
-            cloned.style.width = `${rect.width}px`;
-            cloned.style.height = `${rect.height}px`;
+            
+            cloned.style.width = `${rect.width / scaleFactor}px`;
+            cloned.style.height = `${rect.height / scaleFactor}px`;
+            
+            if (isRoot) {
+              cloned.style.transform = "none";
+              cloned.style.scale = "none";
+            }
+
             for (let i = 0; i < style.length; i++) {
               const prop = style[i];
               let val = style.getPropertyValue(prop);
