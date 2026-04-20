@@ -1919,6 +1919,27 @@ export default function CartEditor() {
           </aside>
         )}
 
+        {/* Desktop Settings Sidebar (Moved from Right to Left) */}
+        {!isMobileView && (
+          <div className="z-50 shrink-0 border-r border-border bg-card shadow-lg flex flex-col overflow-hidden">
+            <div className="w-72 h-full shrink-0 flex flex-col">
+              <SelectionSidebar
+                activeTarget={activeTarget}
+                items={items}
+                itemMap={itemMap}
+                cartA={cartA}
+                cartB={cartB}
+                onSelectItem={handleSelectItem}
+                onLayoutChange={handleLayoutChange}
+                onTagChange={handleTagChange}
+                onShelfClick={handleTagClick}
+                onClose={() => setActiveTarget(null)}
+              />
+            </div>
+          </div>
+        )}
+
+
         {/* Mobile Gallery Overlay */}
         <AnimatePresence>
           {isMobileGalleryOpen && isMobileView && (
@@ -2141,25 +2162,7 @@ export default function CartEditor() {
           )}
         </AnimatePresence>
 
-        {/* Desktop Right Side Panel */}
-        {!isMobileView && (
-          <div className="z-50 shrink-0 border-l border-border bg-card shadow-lg flex flex-col overflow-hidden">
-            <div className="w-72 h-[calc(100vh-56px)] shrink-0 flex flex-col">
-              <SelectionSidebar
-                activeTarget={activeTarget}
-                items={items}
-                itemMap={itemMap}
-                cartA={cartA}
-                cartB={cartB}
-                onSelectItem={handleSelectItem}
-                onLayoutChange={handleLayoutChange}
-                onTagChange={handleTagChange}
-                onShelfClick={handleTagClick}
-                onClose={() => setActiveTarget(null)}
-              />
-            </div>
-          </div>
-        )}
+        {/* Desktop Right Side Panel - Removed, now on left */}
       </div>
 
       {/* Bottom Navigation for Mobile */}
