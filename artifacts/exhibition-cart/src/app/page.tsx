@@ -1702,9 +1702,7 @@ export default function CartEditor() {
               className="w-full h-full object-contain transform-gpu scale-[1.6]" 
             />
           </div>
-          {!isMobileView && (
-            <span className="font-rounded font-black text-xl tracking-widest text-[#64748b] mt-0.5 relative z-10 hidden sm:inline">SMPWO LAYOUT</span>
-          )}
+          <span className="font-rounded font-black text-base sm:text-xl tracking-widest text-[#64748b] mt-0.5 relative z-10">SMPWO LAYOUT</span>
         </div>
 
         {/* Period selector: PC only */}
@@ -2039,12 +2037,20 @@ export default function CartEditor() {
 
           <div 
             ref={cartScrollRef}
-            className="w-full overflow-x-auto pb-8 pt-2 flex scrollbar-hide active:cursor-grabbing select-none justify-start"
+            className={`w-full ${isMobileView ? "overflow-hidden" : "overflow-x-auto"} pb-8 pt-2 flex scrollbar-hide active:cursor-grabbing select-none justify-center`}
             style={{ WebkitOverflowScrolling: "touch" }}
           >
-            <motion.div layout className="shrink-0 mx-auto">
+            <motion.div 
+              layout 
+              className="shrink-0"
+              style={isMobileView ? {
+                transform: `scale(${Math.min(1, (typeof window !== 'undefined' ? window.innerWidth - 32 : 360) / 820)})`,
+                transformOrigin: "top center",
+                width: "820px"
+              } : {}}
+            >
               <div ref={canvasRef as any} id="export-container" className="flex flex-col items-center p-4 bg-background shrink-0">
-                <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
+                <div className="flex -space-x-[180px] items-start shrink-0">
                   <CartPanel
                     cartId="A" layout={cartA} activeTarget={activeTarget}
                     isSelecting={false} itemMap={itemMap}
