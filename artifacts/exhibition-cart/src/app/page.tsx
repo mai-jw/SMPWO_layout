@@ -1007,6 +1007,9 @@ export default function CartEditor() {
   const [newHalf, setNewHalf] = useState<"前半" | "後半">(() => new Date().getDate() <= 15 ? "前半" : "後半");
   const [newLocations, setNewLocations] = useState<string[]>(["すべて"]);
   const [notes, setNotes] = useState("外国語の出版物は、奉仕者が好きな位置に変更できます。\n自分の得意な言語や地点の特色を考えて、自由に動かしてください。");
+  const [concept, setConcept] = useState("");
+  const [commentA, setCommentA] = useState("");
+  const [commentB, setCommentB] = useState("");
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [isEditingLocations, setIsEditingLocations] = useState(false);
   const [locationEditInput, setLocationEditInput] = useState("");
@@ -1075,6 +1078,27 @@ export default function CartEditor() {
       if (existing) {
         setCartA(existing.cart_a);
         setCartB(existing.cart_b);
+        
+        // Load multi-notes from JSON if available
+        try {
+          if (existing.notes && existing.notes.trim().startsWith("{")) {
+            const parsed = JSON.parse(existing.notes);
+            setNotes(parsed.supplementary || "");
+            setConcept(parsed.concept || "");
+            setCommentA(parsed.commentA || "");
+            setCommentB(parsed.commentB || "");
+          } else {
+            setNotes(existing.notes || "外国語の出版物は、奉仕者が好きな位置に変更できます。\n自分の得意な言語や地点の特色を考えて、自由に動かしてください。");
+            setConcept("");
+            setCommentA("");
+            setCommentB("");
+          }
+        } catch (e) {
+          setNotes(existing.notes || "外国語の出版物は、奉仕者が好きな位置に変更できます。\n自分の得意な言語や地点の特色を考えて、自由に動かしてください。");
+          setConcept("");
+          setCommentA("");
+          setCommentB("");
+        }
       }
     }
   }, [layouts, period]);
@@ -1205,6 +1229,9 @@ export default function CartEditor() {
   const handleReset = () => {
     setCartA(makeInitialCartLayoutV2());
     setCartB(makeInitialCartLayoutV2());
+    setConcept("");
+    setCommentA("");
+    setCommentB("");
     setActiveTarget(null);
   };
 
@@ -1215,8 +1242,16 @@ export default function CartEditor() {
 
     // 上書き保存の確認ダイアログを削除（直接実行）
     setSaveStatus("saving");
+    // Combine notes into JSON
+    const notesJson = JSON.stringify({
+      supplementary: notes,
+      concept,
+      commentA,
+      commentB
+    });
+
     try {
-      await saveLayout.mutateAsync({ period, cart_a: cartA, cart_b: cartB });
+      await saveLayout.mutateAsync({ period, cart_a: cartA, cart_b: cartB, notes: notesJson });
       setSaveStatus("saved");
       alert(`「${formatPeriodDisplay(period)}」の設定を保存しました。\n※お手元のパソコンに画像や表（PNG/PDF/Excel）として書き出したい場合は、右端のボタンをクリックしてください。`);
       setTimeout(() => setSaveStatus("idle"), 2500);
@@ -1282,6 +1317,9 @@ export default function CartEditor() {
     }
 
     setPeriod(targetPeriod);
+    setConcept("");
+    setCommentA("");
+    setCommentB("");
     
     // カートA: 直近レイアウトを引き継ぐ / カートB: 常に白紙にリセット
     if (layouts.length > 0) {
@@ -2162,7 +2200,74 @@ export default function CartEditor() {
           )}
         </AnimatePresence>
 
-        {/* Desktop Right Side Panel - Removed, now on left */}
+        {/* Desktop Right Settings Sidebar (Concept & Comments) */}
+        {!isMobileView && (
+          <aside className="w-[300px] h-full bg-white border-l border-border flex flex-col shrink-0 z-10 shadow-sm">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                <Settings className="w-4 h-4 text-primary" /> その他情報
+              </h3>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5 space-y-8 scrollbar-hide">
+              {/* Concept Section */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-slate-800">
+                  <div className="w-1 h-3.5 bg-primary rounded-full" />
+                  <span className="text-[11px] font-black uppercase tracking-wider">
+                    {formatPeriodDisplay(period).split(' (')[0] || "コンセプト"}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 px-1">コンセプト</label>
+                  <textarea 
+                    value={concept}
+                    onChange={(e) => setConcept(e.target.value)}
+                    placeholder="今期のコンセプトを入力してください..."
+                    className="w-full text-xs font-medium border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none h-[120px]"
+                  />
+                </div>
+              </div>
+
+              {/* Cart A Comment */}
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <div className="space-y-2">
+                  <div className="text-[11px] font-black text-slate-800 px-1 flex items-center gap-2">
+                    <span className="w-4 h-4 rounded bg-slate-800 text-white flex items-center justify-center text-[10px]">A</span>
+                     ■ カートA
+                  </div>
+                  <div className="text-[10px] font-bold text-slate-400 px-1">コメント</div>
+                  <textarea 
+                    value={commentA}
+                    onChange={(e) => setCommentA(e.target.value)}
+                    placeholder="カートAへのコメント..."
+                    className="w-full text-xs font-medium border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none h-[100px]"
+                  />
+                </div>
+              </div>
+
+              {/* Cart B Comment */}
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <div className="space-y-2">
+                  <div className="text-[11px] font-black text-slate-800 px-1 flex items-center gap-2">
+                    <span className="w-4 h-4 rounded bg-slate-800 text-white flex items-center justify-center text-[10px]">B</span>
+                     ■ カートB
+                  </div>
+                  <div className="text-[10px] font-bold text-slate-400 px-1">コメント</div>
+                  <textarea 
+                    value={commentB}
+                    onChange={(e) => setCommentB(e.target.value)}
+                    placeholder="カートBへのコメント..."
+                    className="w-full text-xs font-medium border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none h-[100px]"
+                  />
+                </div>
+              </div>
+              
+              <div className="pt-4 opacity-30">
+                <p className="text-[9px] font-bold text-center text-slate-400">※ この情報は画像保存には含まれません</p>
+              </div>
+            </div>
+          </aside>
+        )}
       </div>
 
       {/* Bottom Navigation for Mobile */}
