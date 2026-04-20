@@ -131,7 +131,7 @@ const TagDisplay = React.memo(({ shelf, shelfIndex, isActive, onClick }: TagDisp
       </div>
     </button>
   );
-}
+});
 
 /* ═══════════════════════════════════════════════════════
      ItemSlot — Display slot on cart (click triggers side panel)
