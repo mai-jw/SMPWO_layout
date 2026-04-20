@@ -38,7 +38,7 @@ export type ActiveTarget =
   | null;
 type SidebarFilter = "all" | "poster" | "ja" | "foreign";
 const LANGUAGES = [
-  "日本語", "外国語", "英語",
+  "日本語", "日本語手話", "外国語", "英語",
   "中国語（簡体字）", "中国語（繁体字）",
   "韓国語", "ベトナム語", "タガログ語",
   "タイ語", "インドネシア語", "スペイン語",
