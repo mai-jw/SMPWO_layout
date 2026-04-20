@@ -37,9 +37,9 @@ export type ActiveTarget =
   | { cart: CartId; section: "tag"; shelfIndex: number }
   | null;
 type SidebarFilter = "all" | "poster" | "ja" | "foreign";
-const LANGUAGES = [
+const TAG_LANGUAGES = [
   "日本語", "外国語", "英語",
-  "中国語（簡体字）", "中国語（繁体字）",
+  "中国語",
   "韓国語", "ベトナム語", "タガログ語",
   "タイ語", "インドネシア語", "スペイン語",
   "その他",
@@ -669,6 +669,7 @@ function SelectionSidebar({
 }: SelectionSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<SidebarFilter>("all");
+  const [langFilter, setLangFilter] = useState<string>("all");
 
   const cart = activeTarget ? (activeTarget.cart === "A" ? cartA : cartB) : null;
   const isPoster = activeTarget?.section === "poster";
@@ -692,17 +693,21 @@ function SelectionSidebar({
   const filteredItems = useMemo(() => {
     return items.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const isForeign = !EXPLICIT_LANG_KEYS.includes(item.language) && item.language !== "all";
+      const matchesLang = langFilter === "all" || (langFilter === "foreign" ? isForeign : item.language === langFilter);
+
       if (activeTarget?.section === "shelf" && shelf) {
         const allowedCategories = LAYOUT_TO_CATEGORIES[shelf.layout_type] || [];
-        return matchesSearch && allowedCategories.includes(item.category);
+        return matchesSearch && matchesLang && allowedCategories.includes(item.category);
       }
       if (activeTarget?.section === "poster") {
-        return matchesSearch && item.category === "poster";
+        return matchesSearch && matchesLang && item.category === "poster";
       }
       const matchesFilter = filter === "all" || item.category === filter;
-      return matchesSearch && matchesFilter;
+      return matchesSearch && matchesLang && matchesFilter;
     });
-  }, [items, searchQuery, activeTarget, shelf, filter]);
+  }, [items, searchQuery, activeTarget, shelf, filter, langFilter]);
 
   const renderShelfSettings = () => {
     if (!shelf) return null;
@@ -803,18 +808,18 @@ function SelectionSidebar({
                   <div>
                     <label className="text-[11px] font-black text-slate-500 mb-1.5 block px-1">左タグ</label>
                     <select
-                      value={shelf.tag_1.value}
+                      value={shelf.tag_1.value.includes("中国語") ? "中国語" : shelf.tag_1.value}
                       onChange={(e) => onTagChange(activeTarget!.cart, shelfIdx, "tag_1", { type: "lang", value: (e.target as HTMLSelectElement).value })}
                       className="w-full text-sm bg-white border border-slate-200 rounded-xl px-3 py-3 outline-none text-foreground font-black focus:ring-4 focus:ring-primary/10 shadow-sm transition-all"
                     >
                       <option value="">（言語選択）</option>
-                      {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
+                      {TAG_LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="text-[11px] font-black text-slate-500 mb-1.5 block px-1">右タグ</label>
                     <select
-                      value={shelf.tag_2.type === "lang" ? shelf.tag_2.value : ""}
+                      value={(shelf.tag_2.type === "lang" && shelf.tag_2.value.includes("中国語")) ? "中国語" : (shelf.tag_2.type === "lang" ? shelf.tag_2.value : "")}
                       onChange={(e) => {
                         const val = (e.target as HTMLSelectElement).value;
                         onTagChange(activeTarget!.cart, shelfIdx, "tag_2", val ? { type: "lang", value: val } : { type: "none", value: "" });
@@ -822,7 +827,7 @@ function SelectionSidebar({
                       className="w-full text-sm bg-white border border-slate-200 rounded-xl px-3 py-3 outline-none text-foreground font-black focus:ring-4 focus:ring-primary/10 shadow-sm transition-all"
                     >
                       <option value="">（なし）</option>
-                      {LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
+                      {TAG_LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
                     </select>
                   </div>
                 </div>
@@ -927,12 +932,27 @@ function SelectionSidebar({
         ) : (
           <div className="flex flex-col h-full">
             <div className="p-4 pb-0">
-              <div className="space-y-3 mb-3">
+              <div className="space-y-2 mb-3">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                   <input type="text" placeholder="名前で検索..." value={searchQuery} onChange={(e) => setSearchQuery((e.target as HTMLInputElement).value)}
                     className="w-full text-sm font-bold border border-border rounded-xl pl-10 pr-4 py-3 bg-background text-foreground outline-none focus:ring-4 focus:ring-primary/10 placeholder:text-muted-foreground/50 transition-all shadow-sm" />
                 </div>
+                
+                <div className="relative">
+                  <Languages className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                  <select
+                    value={langFilter}
+                    onChange={(e) => setLangFilter(e.target.value)}
+                    className="w-full text-[11px] font-bold bg-white border border-border rounded-xl pl-9 pr-8 py-2.5 outline-none text-slate-600 focus:border-primary/30 appearance-none cursor-pointer"
+                  >
+                    {LANG_FILTER_OPTIONS.filter(opt => opt.key !== "sign_ja" || isPoster).map((opt) => (
+                      <option key={opt.key} value={opt.key}>{opt.key === "all" ? "すべての言語" : opt.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                </div>
+
                 {activeTarget.section === "shelf" && shelf && (
                   <p className="text-[10px] font-bold text-muted-foreground bg-slate-50 rounded-lg px-3 py-2 border border-slate-100 italic">
                     {shelf.layout_type === "booklet" ? "冊子類・雑誌" : 
@@ -952,7 +972,7 @@ function SelectionSidebar({
                     className="w-full flex items-center gap-4 rounded-2xl p-3 text-left transition-all border border-transparent hover:bg-sky-50 hover:border-sky-100 group">
                     <img src={item.url} alt={item.name} className="w-14 h-14 object-cover rounded-xl shrink-0 bg-muted shadow-sm" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-base font-black text-foreground truncate leading-tight group-hover:text-primary transition-colors">{item.name}</p>
+                      <p className="text-sm font-black text-foreground break-words group-hover:text-primary transition-colors pr-2 leading-[1.25]">{item.name}</p>
                       <div className="flex gap-1.5 mt-2 flex-wrap">
                         {item.category === "poster" && <span className="text-[10px] font-black bg-violet-100 text-violet-700 rounded px-1.5 py-0.5 tracking-tighter">POSTER</span>}
                         {item.language === "ja" && <span className="text-[10px] font-black bg-blue-100 text-blue-700 rounded px-1.5 py-0.5 tracking-tighter">日本語</span>}
