@@ -1850,7 +1850,7 @@ export default function CartEditor() {
         {!isMobileView && (
           <>
             {/* Save Button (Removed Library/Upload from here) */}
-            <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()}
+            <button onClick={() => handleSave()} disabled={saveStatus === "saving" || !period.trim()}
               className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-medium transition-all select-none disabled:opacity-60 ${
                 saveStatus === "saved" ? "bg-emerald-500 text-white" :
                 saveStatus === "error" ? "bg-red-500 text-white" : "bg-[#1b618d] text-white hover:opacity-90 shadow-sm"
