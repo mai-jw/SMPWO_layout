@@ -1419,11 +1419,11 @@ export default function CartEditor() {
           };
           syncStyles(originalContainer, clonedContainer);
           // Allow the container to expand with the new padding
-          clonedContainer.style.width = "auto";
-          clonedContainer.style.height = "auto";
-          clonedContainer.style.backgroundColor = "#ffffff";
-          clonedContainer.style.padding = "100px 300px 40px 300px";
-          clonedContainer.style.display = "flex";
+          clonedContainer.style.setProperty("width", "auto", "important");
+          clonedContainer.style.setProperty("height", "auto", "important");
+          clonedContainer.style.setProperty("padding", "80px 250px", "important");
+          clonedContainer.style.setProperty("background-color", "#ffffff", "important");
+          clonedContainer.style.setProperty("display", "flex", "important");
         }
       });
       const dataUrl = canvas.toDataURL("image/png");
