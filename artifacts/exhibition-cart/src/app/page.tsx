@@ -1893,9 +1893,6 @@ export default function CartEditor() {
             </div>
           </div>
         )}
-
-          </>
-        )}
         {/* View Mode Toggle */}
         <div className="flex items-center gap-1 border-l border-border ml-1 pl-1">
           <button
