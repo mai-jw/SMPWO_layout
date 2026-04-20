@@ -1699,14 +1699,13 @@ export default function CartEditor() {
             <img 
               src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/samesame.gif" 
               alt="SMPWO Logo" 
-              className={`w-full h-full object-contain transform-gpu ${isMobileView ? "scale-[1.3]" : "scale-[1.6]"}`} 
+              className="w-full h-full object-contain transform-gpu scale-[1.6]" 
             />
           </div>
-          {!isMobileView && (
+          {isMobileView ? (
+            <span className="font-rounded font-black text-sm tracking-widest text-[#64748b] mt-0.5 relative z-10 block whitespace-nowrap">SMPWO LAYOUT</span>
+          ) : (
             <span className="font-rounded font-black text-xl tracking-widest text-[#64748b] mt-0.5 relative z-10 hidden sm:inline">SMPWO LAYOUT</span>
-          )}
-          {isMobileView && (
-            <span className="font-rounded font-black text-lg tracking-widest text-[#64748b] mt-0.5 relative z-10">SMPWO LAYOUT</span>
           )}
         </div>
 
@@ -2042,22 +2041,16 @@ export default function CartEditor() {
 
           <div 
             ref={cartScrollRef}
-            className={`w-full overflow-x-auto pb-8 pt-2 flex scrollbar-hide active:cursor-grabbing select-none ${isMobileView ? "justify-center" : "justify-start"}`}
+            className={`w-full ${isMobileView ? "overflow-hidden h-[450px]" : "overflow-x-auto h-auto"} pb-8 pt-2 flex scrollbar-hide active:cursor-grabbing select-none justify-center`}
             style={{ WebkitOverflowScrolling: "touch" }}
           >
-            <motion.div 
-              layout 
-              className="shrink-0"
-              style={isMobileView ? { 
-                transform: "scale(0.42)",
-                transformOrigin: "top center",
-                width: "820px",
-                height: "auto",
-                margin: "0 auto",
-                marginBottom: "-800px" // Compensate for scaled space
-              } : {}}
-            >
-              <div ref={canvasRef as any} id="export-container" className="flex flex-col items-center p-4 bg-background shrink-0">
+            <motion.div layout className="shrink-0 flex items-center justify-center">
+              <div 
+                ref={canvasRef as any} 
+                id="export-container" 
+                className={`flex flex-col items-center p-4 bg-background shrink-0 ${isMobileView ? "scale-[0.42] origin-top " : ""}`}
+                style={isMobileView ? { width: "820px" } : {}}
+              >
                 <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
                   <CartPanel
                     cartId="A" layout={cartA} activeTarget={activeTarget}
