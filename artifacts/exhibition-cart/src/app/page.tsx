@@ -1038,7 +1038,13 @@ export default function CartEditor() {
   const [mobileViewType, setMobileViewType] = useState<"standard" | "wizard">("wizard");
   const [wizardStep, setWizardStep] = useState<"menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete">("menu");
   const [activeWizardCart, setActiveWizardCart] = useState<CartId>("A");
-  const [activeWizardShelf, setActiveWizardShelf] = useState<number>(0); // 0, 1, 2
+  const [activeWizardCart, setActiveWizardCart] = useState<CartId>("A");
+  const [activeWizardShelf, setActiveWizardShelf] = useState<number>(0); 
+
+  // Prevent flicker/hydration mismatch: hide UI until device is detected
+  if (!hasMounted) {
+    return <div className="fixed inset-0 bg-[#fdfaf3] z-[9999]" />;
+  }
 
 
   const { data: locationsConfig = DEFAULT_LOCATIONS } = useLocationsConfig();
@@ -1079,15 +1085,6 @@ export default function CartEditor() {
   const { data: layouts = [] } = useLayouts();
   const saveLayout = useSaveLayout();
   const deleteLayout = useDeleteLayout();
-
-  if (!hasMounted) {
-    return (
-      <div className="fixed inset-0 bg-[#fdfaf3] z-[999] flex flex-col items-center justify-center gap-4">
-        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-        <p className="text-xs font-bold text-primary/60 tracking-widest uppercase animate-pulse">Loading...</p>
-      </div>
-    );
-  }
 
   const itemMap = useMemo(() => {
     return Object.fromEntries(items.filter((i) => i.id).map((i) => [i.id!, i]));
@@ -1355,13 +1352,19 @@ export default function CartEditor() {
   };
 
   const dataURLtoBlob = (dataurl: string) => {
-    const arr = dataurl.split(',');
-    const mime = arr[0].match(/:(.*?);/)![1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while(n--) u8arr[n] = bstr.charCodeAt(n);
-    return new Blob([u8arr], {type:mime});
+    try {
+      const arr = dataurl.split(',');
+      const mimeMatch = arr[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : "image/png";
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while(n--) u8arr[n] = bstr.charCodeAt(n);
+      return new Blob([u8arr], {type:mime});
+    } catch(e) {
+      console.error("Failed to convert dataURL to Blob", e);
+      return new Blob([], {type: "image/png"});
+    }
   };
 
   const handleExportPng = async () => {
@@ -2050,14 +2053,14 @@ export default function CartEditor() {
 
           <div 
             ref={cartScrollRef}
-            className={`w-full ${isMobileView ? "overflow-y-auto overflow-x-hidden h-[calc(100vh-280px)]" : "overflow-x-auto h-auto"} pb-8 pt-2 flex scrollbar-hide active:cursor-grabbing select-none justify-center`}
+            className={`w-full ${isMobileView ? "overflow-y-auto min-h-[600px] h-[650px] max-h-[80vh]" : "overflow-x-auto h-auto"} pb-8 pt-4 flex scrollbar-hide active:cursor-grabbing select-none justify-center`}
             style={{ WebkitOverflowScrolling: "touch" }}
           >
-            <motion.div layout className="shrink-0 flex flex-col items-center">
+            <motion.div layout className="shrink-0 flex items-center justify-center">
               <div 
                 ref={canvasRef as any} 
                 id="export-container" 
-                className={`flex flex-col items-center p-4 bg-background shrink-0 ${isMobileView ? "scale-[0.42] origin-top my-4" : ""}`}
+                className={`flex flex-col items-center p-4 bg-background shrink-0 ${isMobileView ? "scale-[0.42] origin-top " : ""}`}
                 style={isMobileView ? { width: "820px" } : {}}
               >
                 <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
