@@ -1625,7 +1625,8 @@ export default function CartEditor() {
                 <button 
                   onClick={() => {
                     setShowCreationSuccess(false);
-                    setMobileViewType("standard");
+                    setMobileViewType("wizard");
+                    setWizardStep("edit");
                     setIsMobileActionMenuOpen(false);
                   }}
                   className="w-full bg-[#1b618d] text-white py-4 rounded-2xl font-black text-base shadow-lg shadow-[#1b618d]/20 active:scale-[0.98] transition-all"
