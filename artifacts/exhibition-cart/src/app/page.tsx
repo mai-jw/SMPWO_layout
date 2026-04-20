@@ -2061,7 +2061,7 @@ export default function CartEditor() {
             className={`flex-1 w-full flex flex-col items-center justify-center pb-12 pt-4 overflow-hidden select-none`}
             style={{ WebkitOverflowScrolling: "touch" }}
           >
-            <motion.div layout className="shrink-0 flex items-center justify-center">
+            <motion.div layout className={`shrink-0 flex items-center justify-center ${isMobileView ? "-mt-12" : ""}`}>
               <div 
                 ref={canvasRef as any} 
                 id="export-container" 
@@ -2126,22 +2126,20 @@ export default function CartEditor() {
                                     {shelf.layout_type === "none" ? (
                                       <span className="text-slate-300">—</span>
                                     ) : (
-                                      <div className="space-y-1.5">
-                                        {shelfItems.length === 0 ? (
-                                          <span className="text-slate-300">—</span>
-                                        ) : (
-                                          shelfItems.map((item, i) => {
-                                            const langLabel = LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language;
-                                            return (
-                                              <div key={i} className="flex flex-col">
-                                                <div className="font-bold text-foreground leading-tight">{item.name}</div>
-                                                <div className="text-red-600 font-bold text-[9px] leading-tight">
-                                                  {langLabel}
-                                                </div>
+                                      <div className={`grid ${shelf.layout_type === "document" || shelf.layout_type === "bible" ? "grid-cols-3" : shelf.layout_type === "pamphlet" ? "grid-cols-4" : "grid-cols-2"} gap-x-3`}>
+                                        {shelf.items.map((itemId, i) => {
+                                          const item = itemId ? itemMap[itemId] : null;
+                                          if (!item) return <div key={i} className="text-slate-300">—</div>;
+                                          const langLabel = LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language;
+                                          return (
+                                            <div key={i} className="flex flex-col">
+                                              <div className="font-bold text-foreground leading-tight text-[10px]">{item.name}</div>
+                                              <div className="text-red-600 font-bold text-[9px] leading-tight">
+                                                {langLabel}
                                               </div>
-                                            );
-                                          })
-                                        )}
+                                            </div>
+                                          );
+                                        })}
                                       </div>
                                     )}
                                   </td>
