@@ -1412,28 +1412,10 @@ export default function CartEditor() {
           };
           syncStyles(originalContainer, clonedContainer);
 
-          // Force A4 Portrait Ratio Calculation
-          const rect = originalContainer.getBoundingClientRect();
-          const targetRatio = 1 / 1.414; // A4 Portrait ratio
-          const currentRatio = rect.width / rect.height;
-          
-          let py = 120; // Default top/bottom padding
-          let px = 80;  // Default side padding
-
-          if (currentRatio > targetRatio) {
-            // Content is relatively wide: Increase vertical padding to make it 'taller'
-            const targetHeight = rect.width / targetRatio;
-            py = (targetHeight - rect.height) / 2;
-          } else {
-            // Content is already tall: Just add normal side padding
-            const targetWidth = rect.height * targetRatio;
-            px = (targetWidth - rect.width) / 2;
-          }
-
           clonedContainer.style.setProperty("width", "auto", "important");
           clonedContainer.style.setProperty("height", "auto", "important");
           clonedContainer.style.setProperty("background-color", "#ffffff", "important");
-          clonedContainer.style.setProperty("padding", `${Math.max(py, 80)}px ${Math.max(px, 60)}px`, "important");
+          clonedContainer.style.setProperty("padding", "100px 120px", "important");
           clonedContainer.style.setProperty("display", "flex", "important");
           clonedContainer.style.setProperty("flex-direction", "column", "important");
           clonedContainer.style.setProperty("align-items", "center", "important");
