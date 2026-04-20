@@ -89,6 +89,9 @@ export function makeInitialCartLayoutV2(): CartLayoutV2 {
   return {
     poster: null,
     posterType: "",
+    comment: "",
+    concept: "",
+    supplementary: "",
     shelves: [
       makeDefaultShelf("none"),
       makeDefaultShelf("none"),

@@ -62,7 +62,7 @@ interface TagDisplayProps {
   onClick: () => void;
 }
 
-function TagDisplay({ shelf, shelfIndex, isActive, onClick }: TagDisplayProps) {
+const TagDisplay = React.memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayProps) => {
   const layout = shelf.layout_type;
   const mode = shelf.tag_1.type;
   
@@ -277,10 +277,10 @@ interface CartPanelProps {
   onTagClick: (cart: CartId, shelfIdx: number) => void;
 }
 
-function CartPanel({
+const CartPanel = React.memo(({
   cartId, layout, activeTarget, isSelecting, itemMap,
   onSlotClick, onClear, onTagClick,
-}: CartPanelProps) {
+}: CartPanelProps) => {
   const isPosterActive = activeTarget?.cart === cartId && activeTarget.section === "poster";
 
   return (
@@ -333,7 +333,7 @@ function CartPanel({
       </div>
     </div>
   );
-}
+});
 
 /* ═══════════════════════════════════════════════════════
      SelectionSidebar — Context-aware side panel
@@ -1406,16 +1406,34 @@ export default function CartEditor() {
             }
             for (let i = 0; i < orig.children.length; i++) {
               if (orig.children[i] && cloned.children[i]) {
-                syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement);
+                syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement, false);
               }
             }
           };
           syncStyles(originalContainer, clonedContainer);
 
+          // Force A4 Portrait Ratio Calculation
+          const rect = originalContainer.getBoundingClientRect();
+          const targetRatio = 1 / 1.414; // A4 Portrait ratio
+          const currentRatio = rect.width / rect.height;
+          
+          let py = 120; // Default top/bottom padding
+          let px = 80;  // Default side padding
+
+          if (currentRatio > targetRatio) {
+            // Content is relatively wide: Increase vertical padding to make it 'taller'
+            const targetHeight = rect.width / targetRatio;
+            py = (targetHeight - rect.height) / 2;
+          } else {
+            // Content is already tall: Just add normal side padding
+            const targetWidth = rect.height * targetRatio;
+            px = (targetWidth - rect.width) / 2;
+          }
+
           clonedContainer.style.setProperty("width", "auto", "important");
           clonedContainer.style.setProperty("height", "auto", "important");
           clonedContainer.style.setProperty("background-color", "#ffffff", "important");
-          clonedContainer.style.setProperty("padding", "100px 300px 40px 300px", "important");
+          clonedContainer.style.setProperty("padding", `${Math.max(py, 80)}px ${Math.max(px, 60)}px`, "important");
           clonedContainer.style.setProperty("display", "flex", "important");
           clonedContainer.style.setProperty("flex-direction", "column", "important");
           clonedContainer.style.setProperty("align-items", "center", "important");
