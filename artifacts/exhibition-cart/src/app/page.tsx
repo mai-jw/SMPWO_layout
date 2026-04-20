@@ -2125,23 +2125,42 @@ export default function CartEditor() {
                                   <td className="py-1.5">
                                     {shelf.layout_type === "none" ? (
                                       <span className="text-slate-300">—</span>
-                                    ) : (
-                                      <div className={`grid ${shelf.layout_type === "document" || shelf.layout_type === "bible" ? "grid-cols-3" : shelf.layout_type === "pamphlet" ? "grid-cols-4" : "grid-cols-2"} gap-x-3`}>
-                                        {shelf.items.map((itemId, i) => {
-                                          const item = itemId ? itemMap[itemId] : null;
-                                          if (!item) return <div key={i} className="text-slate-300">—</div>;
-                                          const langLabel = LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language;
-                                          return (
-                                            <div key={i} className="flex flex-col">
-                                              <div className="font-bold text-foreground leading-tight text-[10px]">{item.name}</div>
-                                              <div className="text-red-600 font-bold text-[9px] leading-tight">
-                                                {langLabel}
+                                    ) : (() => {
+                                      const mappedItems = shelf.items.map(id => id ? itemMap[id] : null);
+                                      const filledItems = mappedItems.filter((it): it is Item => Boolean(it));
+                                      
+                                      // Check if all filled items are identical (Name & Language)
+                                      const uniqueCheck = Array.from(new Set(filledItems.map(it => `${it.name}|${it.language}`)));
+                                      const isAllIdentical = uniqueCheck.length === 1 && filledItems.length === shelf.items.filter(id => !!id).length && filledItems.length > 1;
+
+                                      if (isAllIdentical) {
+                                        const item = filledItems[0];
+                                        const langLabel = LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language;
+                                        return (
+                                          <div className="flex flex-col">
+                                            <div className="font-bold text-foreground leading-tight text-[10px]">{item.name}</div>
+                                            <div className="text-red-600 font-bold text-[9px] leading-tight">{langLabel}</div>
+                                          </div>
+                                        );
+                                      }
+
+                                      return (
+                                        <div className={`grid ${shelf.layout_type === "document" || shelf.layout_type === "bible" ? "grid-cols-3" : shelf.layout_type === "pamphlet" ? "grid-cols-4" : "grid-cols-2"} gap-x-3`}>
+                                          {mappedItems.map((item, i) => {
+                                            if (!item) return <div key={i} className="text-slate-300">—</div>;
+                                            const langLabel = LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language;
+                                            return (
+                                              <div key={i} className="flex flex-col">
+                                                <div className="font-bold text-foreground leading-tight text-[10px]">{item.name}</div>
+                                                <div className="text-red-600 font-bold text-[9px] leading-tight">
+                                                  {langLabel}
+                                                </div>
                                               </div>
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                    )}
+                                            );
+                                          })}
+                                        </div>
+                                      );
+                                    })()}
                                   </td>
                                 </tr>
                               );
