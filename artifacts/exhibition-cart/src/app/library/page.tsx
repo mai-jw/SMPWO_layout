@@ -6,7 +6,7 @@ import { useUI } from "@/context/ui-context";
 import type { Item } from "@/lib/supabase";
 import {
   Library, Search, Upload, Languages, ChevronDown, Pencil,
-  Trash2, X, Check, ArrowLeft, Image as ImageIcon,
+  Trash2, X, Check, ArrowLeft, Image as ImageIcon, Home
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -91,13 +91,9 @@ export default function LibraryPage() {
                 <span className="font-black text-base tracking-widest text-white uppercase">LIBRARY</span>
               </div>
             </div>
-            <button
-              onClick={openUploadPanel}
-              className="flex items-center gap-2 px-4 py-2 bg-[#ffd76d] text-zinc-800 hover:opacity-90 rounded-xl transition-all shadow-md active:scale-95 font-bold text-sm"
-            >
-              <Upload className="w-4 h-4" />
-              <span className="hidden sm:inline">画像をアップロード</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline text-white/40 text-[10px] font-bold tracking-widest uppercase">Management Mode</span>
+            </div>
           </div>
         </div>
 
@@ -158,152 +154,180 @@ export default function LibraryPage() {
           </div>
         </div>
 
-        {/* Item Grid */}
-        <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
-          {isLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {[...Array(12)].map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 animate-pulse">
-                  <div className="w-full aspect-square bg-slate-100 rounded-xl mb-3" />
-                  <div className="h-4 bg-slate-100 rounded w-3/4 mb-2" />
-                  <div className="h-3 bg-slate-100 rounded w-1/2" />
-                </div>
-              ))}
-            </div>
-          ) : filteredItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center">
-              <ImageIcon className="w-16 h-16 text-slate-200 mb-4" />
-              <p className="text-slate-500 font-bold text-lg">該当するアイテムなし</p>
-              <p className="text-slate-400 text-sm mt-1">条件を変更するか、画像をアップロードしてください。</p>
-              <button
-                onClick={openUploadPanel}
-                className="mt-6 flex items-center gap-2 px-5 py-2.5 bg-[#ffd76d] text-zinc-800 rounded-xl font-bold shadow-md hover:opacity-90 transition-all active:scale-95"
-              >
-                <Upload className="w-4 h-4" />
-                アップロード
-              </button>
-            </div>
-          ) : (
-            <motion.div
-              layout
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"
+        {/* Content Area with Sidebar */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Desktop Left Sidebar: HOME & Upload */}
+          <aside className="hidden lg:flex w-[72px] bg-[#64748b] border-r border-slate-600/30 flex-col items-center py-8 gap-8 shrink-0 z-20 shadow-[4px_0_12px_rgba(0,0,0,0.1)]">
+            <Link 
+              href="/" 
+              className="group flex flex-col items-center gap-1.5 transition-all"
+              title="ホーム（カート編集）"
             >
-              <AnimatePresence>
-                {filteredItems.map((item) => (
-                  <motion.div
-                    key={item.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.18 }}
-                    className="group relative bg-white rounded-2xl p-3 shadow-sm border border-slate-100 hover:shadow-lg hover:-translate-y-0.5 hover:border-sky-200 transition-all duration-200 flex flex-col"
-                  >
-                    {/* Image */}
-                    <div className="relative w-full aspect-square bg-slate-50 rounded-xl overflow-hidden mb-3">
-                      <img
-                        src={item.url}
-                        alt={item.name}
-                        crossOrigin="anonymous"
-                        className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                      {editingId !== item.id && (
-                        <button
-                          onClick={(e) => handleStartEdit(e, item)}
-                          className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-sm"
-                          title="編集"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
+              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white group-hover:bg-[#fdfaf3] group-hover:text-slate-800 transition-all shadow-lg group-hover:scale-110">
+                <Home className="w-6 h-6" />
+              </div>
+              <span className="text-[10px] font-black text-white/50 group-hover:text-white uppercase tracking-widest mt-0.5">Home</span>
+            </Link>
 
-                    {/* Info / Edit form */}
-                    {editingId === item.id ? (
-                      <div className="space-y-2 relative">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setEditingId(null); }}
-                          className="absolute -top-1 -right-1 p-1 bg-white border border-slate-200 text-slate-400 hover:text-red-500 rounded-full shadow-sm transition-all z-10"
-                          title="キャンセル"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                        <input
-                          autoFocus
-                          className="text-xs font-bold text-slate-800 bg-white border border-sky-400 rounded-lg px-2 py-1.5 w-full outline-none"
-                          value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(item.id!); if (e.key === "Escape") setEditingId(null); }}
-                        />
-                        <div className="grid grid-cols-2 gap-1">
-                          <select
-                            value={editCategory}
-                            onChange={(e) => setEditCategory(e.target.value)}
-                            className="text-[10px] font-bold border border-slate-200 rounded px-1 py-1 bg-white outline-none focus:border-sky-400"
-                          >
-                            {Object.entries(GALLERY_FILTER_LABELS).filter(([k]) => k !== "all").map(([k, v]) => (
-                              <option key={k} value={k}>{v}</option>
-                            ))}
-                          </select>
-                          <select
-                            value={editLanguage}
-                            onChange={(e) => setEditLanguage(e.target.value)}
-                            className="text-[10px] font-bold border border-slate-200 rounded px-1 py-1 bg-white outline-none focus:border-sky-400"
-                          >
-                            {LANG_FILTER_OPTIONS.filter(o => o.key !== "all" && o.key !== "foreign").map(o => (
-                              <option key={o.key} value={o.key}>{o.label}</option>
-                            ))}
-                            <option value="other">その他外国語</option>
-                          </select>
-                          {editCategory === "poster" && (
-                            <select
-                              value={editPosterType}
-                              onChange={(e) => setEditPosterType(e.target.value)}
-                              className="col-span-2 text-[10px] font-bold border border-amber-200 rounded px-1 py-1 bg-amber-50 text-amber-800 outline-none focus:border-amber-400"
-                            >
-                              <option value="">ポスタータイプ未設定</option>
-                              <option value="マグポス">マグポス</option>
-                              <option value="コルトン">コルトン</option>
-                              <option value="その他">その他</option>
-                            </select>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 pt-1">
-                          {deleteConfirmId === item.id ? (
-                            <div className="flex gap-1.5 w-full">
-                              <button onClick={() => executeDelete(item)} className="flex-1 px-2 py-1.5 bg-red-600 text-white text-[10px] font-bold rounded hover:bg-red-700 transition">はい</button>
-                              <button onClick={() => setDeleteConfirmId(null)} className="flex-1 px-2 py-1.5 bg-slate-100 text-slate-700 text-[10px] font-bold rounded hover:bg-slate-200 transition">戻る</button>
-                            </div>
-                          ) : (
-                            <>
-                              <button onClick={() => setDeleteConfirmId(item.id!)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100" title="削除">
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                              <button onClick={() => handleSaveEdit(item.id!)} className="flex-1 py-1.5 bg-sky-600 text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-sky-700 transition-colors shadow-sm">
-                                <Check className="w-3.5 h-3.5" /> 保存
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex-1 flex flex-col min-w-0">
-                        <p className="text-xs font-bold text-slate-800 truncate leading-tight mb-1.5" title={item.name}>
-                          {item.name}
-                        </p>
-                        <div className="flex flex-wrap gap-1 mt-auto">
-                          <span className="text-[10px] font-bold bg-slate-100 text-slate-600 rounded px-1.5 py-0.5 uppercase truncate max-w-full">
-                            {GALLERY_FILTER_LABELS[item.category as GalleryFilterType] || item.category}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
+            <button 
+              onClick={openUploadPanel}
+              className="group flex flex-col items-center gap-1.5 transition-all"
+              title="画像をアップロード"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-[#ffd76d] flex items-center justify-center text-zinc-800 transition-all shadow-lg group-hover:bg-[#ffeaab] group-hover:scale-110">
+                <Upload className="w-6 h-6" />
+              </div>
+              <span className="text-[10px] font-black text-white/50 group-hover:text-white uppercase tracking-widest mt-0.5">Upload</span>
+            </button>
+          </aside>
+
+          {/* Item Grid */}
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 scrollbar-hide">
+            {isLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                {[...Array(12)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 animate-pulse">
+                    <div className="w-full aspect-square bg-slate-100 rounded-xl mb-3" />
+                    <div className="h-4 bg-slate-100 rounded w-3/4 mb-2" />
+                    <div className="h-3 bg-slate-100 rounded w-1/2" />
+                  </div>
                 ))}
-              </AnimatePresence>
-            </motion.div>
-          )}
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <ImageIcon className="w-16 h-16 text-slate-200 mb-4" />
+                <p className="text-slate-500 font-bold text-lg">該当するアイテムなし</p>
+                <p className="text-slate-400 text-sm mt-1">条件を変更するか、画像をアップロードしてください。</p>
+                <button
+                  onClick={openUploadPanel}
+                  className="mt-6 flex items-center gap-2 px-5 py-2.5 bg-[#ffd76d] text-zinc-800 rounded-xl font-bold shadow-md hover:opacity-90 transition-all active:scale-95"
+                >
+                  <Upload className="w-4 h-4" />
+                  アップロード
+                </button>
+              </div>
+            ) : (
+              <motion.div
+                layout
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-12"
+              >
+                <AnimatePresence>
+                  {filteredItems.map((item) => (
+                    <motion.div
+                      key={item.id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.18 }}
+                      className="group relative bg-white rounded-2xl p-3 shadow-sm border border-slate-100 hover:shadow-lg hover:-translate-y-0.5 hover:border-sky-200 transition-all duration-200 flex flex-col"
+                    >
+                      {/* Image */}
+                      <div className="relative w-full aspect-square bg-slate-50 rounded-xl overflow-hidden mb-3">
+                        <img
+                          src={item.url}
+                          alt={item.name}
+                          crossOrigin="anonymous"
+                          className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        {editingId !== item.id && (
+                          <button
+                            onClick={(e) => handleStartEdit(e, item)}
+                            className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-sm"
+                            title="編集"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Info / Edit form */}
+                      {editingId === item.id ? (
+                        <div className="space-y-2 relative">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setEditingId(null); }}
+                            className="absolute -top-1 -right-1 p-1 bg-white border border-slate-200 text-slate-400 hover:text-red-500 rounded-full shadow-sm transition-all z-10"
+                            title="キャンセル"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          <input
+                            autoFocus
+                            className="text-xs font-bold text-slate-800 bg-white border border-sky-400 rounded-lg px-2 py-1.5 w-full outline-none"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(item.id!); if (e.key === "Escape") setEditingId(null); }}
+                          />
+                          <div className="grid grid-cols-2 gap-1">
+                            <select
+                              value={editCategory}
+                              onChange={(e) => setEditCategory(e.target.value)}
+                              className="text-[10px] font-bold border border-slate-200 rounded px-1 py-1 bg-white outline-none focus:border-sky-400"
+                            >
+                              {Object.entries(GALLERY_FILTER_LABELS).filter(([k]) => k !== "all").map(([k, v]) => (
+                                <option key={k} value={k}>{v}</option>
+                              ))}
+                            </select>
+                            <select
+                              value={editLanguage}
+                              onChange={(e) => setEditLanguage(e.target.value)}
+                              className="text-[10px] font-bold border border-slate-200 rounded px-1 py-1 bg-white outline-none focus:border-sky-400"
+                            >
+                              {LANG_FILTER_OPTIONS.filter(o => o.key !== "all" && o.key !== "foreign").map(o => (
+                                <option key={o.key} value={o.key}>{o.label}</option>
+                              ))}
+                              <option value="other">その他外国語</option>
+                            </select>
+                            {editCategory === "poster" && (
+                              <select
+                                value={editPosterType}
+                                onChange={(e) => setEditPosterType(e.target.value)}
+                                className="col-span-2 text-[10px] font-bold border border-amber-200 rounded px-1 py-1 bg-amber-50 text-amber-800 outline-none focus:border-amber-400"
+                              >
+                                <option value="">ポスタータイプ未設定</option>
+                                <option value="マグポス">マグポス</option>
+                                <option value="コルトン">コルトン</option>
+                                <option value="その他">その他</option>
+                              </select>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 pt-1">
+                            {deleteConfirmId === item.id ? (
+                              <div className="flex gap-1.5 w-full">
+                                <button onClick={() => executeDelete(item)} className="flex-1 px-2 py-1.5 bg-red-600 text-white text-[10px] font-bold rounded hover:bg-red-700 transition">はい</button>
+                                <button onClick={() => setDeleteConfirmId(null)} className="flex-1 px-2 py-1.5 bg-slate-100 text-slate-700 text-[10px] font-bold rounded hover:bg-slate-200 transition">戻る</button>
+                              </div>
+                            ) : (
+                              <>
+                                <button onClick={() => setDeleteConfirmId(item.id!)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100" title="削除">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button onClick={() => handleSaveEdit(item.id!)} className="flex-1 py-1.5 bg-sky-600 text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 hover:bg-sky-700 transition-colors shadow-sm">
+                                  <Check className="w-3.5 h-3.5" /> 保存
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex-1 flex flex-col min-w-0">
+                          <p className="text-xs font-bold text-slate-800 truncate leading-tight mb-1.5" title={item.name}>
+                            {item.name}
+                          </p>
+                          <div className="flex flex-wrap gap-1 mt-auto">
+                            <span className="text-[10px] font-bold bg-slate-100 text-slate-600 rounded px-1.5 py-0.5 uppercase truncate max-w-full">
+                              {GALLERY_FILTER_LABELS[item.category as GalleryFilterType] || item.category}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </div>
         </div>
       </div>
     </>

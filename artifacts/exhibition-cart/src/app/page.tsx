@@ -1804,23 +1804,7 @@ export default function CartEditor() {
         <div className="flex-1" />
         {!isMobileView && (
           <>
-            {/* LIBRARY link */}
-            <Link
-              href="/library"
-              className="flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-bold border border-[#64748b] bg-white text-[#64748b] hover:bg-[#64748b] hover:text-white transition-all shadow-xs select-none"
-            >
-              <Library className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden sm:inline">LIBRARY</span>
-            </Link>
-            {/* Upload button (HOME) */}
-            <button
-              onClick={openUploadPanel}
-              className="flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-bold bg-[#ffd76d] text-zinc-800 hover:opacity-90 transition-all shadow-xs active:scale-95 select-none"
-              title="画像をアップロード"
-            >
-              <Upload className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden sm:inline">アップロード</span>
-            </button>
+            {/* Save Button (Removed Library/Upload from here) */}
             <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()}
               className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-medium transition-all select-none disabled:opacity-60 ${
                 saveStatus === "saved" ? "bg-emerald-500 text-white" :
@@ -1907,6 +1891,34 @@ export default function CartEditor() {
       {/* Main Content: Left Gallery + Carts + Side Panel */}
       <div className={`flex flex-1 overflow-hidden relative ${isMobileView ? "pb-16" : ""}`}>
         
+        {/* Mobile Gallery Overlay */}
+        {/* Desktop Left Sidebar: LIBRARY & Upload Buttons */}
+        {!isMobileView && (
+          <aside className="w-[72px] bg-[#64748b] border-r border-slate-700/30 flex flex-col items-center py-8 gap-8 shrink-0 z-20 shadow-[4px_0_12px_rgba(0,0,0,0.1)]">
+            <Link 
+              href="/library" 
+              className="group flex flex-col items-center gap-1.5 transition-all"
+              title="LIBRARY"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white group-hover:bg-[#aecbe2] group-hover:text-slate-800 transition-all shadow-lg group-hover:scale-110">
+                <Library className="w-6 h-6" />
+              </div>
+              <span className="text-[10px] font-black text-white/50 group-hover:text-white uppercase tracking-widest mt-0.5">Library</span>
+            </Link>
+
+            <button 
+              onClick={openUploadPanel}
+              className="group flex flex-col items-center gap-1.5 transition-all"
+              title="画像をアップロード"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-[#ffd76d] flex items-center justify-center text-zinc-800 transition-all shadow-lg group-hover:bg-[#ffeaab] group-hover:scale-110">
+                <Upload className="w-6 h-6" />
+              </div>
+              <span className="text-[10px] font-black text-white/50 group-hover:text-white uppercase tracking-widest mt-0.5">Upload</span>
+            </button>
+          </aside>
+        )}
+
         {/* Mobile Gallery Overlay */}
         <AnimatePresence>
           {isMobileGalleryOpen && isMobileView && (
