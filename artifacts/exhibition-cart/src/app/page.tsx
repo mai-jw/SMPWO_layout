@@ -1378,9 +1378,16 @@ export default function CartEditor() {
   };
 
   const handleExportPng = async () => {
-    if (!canvasRef.current) return;
-    setExporting("png");
     try {
+      // 1. Prepare for capture: Temporarily remove mobile scaling transforms
+      const originalStyle = canvasRef.current.style.cssText;
+      const originalClassName = canvasRef.current.className;
+      
+      canvasRef.current.style.transform = "none";
+      canvasRef.current.style.scale = "1";
+      canvasRef.current.style.width = "820px";
+      canvasRef.current.classList.remove("scale-[0.6]", "scale-[0.62]", "origin-center", "origin-top");
+
       // Wait for all images to load before capturing
       const images = canvasRef.current.getElementsByTagName('img');
       await Promise.all(Array.from(images).map(img => {
@@ -1391,19 +1398,15 @@ export default function CartEditor() {
       const canvas = await html2canvas(canvasRef.current, { 
         scale: 2, 
         useCORS: true, 
-        logging: true,
+        logging: false,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          const originalContainer = canvasRef.current;
           const clonedContainer = clonedDoc.getElementById("export-container");
-          if (!originalContainer || !clonedContainer) return;
+          if (!clonedContainer) return;
 
-          // Nuclear Isolation: Wipe everything else to prevent the parser from seeing problematic styles
           clonedDoc.head.innerHTML = "";
           clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
           
-          // CRITICAL: Re-inject basic box-sizing reset since Tailwind's global reset was wiped.
-          // This prevents cumulative pixel shifts from borders/padding.
           const resetStyle = clonedDoc.createElement("style");
           resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
           clonedDoc.head.appendChild(resetStyle);
@@ -1415,15 +1418,7 @@ export default function CartEditor() {
             const style = window.getComputedStyle(orig);
             const isRoot = cloned.id === "export-container";
             
-            // Calculate sizes based on viewport scale (mobile is 0.6x)
-            const scaleFactor = isMobileView ? 0.6 : 1.0;
-            const rect = orig.getBoundingClientRect();
-            
-            if (!isRoot) {
-              cloned.style.width = `${rect.width / scaleFactor}px`;
-              cloned.style.height = `${rect.height / scaleFactor}px`;
-            } else {
-              // Ensure root in clone is full size and unscaled
+            if (isRoot) {
               cloned.style.transform = "none";
               cloned.style.scale = "none";
               cloned.style.width = "820px";
@@ -1431,6 +1426,9 @@ export default function CartEditor() {
 
             for (let i = 0; i < style.length; i++) {
               const prop = style[i];
+              // Skip layout-altering props that should be handled by the 820px parent
+              if (prop === "width" || prop === "height" || prop === "transform" || prop === "scale") continue;
+              
               let val = style.getPropertyValue(prop);
               if (val && (val.toLowerCase().includes("oklch") || val.toLowerCase().includes("oklab"))) {
                 val = (prop.includes("background") || prop.includes("border")) ? "transparent" : "#1f1d1b";
@@ -1443,7 +1441,7 @@ export default function CartEditor() {
               }
             }
           };
-          syncStyles(originalContainer, clonedContainer);
+          syncStyles(canvasRef.current, clonedContainer);
 
           // Force fixed width to match actual content (2 carts x 500px - 180px overlap = ~820px)
           clonedContainer.style.setProperty("width", "820px", "important");
@@ -1456,6 +1454,14 @@ export default function CartEditor() {
           clonedContainer.style.setProperty("margin", "0", "important");
         }
       });
+
+      // Restoration
+      canvasRef.current.style.cssText = originalStyle;
+      canvasRef.current.className = originalClassName;
+
+      // 4. Restore state
+      canvasRef.current.style.cssText = originalStyle;
+      canvasRef.current.className = originalClassName;
       const dataUrl = canvas.toDataURL("image/png");
       const blob = dataURLtoBlob(dataUrl);
       
@@ -1471,35 +1477,41 @@ export default function CartEditor() {
     if (!canvasRef.current) return;
     setExporting("pdf");
     try {
+      const originalStyle = canvasRef.current.style.cssText;
+      const originalClassName = canvasRef.current.className;
+      
+      canvasRef.current.style.transform = "none";
+      canvasRef.current.style.scale = "1";
+      canvasRef.current.style.width = "820px";
+      canvasRef.current.classList.remove("scale-[0.6]", "scale-[0.62]", "origin-center", "origin-top");
+
       const images = canvasRef.current.getElementsByTagName('img');
       await Promise.all(Array.from(images).map(img => {
         if (img.complete) return Promise.resolve();
         return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
       }));
+
       const canvas = await html2canvas(canvasRef.current, { 
         scale: 2, 
         useCORS: true, 
-        logging: true,
+        logging: false,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          const originalContainer = canvasRef.current;
           const clonedContainer = clonedDoc.getElementById("export-container");
-          if (!originalContainer || !clonedContainer) return;
+          if (!clonedContainer) return;
+
           clonedDoc.head.innerHTML = "";
           clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
           const resetStyle = clonedDoc.createElement("style");
           resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
           clonedDoc.head.appendChild(resetStyle);
+
           clonedDoc.body.innerHTML = "";
           clonedDoc.body.appendChild(clonedContainer);
+
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
             const isRoot = cloned.id === "export-container";
-            const scaleFactor = isMobileView ? 0.6 : 1.0;
-            const rect = orig.getBoundingClientRect();
-            
-            cloned.style.width = `${rect.width / scaleFactor}px`;
-            cloned.style.height = `${rect.height / scaleFactor}px`;
             
             if (isRoot) {
               cloned.style.transform = "none";
@@ -1508,15 +1520,22 @@ export default function CartEditor() {
 
             for (let i = 0; i < style.length; i++) {
               const prop = style[i];
+              if (prop === "width" || prop === "height" || prop === "transform" || prop === "scale") continue;
+              
               let val = style.getPropertyValue(prop);
               if (val && (val.toLowerCase().includes("oklch") || val.toLowerCase().includes("oklab"))) {
                 val = (prop.includes("background") || prop.includes("border")) ? "transparent" : "#1f1d1b";
               }
               cloned.style.setProperty(prop, val, "important");
             }
-            for (let i = 0; i < orig.children.length; i++) { if (orig.children[i] && cloned.children[i]) syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement); }
+            for (let i = 0; i < orig.children.length; i++) {
+              if (orig.children[i] && cloned.children[i]) {
+                syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement);
+              }
+            }
           };
-          syncStyles(originalContainer, clonedContainer);
+          syncStyles(canvasRef.current, clonedContainer);
+
           clonedContainer.style.width = "auto";
           clonedContainer.style.height = "auto";
           clonedContainer.style.backgroundColor = "#ffffff";
@@ -1524,6 +1543,9 @@ export default function CartEditor() {
           clonedContainer.style.display = "flex";
         }
       });
+
+      canvasRef.current.style.cssText = originalStyle;
+      canvasRef.current.className = originalClassName;
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pW = pdf.internal.pageSize.getWidth();

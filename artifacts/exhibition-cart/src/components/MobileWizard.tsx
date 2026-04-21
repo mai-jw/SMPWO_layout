@@ -380,15 +380,25 @@ export function MobileWizard({
                 </section>
               )}
             </div>
-            <div className="p-8 bg-white rounded-t-[3rem] shadow-2xl flex gap-4">
-              <button onClick={() => { if (activeShelfIdx === 0 && activeCart === "A") setStep("menu"); else if (activeShelfIdx === 0 && activeCart === "B") { setActiveCart("A"); setActiveShelfIdx(3); } else setActiveShelfIdx(prev => prev - 1); }}
-                className="w-20 h-16 rounded-[1.5rem] bg-cream flex items-center justify-center active:scale-90 transition-all font-black text-coral">
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <button onClick={() => { if (activeShelfIdx === 3) { if (activeCart === "A") { setActiveCart("B"); setActiveShelfIdx(0); } else setStep("preview"); } else setActiveShelfIdx(prev => prev + 1); }}
-                className="flex-1 h-16 rounded-[1.5rem] font-black text-white shadow-lg shadow-coral/30 active:scale-95 transition-all flex items-center justify-center gap-2" style={{ backgroundColor: COLORS.coral }}>
-                <span>{activeShelfIdx === 3 && activeCart === "B" ? "プレビューへ" : "次へ進む"}</span>
-                <ChevronRight className="w-5 h-5" />
+            <div className="p-8 bg-white rounded-t-[3rem] shadow-2xl flex flex-col gap-4">
+              <div className="flex gap-4">
+                <button onClick={() => { if (activeShelfIdx === 0 && activeCart === "A") setStep("menu"); else if (activeShelfIdx === 0 && activeCart === "B") { setActiveCart("A"); setActiveShelfIdx(3); } else setActiveShelfIdx(prev => prev - 1); }}
+                  className="w-20 h-16 rounded-[1.5rem] bg-cream flex items-center justify-center active:scale-90 transition-all font-black text-coral">
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button onClick={() => { if (activeShelfIdx === 3) { if (activeCart === "A") { setActiveCart("B"); setActiveShelfIdx(0); } else setStep("preview"); } else setActiveShelfIdx(prev => prev + 1); }}
+                  className="flex-1 h-16 rounded-[1.5rem] font-black text-white shadow-lg shadow-coral/30 active:scale-95 transition-all flex items-center justify-center gap-2" style={{ backgroundColor: COLORS.coral }}>
+                  <span>{activeShelfIdx === 3 && activeCart === "B" ? "プレビューへ" : "次へ進む"}</span>
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {/* Shortcut to Preview */}
+              <button 
+                onClick={() => setStep("preview")}
+                className="w-full h-14 rounded-[1.25rem] font-black text-sm text-slate-400 border-2 border-slate-100 active:scale-95 transition-all text-center"
+              >
+                編集を切り上げてプレビューへ
               </button>
             </div>
           </motion.div>
@@ -408,9 +418,9 @@ export function MobileWizard({
                   </div>
                   <div className="grid grid-cols-2 gap-6">
                     {(["A", "B"] as CartId[]).map((cid, i) => (
-                      <div key={cid} className="space-y-4">
+                      <div key={cid} className="space-y-4 flex flex-col items-center">
                          <p className="font-black text-sm opacity-40 uppercase tracking-widest text-center">カート {cid}</p>
-                         <div className="aspect-[2/3] bg-cream rounded-[2rem] p-4 flex flex-col gap-2 shadow-inner">
+                         <div className="aspect-[2/3] w-full bg-cream rounded-[2rem] p-4 flex flex-col gap-2 shadow-inner">
                             <div className="flex-1 bg-white rounded-xl shadow-sm overflow-hidden p-2">
                                {(() => {
                                  const pId = (i === 0 ? cartA : cartB).poster;
@@ -419,6 +429,12 @@ export function MobileWizard({
                             </div>
                             <div className="flex gap-1 h-10"><div className="flex-1 bg-white/50 rounded-lg" /><div className="flex-1 bg-white/50 rounded-lg" /></div>
                          </div>
+                         <button 
+                           onClick={() => { setActiveCart(cid); setActiveShelfIdx(0); setStep("edit"); }}
+                           className="text-[10px] font-black uppercase tracking-widest text-coral/60 border-b border-coral/20 pb-0.5"
+                         >
+                           ↑ 編集に戻る
+                         </button>
                       </div>
                     ))}
                   </div>
