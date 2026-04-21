@@ -1389,7 +1389,7 @@ export default function CartEditor() {
       container.style.transform = "none";
       container.style.scale = "1";
       container.style.width = "820px";
-      container.classList.remove("scale-[0.6]", \"scale-[0.62]\", \"origin-center\", \"origin-top\");
+      container.classList.remove("scale-[0.6]", "scale-[0.62]", "origin-center", "origin-top");
 
       // Wait for all images to load before capturing
       const images = container.getElementsByTagName('img');
@@ -1402,44 +1402,44 @@ export default function CartEditor() {
         scale: 2, 
         useCORS: true, 
         logging: false,
-        backgroundColor: \"#ffffff\",
+        backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          const clonedContainer = clonedDoc.getElementById(\"export-container\");
+          const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
-          clonedDoc.head.innerHTML = \"\";
-          clonedDoc.querySelectorAll(\"style, link\").forEach(el => el.remove());
+          clonedDoc.head.innerHTML = "";
+          clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
           
-          const resetStyle = clonedDoc.createElement(\"style\");
-          resetStyle.innerHTML = \"*, ::before, ::after { box-sizing: border-box; }\";
+          const resetStyle = clonedDoc.createElement("style");
+          resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
           clonedDoc.head.appendChild(resetStyle);
 
-          clonedDoc.body.innerHTML = \"\";
+          clonedDoc.body.innerHTML = "";
           clonedDoc.body.appendChild(clonedContainer);
 
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
-            const isRoot = cloned.id === \"export-container\";
+            const isRoot = cloned.id === "export-container";
             
             if (isRoot) {
-              cloned.style.transform = \"none\";
-              cloned.style.scale = \"none\";
-              cloned.style.width = \"820px\";
+              cloned.style.transform = "none";
+              cloned.style.scale = "none";
+              cloned.style.width = "820px";
             }
 
-            for (let i = 0; i \u003c style.length; i++) {
+            for (let i = 0; i < style.length; i++) {
               const prop = style[i];
               // Skip layout-altering props that should be handled by the 820px parent
-              if (prop === \"width\" || prop === \"height\" || prop === \"transform\" || prop === \"scale\") continue;
+              if (prop === "width" || prop === "height" || prop === "transform" || prop === "scale") continue;
               
               let val = style.getPropertyValue(prop);
-              if (val \u0026\u0026 (val.toLowerCase().includes(\"oklch\") || val.toLowerCase().includes(\"oklab\"))) {
-                val = (prop.includes(\"background\") || prop.includes(\"border\")) ? \"transparent\" : \"#1f1d1b\";
+              if (val && (val.toLowerCase().includes("oklch") || val.toLowerCase().includes("oklab"))) {
+                val = (prop.includes("background") || prop.includes("border")) ? "transparent" : "#1f1d1b";
               }
-              cloned.style.setProperty(prop, val, \"important\");
+              cloned.style.setProperty(prop, val, "important");
             }
-            for (let i = 0; i \u003c orig.children.length; i++) {
-              if (orig.children[i] \u0026\u0026 cloned.children[i]) {
+            for (let i = 0; i < orig.children.length; i++) {
+              if (orig.children[i] && cloned.children[i]) {
                 syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement);
               }
             }
@@ -1447,43 +1447,43 @@ export default function CartEditor() {
           syncStyles(container, clonedContainer);
 
           // Force fixed width to match actual content (2 carts x 500px - 180px overlap = ~820px)
-          clonedContainer.style.setProperty(\"width\", \"820px\", \"important\");
-          clonedContainer.style.setProperty(\"height\", \"auto\", \"important\");
-          clonedContainer.style.setProperty(\"background-color\", \"#ffffff\", \"important\");
-          clonedContainer.style.setProperty(\"padding\", \"80px 40px\", \"important\");
-          clonedContainer.style.setProperty(\"display\", \"flex\", \"important\");
-          clonedContainer.style.setProperty(\"flex-direction\", \"column\", \"important\");
-          clonedContainer.style.setProperty(\"align-items\", \"center\", \"important\");
-          clonedContainer.style.setProperty(\"margin\", \"0\", \"important\");
+          clonedContainer.style.setProperty("width", "820px", "important");
+          clonedContainer.style.setProperty("height", "auto", "important");
+          clonedContainer.style.setProperty("background-color", "#ffffff", "important");
+          clonedContainer.style.setProperty("padding", "80px 40px", "important");
+          clonedContainer.style.setProperty("display", "flex", "important");
+          clonedContainer.style.setProperty("flex-direction", "column", "important");
+          clonedContainer.style.setProperty("align-items", "center", "important");
+          clonedContainer.style.setProperty("margin", "0", "important");
         }
       });
 
       // Restoration
       container.style.cssText = originalStyle;
       container.className = originalClassName;
-      const dataUrl = canvas.toDataURL(\"image/png\");
+      const dataUrl = canvas.toDataURL("image/png");
       const blob = dataURLtoBlob(dataUrl);
       
-      await saveFileWrapper(blob, \"cart-layout.png\", \"image/png\", \".png\");
-      alert(\"PNG画像を保存しました。\");
+      await saveFileWrapper(blob, "cart-layout.png", "image/png", ".png");
+      alert("PNG画像を保存しました。");
     } catch (err: any) {
-      console.error(\"[PNG Export Error]\", err);
-      alert(\"PNG書き出し中にエラーが発生しました: \" + (err.message || \"Unknown error\"));
+      console.error("[PNG Export Error]", err);
+      alert("PNG書き出し中にエラーが発生しました: " + (err.message || "Unknown error"));
     } finally { setExporting(null); }
   };
 
   const handleExportPdf = async () => {
     const container = canvasRef.current;
     if (!container) return;
-    setExporting(\"pdf\");
+    setExporting("pdf");
     try {
       const originalStyle = container.style.cssText;
       const originalClassName = container.className;
       
-      container.style.transform = \"none\";
-      container.style.scale = \"1\";
-      container.style.width = \"820px\";
-      container.classList.remove(\"scale-[0.6]\", \"scale-[0.62]\", \"origin-center\", \"origin-top\");
+      container.style.transform = "none";
+      container.style.scale = "1";
+      container.style.width = "820px";
+      container.classList.remove("scale-[0.6]", "scale-[0.62]", "origin-center", "origin-top");
 
       const images = container.getElementsByTagName('img');
       await Promise.all(Array.from(images).map(img => {
@@ -1495,81 +1495,81 @@ export default function CartEditor() {
         scale: 2, 
         useCORS: true, 
         logging: false,
-        backgroundColor: \"#ffffff\",
+        backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          const clonedContainer = clonedDoc.getElementById(\"export-container\");
+          const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
-          clonedDoc.head.innerHTML = \"\";
-          clonedDoc.querySelectorAll(\"style, link\").forEach(el => el.remove());
-          const resetStyle = clonedDoc.createElement(\"style\");
-          resetStyle.innerHTML = \"*, ::before, ::after { box-sizing: border-box; }\";
+          clonedDoc.head.innerHTML = "";
+          clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
+          const resetStyle = clonedDoc.createElement("style");
+          resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
           clonedDoc.head.appendChild(resetStyle);
 
-          clonedDoc.body.innerHTML = \"\";
+          clonedDoc.body.innerHTML = "";
           clonedDoc.body.appendChild(clonedContainer);
 
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
-            const isRoot = cloned.id === \"export-container\";
+            const isRoot = cloned.id === "export-container";
             
             if (isRoot) {
-              cloned.style.transform = \"none\";
-              cloned.style.scale = \"none\";
+              cloned.style.transform = "none";
+              cloned.style.scale = "none";
             }
 
-            for (let i = 0; i \u003c style.length; i++) {
+            for (let i = 0; i < style.length; i++) {
               const prop = style[i];
-              if (prop === \"width\" || prop === \"height\" || prop === \"transform\" || prop === \"scale\") continue;
+              if (prop === "width" || prop === "height" || prop === "transform" || prop === "scale") continue;
               
               let val = style.getPropertyValue(prop);
-              if (val \u0026\u0026 (val.toLowerCase().includes(\"oklch\") || val.toLowerCase().includes(\"oklab\"))) {
-                val = (prop.includes(\"background\") || prop.includes(\"border\")) ? \"transparent\" : \"#1f1d1b\";
+              if (val && (val.toLowerCase().includes("oklch") || val.toLowerCase().includes("oklab"))) {
+                val = (prop.includes("background") || prop.includes("border")) ? "transparent" : "#1f1d1b";
               }
-              cloned.style.setProperty(prop, val, \"important\");
+              cloned.style.setProperty(prop, val, "important");
             }
-            for (let i = 0; i \u003c orig.children.length; i++) {
-              if (orig.children[i] \u0026\u0026 cloned.children[i]) {
+            for (let i = 0; i < orig.children.length; i++) {
+              if (orig.children[i] && cloned.children[i]) {
                 syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement);
               }
             }
           };
           syncStyles(container, clonedContainer);
 
-          clonedContainer.style.width = \"auto\";
-          clonedContainer.style.height = \"auto\";
-          clonedContainer.style.backgroundColor = \"#ffffff\";
-          clonedContainer.style.padding = \"100px 300px 40px 300px\";
-          clonedContainer.style.display = \"flex\";
+          clonedContainer.style.width = "auto";
+          clonedContainer.style.height = "auto";
+          clonedContainer.style.backgroundColor = "#ffffff";
+          clonedContainer.style.padding = "100px 300px 40px 300px";
+          clonedContainer.style.display = "flex";
         }
       });
 
       container.style.cssText = originalStyle;
       container.className = originalClassName;
-      const imgData = canvas.toDataURL(\"image/png\");
-      const pdf = new jsPDF({ orientation: \"portrait\", unit: \"mm\", format: \"a4\" });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pW = pdf.internal.pageSize.getWidth();
       const pH = pdf.internal.pageSize.getHeight();
       const ratio = canvas.width / canvas.height;
       let imgW = pW - 20;
       let imgH = imgW / ratio;
-      if (imgH \u003e pH - 20) { imgH = pH - 20; imgW = imgH * ratio; }
+      if (imgH > pH - 20) { imgH = pH - 20; imgW = imgH * ratio; }
       const xOffset = (pW - imgW) / 2;
       const yOffset = (pH - imgH) / 2;
-      pdf.addImage(imgData, \"PNG\", xOffset, yOffset, imgW, imgH);
-      const blob = pdf.output(\"blob\");
-      await saveFileWrapper(blob, \"cart-layout.pdf\", \"application/pdf\", \".pdf\");
-      alert(\"PDFドキュメントを保存しました。\");
+      pdf.addImage(imgData, "PNG", xOffset, yOffset, imgW, imgH);
+      const blob = pdf.output("blob");
+      await saveFileWrapper(blob, "cart-layout.pdf", "application/pdf", ".pdf");
+      alert("PDFドキュメントを保存しました。");
     } catch (err: any) {
-      console.error(\"[PDF Export Error]\", err);
-      alert(\"PDF書き出し中にエラーが発生しました: \" + (err.message || \"Unknown error\"));
+      console.error("[PDF Export Error]", err);
+      alert("PDF書き出し中にエラーが発生しました: " + (err.message || "Unknown error"));
     } finally { setExporting(null); }
   };
 
   const handleExportXlsx = async () => {
     const container = canvasRef.current;
     if (!container) return;
-    setExporting(\"xlsx\");
+    setExporting("xlsx");
     try {
       const images = container.getElementsByTagName('img');
       await Promise.all(Array.from(images).map(img => {
@@ -1580,21 +1580,21 @@ export default function CartEditor() {
         scale: 2, 
         useCORS: true, 
         logging: true,
-        backgroundColor: \"#ffffff\",
+        backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
           const originalContainer = container;
-          const clonedContainer = clonedDoc.getElementById(\"export-container\");
+          const clonedContainer = clonedDoc.getElementById("export-container");
           if (!originalContainer || !clonedContainer) return;
-          clonedDoc.head.innerHTML = \"\";
-          clonedDoc.querySelectorAll(\"style, link\").forEach(el => el.remove());
-          const resetStyle = clonedDoc.createElement(\"style\");
-          resetStyle.innerHTML = \"*, ::before, ::after { box-sizing: border-box; }\";
+          clonedDoc.head.innerHTML = "";
+          clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
+          const resetStyle = clonedDoc.createElement("style");
+          resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
           clonedDoc.head.appendChild(resetStyle);
-          clonedDoc.body.innerHTML = \"\";
+          clonedDoc.body.innerHTML = "";
           clonedDoc.body.appendChild(clonedContainer);
           const syncStyles = (orig: HTMLElement, cloned: HTMLElement) => {
             const style = window.getComputedStyle(orig);
-            const isRoot = cloned.id === \"export-container\";
+            const isRoot = cloned.id === "export-container";
             const scaleFactor = isMobileView ? 0.6 : 1.0;
             const rect = orig.getBoundingClientRect();
             
@@ -1602,26 +1602,26 @@ export default function CartEditor() {
             cloned.style.height = `${rect.height / scaleFactor}px`;
             
             if (isRoot) {
-              cloned.style.transform = \"none\";
-              cloned.style.scale = \"none\";
+              cloned.style.transform = "none";
+              cloned.style.scale = "none";
             }
 
-            for (let i = 0; i \u003c style.length; i++) {
+            for (let i = 0; i < style.length; i++) {
               const prop = style[i];
               let val = style.getPropertyValue(prop);
-              if (val \u0026\u0026 (val.toLowerCase().includes(\"oklch\") || val.toLowerCase().includes(\"oklab\"))) {
-                val = (prop.includes(\"background\") || prop.includes(\"border\")) ? \"transparent\" : \"#1f1d1b\";
+              if (val && (val.toLowerCase().includes("oklch") || val.toLowerCase().includes("oklab"))) {
+                val = (prop.includes("background") || prop.includes("border")) ? "transparent" : "#1f1d1b";
               }
-              cloned.style.setProperty(prop, val, \"important\");
+              cloned.style.setProperty(prop, val, "important");
             }
-            for (let i = 0; i \u003c orig.children.length; i++) { if (orig.children[i] \u0026\u0026 cloned.children[i]) syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement); }
+            for (let i = 0; i < orig.children.length; i++) { if (orig.children[i] && cloned.children[i]) syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement); }
           };
           syncStyles(originalContainer, clonedContainer);
-          clonedContainer.style.width = \"auto\";
-          clonedContainer.style.height = \"auto\";
-          clonedContainer.style.backgroundColor = \"#ffffff\";
-          clonedContainer.style.padding = \"100px 300px 40px 300px\";
-          clonedContainer.style.display = \"flex\";
+          clonedContainer.style.width = "auto";
+          clonedContainer.style.height = "auto";
+          clonedContainer.style.backgroundColor = "#ffffff";
+          clonedContainer.style.padding = "100px 300px 40px 300px";
+          clonedContainer.style.display = "flex";
         }
       });
       const cartImgBase64 = cartCanvas.toDataURL("image/png");
