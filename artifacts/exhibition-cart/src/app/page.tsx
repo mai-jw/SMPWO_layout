@@ -1378,6 +1378,8 @@ export default function CartEditor() {
   };
 
   const handleExportPng = async () => {
+    if (!canvasRef.current) return;
+    setExporting("png");
     try {
       // 1. Prepare for capture: Temporarily remove mobile scaling transforms
       const originalStyle = canvasRef.current.style.cssText;
@@ -1456,10 +1458,6 @@ export default function CartEditor() {
       });
 
       // Restoration
-      canvasRef.current.style.cssText = originalStyle;
-      canvasRef.current.className = originalClassName;
-
-      // 4. Restore state
       canvasRef.current.style.cssText = originalStyle;
       canvasRef.current.className = originalClassName;
       const dataUrl = canvas.toDataURL("image/png");
