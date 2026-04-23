@@ -639,7 +639,16 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
                     <span className="text-[10px] font-black bg-zinc-100 text-zinc-700 rounded px-1.5 py-0.5 uppercase">
                       {GALLERY_FILTER_LABELS[item.category as GalleryFilterType] || item.category}
                     </span>
+                    <span className={`text-[10px] font-black rounded px-1.5 py-0.5 ${
+                      item.language === 'ja' ? 'bg-blue-100 text-blue-700' :
+                      item.language === 'en' ? 'bg-orange-100 text-orange-700' :
+                      item.language.startsWith('zh') ? 'bg-red-100 text-red-700' :
+                      'bg-zinc-100 text-zinc-600'
+                    }`}>
+                      {LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}
+                    </span>
                   </div>
+
                 )}
               </div>
             </div>
@@ -968,9 +977,16 @@ function SelectionSidebar({
                       <p className="text-sm font-black text-foreground break-words group-hover:text-primary transition-colors pr-2 leading-[1.25]">{item.name}</p>
                       <div className="flex gap-1.5 mt-2 flex-wrap">
                         {item.category === "poster" && <span className="text-[10px] font-black bg-violet-100 text-violet-700 rounded px-1.5 py-0.5 tracking-tighter">POSTER</span>}
-                        {item.language === "ja" && <span className="text-[10px] font-black bg-blue-100 text-blue-700 rounded px-1.5 py-0.5 tracking-tighter">日本語</span>}
-                        {item.language === "en" && <span className="text-[10px] font-black bg-orange-100 text-orange-700 rounded px-1.5 py-0.5 tracking-tighter">EN</span>}
+                        <span className={`text-[10px] font-black rounded px-1.5 py-0.5 tracking-tighter ${
+                          item.language === 'ja' ? 'bg-blue-100 text-blue-700' :
+                          item.language === 'en' ? 'bg-orange-100 text-orange-700' :
+                          item.language.startsWith('zh') ? 'bg-red-100 text-red-700' :
+                          'bg-zinc-100 text-zinc-600'
+                        }`}>
+                          {LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}
+                        </span>
                       </div>
+
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
                   </button>
