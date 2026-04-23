@@ -311,7 +311,9 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
                                 <option value="document">文庫本サイズ書籍</option>
                                 <option value="pamphlet">パンフレット</option>
                                 <option value="invitation">招待状</option>
+                                <option value="bible">聖書</option>
                               </select>
+
 
                               <select
                                 value={file.language}
