@@ -1014,6 +1014,8 @@ export default function CartEditor() {
   const [activeTarget, setActiveTarget] = useState<ActiveTarget>(null);
   const { openUploadPanel } = useUI();
   const [exporting, setExporting] = useState<"png" | "pdf" | "xlsx" | null>(null);
+  const [exportVersion, setExportVersion] = useState<"standard" | "with-info">("standard");
+
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [showNewPanel, setShowNewPanel] = useState(false);
   const [newMonth, setNewMonth] = useState(() => new Date().getMonth() + 1);
@@ -1424,12 +1426,12 @@ export default function CartEditor() {
             if (isRoot) {
               cloned.style.transform = "none";
               cloned.style.scale = "none";
-              cloned.style.width = "820px";
+              cloned.style.width = exportVersion === "with-info" ? "1180px" : "820px";
             }
 
             for (let i = 0; i < style.length; i++) {
               const prop = style[i];
-              // Skip layout-altering props that should be handled by the 820px parent
+              // Skip layout-altering props that should be handled by the parent
               if (prop === "width" || prop === "height" || prop === "transform" || prop === "scale") continue;
               
               let val = style.getPropertyValue(prop);
@@ -1446,17 +1448,80 @@ export default function CartEditor() {
           };
           syncStyles(container, clonedContainer);
 
-          // Force fixed width to match actual content (2 carts x 500px - 180px overlap = ~820px)
-          clonedContainer.style.setProperty("width", "820px", "important");
+          // If with-info, rearrange and add info panel
+          if (exportVersion === "with-info") {
+            const wrapper = clonedDoc.createElement("div");
+            wrapper.style.display = "flex";
+            wrapper.style.gap = "40px";
+            wrapper.style.alignItems = "flex-start";
+            wrapper.style.width = "100%";
+
+            const mainCol = clonedDoc.createElement("div");
+            mainCol.style.flex = "1";
+            mainCol.style.display = "flex";
+            mainCol.style.flexDirection = "column";
+            mainCol.style.alignItems = "center";
+            
+            // Move existing children to mainCol
+            while (clonedContainer.firstChild) {
+              mainCol.appendChild(clonedContainer.firstChild);
+            }
+            wrapper.appendChild(mainCol);
+
+            // Create Info Panel
+            const infoPanel = clonedDoc.createElement("div");
+            infoPanel.style.width = "320px";
+            infoPanel.style.backgroundColor = "#ffffff";
+            infoPanel.style.borderLeft = "2px solid #f1f5f9";
+            infoPanel.style.paddingLeft = "32px";
+            infoPanel.style.display = "flex";
+            infoPanel.style.flexDirection = "column";
+            infoPanel.style.gap = "32px";
+            infoPanel.style.height = "100%";
+
+            const periodName = formatPeriodDisplay(period).split(' (')[0] || "コンセプト";
+
+            infoPanel.innerHTML = `
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; color: #1e293b;">
+                  <div style="width: 4px; height: 14px; backgroundColor: #3b82f6; borderRadius: 999px;"></div>
+                  <span style="font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;">${periodName}</span>
+                </div>
+                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 8px;">コンセプト</p>
+                  <p style="font-size: 13px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.6;">${concept || "—"}</p>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 4px;">■ カートA コメント</p>
+                  <p style="font-size: 12px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.5;">${commentA || "—"}</p>
+                </div>
+                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 4px;">■ カートB コメント</p>
+                  <p style="font-size: 12px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.5;">${commentB || "—"}</p>
+                </div>
+              </div>
+            `;
+            wrapper.appendChild(infoPanel);
+            clonedContainer.appendChild(wrapper);
+
+            clonedContainer.style.setProperty("width", "1180px", "important");
+            clonedContainer.style.setProperty("display", "block", "important");
+          } else {
+            clonedContainer.style.setProperty("width", "820px", "important");
+            clonedContainer.style.setProperty("display", "flex", "important");
+            clonedContainer.style.setProperty("flex-direction", "column", "important");
+            clonedContainer.style.setProperty("align-items", "center", "important");
+          }
+
           clonedContainer.style.setProperty("height", "auto", "important");
           clonedContainer.style.setProperty("background-color", "#ffffff", "important");
           clonedContainer.style.setProperty("padding", "80px 40px", "important");
-          clonedContainer.style.setProperty("display", "flex", "important");
-          clonedContainer.style.setProperty("flex-direction", "column", "important");
-          clonedContainer.style.setProperty("align-items", "center", "important");
           clonedContainer.style.setProperty("margin", "0", "important");
         }
       });
+
 
       // Restoration
       container.style.cssText = originalStyle;
@@ -1516,6 +1581,7 @@ export default function CartEditor() {
             if (isRoot) {
               cloned.style.transform = "none";
               cloned.style.scale = "none";
+              cloned.style.width = exportVersion === "with-info" ? "1180px" : "820px";
             }
 
             for (let i = 0; i < style.length; i++) {
@@ -1536,13 +1602,74 @@ export default function CartEditor() {
           };
           syncStyles(container, clonedContainer);
 
-          clonedContainer.style.width = "auto";
-          clonedContainer.style.height = "auto";
-          clonedContainer.style.backgroundColor = "#ffffff";
-          clonedContainer.style.padding = "100px 300px 40px 300px";
-          clonedContainer.style.display = "flex";
+          // If with-info, rearrange and add info panel
+          if (exportVersion === "with-info") {
+            const wrapper = clonedDoc.createElement("div");
+            wrapper.style.display = "flex";
+            wrapper.style.gap = "40px";
+            wrapper.style.alignItems = "flex-start";
+            wrapper.style.width = "100%";
+
+            const mainCol = clonedDoc.createElement("div");
+            mainCol.style.flex = "1";
+            mainCol.style.display = "flex";
+            mainCol.style.flexDirection = "column";
+            mainCol.style.alignItems = "center";
+            
+            while (clonedContainer.firstChild) {
+              mainCol.appendChild(clonedContainer.firstChild);
+            }
+            wrapper.appendChild(mainCol);
+
+            const infoPanel = clonedDoc.createElement("div");
+            infoPanel.style.width = "320px";
+            infoPanel.style.backgroundColor = "#ffffff";
+            infoPanel.style.borderLeft = "2px solid #f1f5f9";
+            infoPanel.style.paddingLeft = "32px";
+            infoPanel.style.display = "flex";
+            infoPanel.style.flexDirection = "column";
+            infoPanel.style.gap = "32px";
+            infoPanel.style.height = "100%";
+
+            const periodName = formatPeriodDisplay(period).split(' (')[0] || "コンセプト";
+
+            infoPanel.innerHTML = `
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; color: #1e293b;">
+                  <div style="width: 4px; height: 14px; backgroundColor: #3b82f6; borderRadius: 999px;"></div>
+                  <span style="font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;">${periodName}</span>
+                </div>
+                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 8px;">コンセプト</p>
+                  <p style="font-size: 13px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.6;">${concept || "—"}</p>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 4px;">■ カートA コメント</p>
+                  <p style="font-size: 12px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.5;">${commentA || "—"}</p>
+                </div>
+                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 4px;">■ カートB コメント</p>
+                  <p style="font-size: 12px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.5;">${commentB || "—"}</p>
+                </div>
+              </div>
+            `;
+            wrapper.appendChild(infoPanel);
+            clonedContainer.appendChild(wrapper);
+
+            clonedContainer.style.setProperty("width", "1180px", "important");
+            clonedContainer.style.display = "block";
+          } else {
+            clonedContainer.style.width = "auto";
+            clonedContainer.style.height = "auto";
+            clonedContainer.style.backgroundColor = "#ffffff";
+            clonedContainer.style.padding = "100px 300px 40px 300px";
+            clonedContainer.style.display = "flex";
+          }
         }
       });
+
 
       container.style.cssText = originalStyle;
       container.className = originalClassName;
@@ -1598,7 +1725,8 @@ export default function CartEditor() {
             const scaleFactor = isMobileView ? 0.6 : 1.0;
             const rect = orig.getBoundingClientRect();
             
-            cloned.style.width = `${rect.width / scaleFactor}px`;
+            const baseWidth = rect.width / scaleFactor;
+            cloned.style.width = exportVersion === "with-info" ? "1180px" : `${baseWidth}px`;
             cloned.style.height = `${rect.height / scaleFactor}px`;
             
             if (isRoot) {
@@ -1617,13 +1745,74 @@ export default function CartEditor() {
             for (let i = 0; i < orig.children.length; i++) { if (orig.children[i] && cloned.children[i]) syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement); }
           };
           syncStyles(originalContainer, clonedContainer);
-          clonedContainer.style.width = "auto";
-          clonedContainer.style.height = "auto";
-          clonedContainer.style.backgroundColor = "#ffffff";
-          clonedContainer.style.padding = "100px 300px 40px 300px";
-          clonedContainer.style.display = "flex";
+
+          if (exportVersion === "with-info") {
+            const wrapper = clonedDoc.createElement("div");
+            wrapper.style.display = "flex";
+            wrapper.style.gap = "40px";
+            wrapper.style.alignItems = "flex-start";
+            wrapper.style.width = "100%";
+
+            const mainCol = clonedDoc.createElement("div");
+            mainCol.style.flex = "1";
+            mainCol.style.display = "flex";
+            mainCol.style.flexDirection = "column";
+            mainCol.style.alignItems = "center";
+            
+            while (clonedContainer.firstChild) {
+              mainCol.appendChild(clonedContainer.firstChild);
+            }
+            wrapper.appendChild(mainCol);
+
+            const infoPanel = clonedDoc.createElement("div");
+            infoPanel.style.width = "320px";
+            infoPanel.style.backgroundColor = "#ffffff";
+            infoPanel.style.borderLeft = "2px solid #f1f5f9";
+            infoPanel.style.paddingLeft = "32px";
+            infoPanel.style.display = "flex";
+            infoPanel.style.flexDirection = "column";
+            infoPanel.style.gap = "32px";
+            infoPanel.style.height = "100%";
+
+            const periodName = formatPeriodDisplay(period).split(' (')[0] || "コンセプト";
+
+            infoPanel.innerHTML = `
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; color: #1e293b;">
+                  <div style="width: 4px; height: 14px; backgroundColor: #3b82f6; borderRadius: 999px;"></div>
+                  <span style="font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;">${periodName}</span>
+                </div>
+                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 8px;">コンセプト</p>
+                  <p style="font-size: 13px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.6;">${concept || "—"}</p>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 4px;">■ カートA コメント</p>
+                  <p style="font-size: 12px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.5;">${commentA || "—"}</p>
+                </div>
+                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 4px;">■ カートB コメント</p>
+                  <p style="font-size: 12px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.5;">${commentB || "—"}</p>
+                </div>
+              </div>
+            `;
+            wrapper.appendChild(infoPanel);
+            clonedContainer.appendChild(wrapper);
+
+            clonedContainer.style.setProperty("width", "1180px", "important");
+            clonedContainer.style.display = "block";
+          } else {
+            clonedContainer.style.width = "auto";
+            clonedContainer.style.height = "auto";
+            clonedContainer.style.backgroundColor = "#ffffff";
+            clonedContainer.style.padding = "100px 300px 40px 300px";
+            clonedContainer.style.display = "flex";
+          }
         }
       });
+
       const cartImgBase64 = cartCanvas.toDataURL("image/png");
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("配置レイアウト");
@@ -1763,6 +1952,9 @@ export default function CartEditor() {
           handleExportPng={handleExportPng}
           handleExportPdf={handleExportPdf}
           handleExportXlsx={handleExportXlsx}
+          exportVersion={exportVersion}
+          setExportVersion={setExportVersion}
+
           handleDelete={executeDeleteLayout}
           onOpenUpload={openUploadPanel}
           saveStatus={saveStatus}
@@ -2004,7 +2196,24 @@ export default function CartEditor() {
                 )}
               </div>
             )}
+            {/* Export Version Selection (PC) */}
+            <div className="flex items-center gap-1.5 px-2 bg-slate-50 border border-slate-200 rounded-lg ml-2 py-0.5">
+              <button 
+                onClick={() => setExportVersion("standard")}
+                className={`text-[9px] font-black px-2 py-1 rounded transition-all ${exportVersion === "standard" ? "bg-white text-primary shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+              >
+                通常
+              </button>
+              <button 
+                onClick={() => setExportVersion("with-info")}
+                className={`text-[9px] font-black px-2 py-1 rounded transition-all ${exportVersion === "with-info" ? "bg-white text-primary shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+              >
+                コンセプト・コメント付
+              </button>
+            </div>
+
             {/* Compact Export Buttons for Mobile */}
+
             <div className="flex items-center gap-1 px-1 border-l border-border ml-1">
               {[
                 { key: "png" as const, label: "PNG", icon: <FileImage className="w-3.5 h-3.5" />, cls: "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold shadow-xs" },
@@ -2542,10 +2751,25 @@ export default function CartEditor() {
 
                   {/* Export Section */}
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between px-1">
+                    <div className="flex flex-col gap-2 px-1">
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">書き出し</p>
+                      <div className="flex gap-2 p-1 bg-slate-100/50 rounded-xl border border-slate-100">
+                        <button 
+                          onClick={() => setExportVersion("standard")}
+                          className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${exportVersion === "standard" ? "bg-white text-primary shadow-sm" : "text-slate-400"}`}
+                        >
+                          通常
+                        </button>
+                        <button 
+                          onClick={() => setExportVersion("with-info")}
+                          className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${exportVersion === "with-info" ? "bg-white text-primary shadow-sm" : "text-slate-400"}`}
+                        >
+                          コンセプト付
+                        </button>
+                      </div>
                       {exporting && <div className="text-[10px] text-primary animate-pulse font-bold">処理中...</div>}
                     </div>
+
                     <div className="grid grid-cols-3 gap-3">
                       {[
                         { key: "png" as const, label: "PNG画像", icon: <FileImage className="w-5 h-5" />, color: "bg-amber-50 text-amber-700 border-amber-200" },
