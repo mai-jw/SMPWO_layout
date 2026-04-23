@@ -1015,6 +1015,8 @@ export default function CartEditor() {
   const { openUploadPanel } = useUI();
   const [exporting, setExporting] = useState<"png" | "pdf" | "xlsx" | null>(null);
   const [exportVersion, setExportVersion] = useState<"standard" | "with-info">("standard");
+  const [exportTarget, setExportTarget] = useState<"png" | "pdf" | "xlsx" | null>(null);
+
 
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [showNewPanel, setShowNewPanel] = useState(false);
@@ -1379,8 +1381,10 @@ export default function CartEditor() {
     }
   };
 
-  const handleExportPng = async () => {
+  const handleExportPng = async (v?: "standard" | "with-info") => {
+    const version = v || exportVersion;
     const container = canvasRef.current;
+
     if (!container) return;
     setExporting("png");
     try {
@@ -1537,8 +1541,10 @@ export default function CartEditor() {
     } finally { setExporting(null); }
   };
 
-  const handleExportPdf = async () => {
+  const handleExportPdf = async (v?: "standard" | "with-info") => {
+    const version = v || exportVersion;
     const container = canvasRef.current;
+
     if (!container) return;
     setExporting("pdf");
     try {
@@ -1693,8 +1699,10 @@ export default function CartEditor() {
     } finally { setExporting(null); }
   };
 
-  const handleExportXlsx = async () => {
+  const handleExportXlsx = async (v?: "standard" | "with-info") => {
+    const version = v || exportVersion;
     const container = canvasRef.current;
+
     if (!container) return;
     setExporting("xlsx");
     try {
@@ -1952,8 +1960,9 @@ export default function CartEditor() {
           handleExportPng={handleExportPng}
           handleExportPdf={handleExportPdf}
           handleExportXlsx={handleExportXlsx}
-          exportVersion={exportVersion}
-          setExportVersion={setExportVersion}
+          exportTarget={exportTarget}
+          setExportTarget={setExportTarget}
+
 
           handleDelete={executeDeleteLayout}
           onOpenUpload={openUploadPanel}
@@ -2196,23 +2205,8 @@ export default function CartEditor() {
                 )}
               </div>
             )}
-            {/* Export Version Selection (PC) */}
-            <div className="flex items-center gap-1.5 px-2 bg-slate-50 border border-slate-200 rounded-lg ml-2 py-0.5">
-              <button 
-                onClick={() => setExportVersion("standard")}
-                className={`text-[9px] font-black px-2 py-1 rounded transition-all ${exportVersion === "standard" ? "bg-white text-primary shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
-              >
-                通常
-              </button>
-              <button 
-                onClick={() => setExportVersion("with-info")}
-                className={`text-[9px] font-black px-2 py-1 rounded transition-all ${exportVersion === "with-info" ? "bg-white text-primary shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
-              >
-                コンセプト・コメント付
-              </button>
-            </div>
-
             {/* Compact Export Buttons for Mobile */}
+
 
             <div className="flex items-center gap-1 px-1 border-l border-border ml-1">
               {[
@@ -2221,8 +2215,9 @@ export default function CartEditor() {
                 { key: "xlsx" as const, label: "Excel", icon: <FileSpreadsheet className="w-3.5 h-3.5" />, cls: "border-green-400 bg-green-50 text-green-700 hover:bg-green-100 font-bold shadow-xs" },
               ].map(({ key, label, icon, cls }) => (
                 <button key={key} disabled={!!exporting}
-                  onClick={key === "png" ? handleExportPng : key === "pdf" ? handleExportPdf : handleExportXlsx}
+                  onClick={() => setExportTarget(key)}
                   className={`flex items-center gap-1 text-[10px] px-1.5 sm:px-2 py-0.5 rounded-md border disabled:opacity-50 transition-all active:scale-95 select-none ${cls}`}>
+
                   {exporting === key ? <div className="w-3.5 h-3.5 border-2 border-current/30 border-t-white rounded-full animate-spin" /> : icon}
                   <span className="hidden sm:inline">{label}</span>
                   {key === "xlsx" && <span className="sm:hidden">Excel</span>}
@@ -2751,24 +2746,11 @@ export default function CartEditor() {
 
                   {/* Export Section */}
                   <div className="space-y-3">
-                    <div className="flex flex-col gap-2 px-1">
+                    <div className="flex items-center justify-between px-1">
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">書き出し</p>
-                      <div className="flex gap-2 p-1 bg-slate-100/50 rounded-xl border border-slate-100">
-                        <button 
-                          onClick={() => setExportVersion("standard")}
-                          className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${exportVersion === "standard" ? "bg-white text-primary shadow-sm" : "text-slate-400"}`}
-                        >
-                          通常
-                        </button>
-                        <button 
-                          onClick={() => setExportVersion("with-info")}
-                          className={`flex-1 py-2 text-[10px] font-black rounded-lg transition-all ${exportVersion === "with-info" ? "bg-white text-primary shadow-sm" : "text-slate-400"}`}
-                        >
-                          コンセプト付
-                        </button>
-                      </div>
                       {exporting && <div className="text-[10px] text-primary animate-pulse font-bold">処理中...</div>}
                     </div>
+
 
                     <div className="grid grid-cols-3 gap-3">
                       {[
@@ -2778,10 +2760,9 @@ export default function CartEditor() {
                       ].map(({ key, label, icon, color }) => (
                         <button key={key} disabled={!!exporting}
                           onClick={() => {
-                            if (key === "png") handleExportPng();
-                            else if (key === "pdf") handleExportPdf();
-                            else handleExportXlsx();
+                            setExportTarget(key);
                           }}
+
                           className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all active:scale-95 shadow-sm bg-white ${color} ${exporting === key ? "ring-2 ring-primary ring-offset-1" : ""}`}
                         >
                           {icon}
@@ -2932,7 +2913,69 @@ export default function CartEditor() {
           )}
         </AnimatePresence>
 
-        <style jsx global>{`
+      {/* Export Style Selection Modal */}
+      <AnimatePresence>
+        {exportTarget && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setExportTarget(null)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" 
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-white rounded-[2.5rem] shadow-2xl p-8 w-full max-w-sm flex flex-col items-center text-center gap-8 border border-white/20"
+            >
+              <div className="w-20 h-20 bg-amber-50 text-amber-500 rounded-3xl flex items-center justify-center shadow-inner rotate-3">
+                <Download className="w-10 h-10" strokeWidth={2.5} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-black text-slate-800 tracking-tight">書き出しパターンの選択</h3>
+                <p className="text-xs font-bold text-slate-400 leading-relaxed px-4">
+                  保存するデータのスタイルを選択してください。
+                </p>
+              </div>
+              <div className="flex flex-col w-full gap-3">
+                <button 
+                  onClick={async () => {
+                    const target = exportTarget;
+                    setExportTarget(null);
+                    if (target === "png") await handleExportPng("standard");
+                    else if (target === "pdf") await handleExportPdf("standard");
+                    else if (target === "xlsx") await handleExportXlsx("standard");
+                  }}
+                  className="w-full bg-slate-800 text-white py-4.5 rounded-2xl font-black text-sm shadow-xl shadow-slate-200 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-0.5 group"
+                >
+                  <span className="text-base">通常スタイルで保存</span>
+                  <span className="text-[10px] opacity-40 font-bold uppercase tracking-widest group-hover:opacity-60 transition-opacity">Standard Layout</span>
+                </button>
+                <button 
+                  onClick={async () => {
+                    const target = exportTarget;
+                    setExportTarget(null);
+                    if (target === "png") await handleExportPng("with-info");
+                    else if (target === "pdf") await handleExportPdf("with-info");
+                    else if (target === "xlsx") await handleExportXlsx("with-info");
+                  }}
+                  className="w-full bg-white text-slate-800 border-2 border-slate-100 py-4.5 rounded-2xl font-black text-sm shadow-lg shadow-black/5 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-0.5 group hover:border-amber-200 hover:bg-amber-50/30"
+                >
+                  <span className="text-base text-amber-600">コンセプト・コメント付</span>
+                  <span className="text-[10px] text-amber-600/40 font-bold uppercase tracking-widest group-hover:text-amber-600/60 transition-opacity">With Concept & Comments</span>
+                </button>
+                <button 
+                  onClick={() => setExportTarget(null)}
+                  className="mt-2 w-full py-2 text-slate-400 font-bold text-xs hover:text-slate-600 transition-colors"
+                >
+                  キャンセル
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <style jsx global>{`
+
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
         }

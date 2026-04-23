@@ -81,9 +81,10 @@ interface MobileWizardProps {
   locationsConfig: string[];
   handleCreateNew: () => void;
   formatPeriodDisplay: (p: string) => string;
-  exportVersion: "standard" | "with-info";
-  setExportVersion: (v: "standard" | "with-info") => void;
+  exportTarget: "png" | "pdf" | "xlsx" | null;
+  setExportTarget: (t: "png" | "pdf" | "xlsx" | null) => void;
 }
+
 
 
 const LANGUAGES = [
@@ -100,8 +101,9 @@ export function MobileWizard({
   onOpenUpload, saveStatus, exporting, step, setStep, onToggleStandard,
   newMonth, setNewMonth, newHalf, setNewHalf, newLocations, setNewLocations, locationsConfig, handleCreateNew, formatPeriodDisplay,
   executeDeleteLayoutForPeriod, loadLayoutForEdit,
-  exportVersion, setExportVersion
+  exportTarget, setExportTarget
 }: MobileWizardProps) {
+
 
   
   const [activeCart, setActiveCart] = useState<CartId>("A");
@@ -445,29 +447,7 @@ export function MobileWizard({
                   </div>
                </div>
                 <div className="space-y-4">
-                   <div className="bg-white rounded-[2rem] p-6 shadow-md space-y-4">
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-2">書き出しパターンの選択</p>
-                      <div className="flex gap-2 p-1.5 bg-slate-50 rounded-2xl border border-slate-100">
-                        <button 
-                          onClick={() => setExportVersion("standard")}
-                          className={`flex-1 py-3 text-xs font-black rounded-xl transition-all ${exportVersion === "standard" ? "bg-white text-coral shadow-md" : "text-slate-400"}`}
-                        >
-                          通常
-                        </button>
-                        <button 
-                          onClick={() => setExportVersion("with-info")}
-                          className={`flex-1 py-3 text-xs font-black rounded-xl transition-all ${exportVersion === "with-info" ? "bg-white text-coral shadow-md" : "text-slate-400"}`}
-                        >
-                          コンセプト付
-                        </button>
-                      </div>
-                      <p className="text-[9px] font-bold text-slate-400 text-center px-4 leading-relaxed">
-                        ※「コンセプト付」を選ぶと、配置図の右側にコンセプトとコメントが表示されます。
-                      </p>
-                   </div>
-
                    <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()} className="w-full py-6 rounded-[2rem] font-black text-xl text-white shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"
-
                    style={{ backgroundColor: saveStatus === "saved" ? "#10b981" : COLORS.deepPurple }}>
                    {saveStatus === "saving" ? <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" /> : <Save className="w-6 h-6" />}
                    <span>{saveStatus === "saved" ? "保存済み" : "配置を保存する"}</span>
