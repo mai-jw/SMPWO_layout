@@ -70,8 +70,10 @@ export interface CartLayoutV2 {
   // Metadata for Concept/Comments (Stored in JSON to avoid missing DB columns)
   comment?: string;
   concept?: string;
+  creator?: string;
   supplementary?: string;
 }
+
 
 export const DEFAULT_TAG: TagData = { type: "none", value: "" };
 

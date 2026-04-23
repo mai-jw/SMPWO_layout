@@ -1027,7 +1027,9 @@ export default function CartEditor() {
   const [concept, setConcept] = useState("");
   const [commentA, setCommentA] = useState("");
   const [commentB, setCommentB] = useState("");
+  const [creator, setCreator] = useState("");
   const [isEditingNotes, setIsEditingNotes] = useState(false);
+
   const [isEditingLocations, setIsEditingLocations] = useState(false);
   const [locationEditInput, setLocationEditInput] = useState("");
   const [layoutDeleteConfirm, setLayoutDeleteConfirm] = useState(false);
@@ -1103,7 +1105,9 @@ export default function CartEditor() {
         setConcept(existing.cart_a.concept || "");
         setCommentA(existing.cart_a.comment || "");
         setCommentB(existing.cart_b.comment || "");
+        setCreator(existing.cart_a.creator || "");
       }
+
     }
   }, [layouts, period]);
 
@@ -1254,8 +1258,9 @@ export default function CartEditor() {
     setSaveStatus("saving");
     
     // Merge metadata into JSON-based objects to avoid missing DB columns
-    const finalCartA = { ...cartA, concept, comment: commentA, supplementary: notes };
+    const finalCartA = { ...cartA, concept, creator, comment: commentA, supplementary: notes };
     const finalCartB = { ...cartB, comment: commentB };
+
 
     try {
       await saveLayout.mutateAsync({ 
@@ -1430,7 +1435,7 @@ export default function CartEditor() {
             if (isRoot) {
               cloned.style.transform = "none";
               cloned.style.scale = "none";
-              cloned.style.width = exportVersion === "with-info" ? "1180px" : "820px";
+              cloned.style.width = version === "with-info" ? "1180px" : "820px";
             }
 
             for (let i = 0; i < style.length; i++) {
@@ -1474,7 +1479,6 @@ export default function CartEditor() {
             }
             wrapper.appendChild(mainCol);
 
-            // Create Info Panel
             const infoPanel = clonedDoc.createElement("div");
             infoPanel.style.width = "320px";
             infoPanel.style.minWidth = "320px";
@@ -1483,7 +1487,7 @@ export default function CartEditor() {
             infoPanel.style.paddingLeft = "32px";
             infoPanel.style.display = "flex";
             infoPanel.style.flexDirection = "column";
-            infoPanel.style.gap = "32px";
+            infoPanel.style.gap = "28px";
             infoPanel.style.height = "auto";
             infoPanel.style.marginTop = "20px";
 
@@ -1491,9 +1495,12 @@ export default function CartEditor() {
 
             infoPanel.innerHTML = `
               <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 8px; color: #1e293b;">
-                  <div style="width: 4px; height: 16px; background-color: #3b82f6; border-radius: 999px;"></div>
-                  <span style="font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #1e293b;">${periodName}</span>
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <div style="display: flex; align-items: center; gap: 8px; color: #1e293b;">
+                    <div style="width: 4px; height: 16px; background-color: #3b82f6; border-radius: 999px;"></div>
+                    <span style="font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #1e293b;">${periodName}</span>
+                  </div>
+                  ${creator ? `<span style="font-size: 10px; font-weight: 700; color: #94a3b8;">作成者: ${creator}</span>` : ''}
                 </div>
                 <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
                   <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 8px; text-transform: uppercase;">コンセプト</p>
@@ -1513,6 +1520,7 @@ export default function CartEditor() {
             `;
             wrapper.appendChild(infoPanel);
             clonedContainer.appendChild(wrapper);
+
 
             clonedContainer.style.setProperty("width", "1180px", "important");
             clonedContainer.style.setProperty("display", "block", "important");
@@ -1643,7 +1651,7 @@ export default function CartEditor() {
             infoPanel.style.paddingLeft = "32px";
             infoPanel.style.display = "flex";
             infoPanel.style.flexDirection = "column";
-            infoPanel.style.gap = "32px";
+            infoPanel.style.gap = "28px";
             infoPanel.style.height = "auto";
             infoPanel.style.marginTop = "20px";
 
@@ -1651,9 +1659,12 @@ export default function CartEditor() {
 
             infoPanel.innerHTML = `
               <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 8px; color: #1e293b;">
-                  <div style="width: 4px; height: 16px; background-color: #3b82f6; border-radius: 999px;"></div>
-                  <span style="font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #1e293b;">${periodName}</span>
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                  <div style="display: flex; align-items: center; gap: 8px; color: #1e293b;">
+                    <div style="width: 4px; height: 16px; background-color: #3b82f6; border-radius: 999px;"></div>
+                    <span style="font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #1e293b;">${periodName}</span>
+                  </div>
+                  ${creator ? `<span style="font-size: 10px; font-weight: 700; color: #94a3b8;">作成者: ${creator}</span>` : ''}
                 </div>
                 <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
                   <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 8px; text-transform: uppercase;">コンセプト</p>
@@ -1673,6 +1684,7 @@ export default function CartEditor() {
             `;
             wrapper.appendChild(infoPanel);
             clonedContainer.appendChild(wrapper);
+
 
             clonedContainer.style.setProperty("width", "1180px", "important");
             clonedContainer.style.display = "block";
@@ -2579,18 +2591,29 @@ export default function CartEditor() {
               </h3>
             </div>
             <div className="flex-1 overflow-y-auto p-5 space-y-8 scrollbar-hide">
-              {/* Concept Section */}
-              <div className="space-y-3">
+              {/* Creator & Concept Section */}
+              <div className="space-y-5">
                 <div className="flex items-center gap-2 text-slate-800">
                   <div className="w-1 h-3.5 bg-primary rounded-full" />
                   <span className="text-[11px] font-black uppercase tracking-wider">
                     {formatPeriodDisplay(period).split(' (')[0] || "コンセプト"}
                   </span>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between px-1">
-                    <label className="text-[10px] font-bold text-slate-400">コンセプト</label>
-                  </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 px-1">作成者</label>
+                  <input 
+                    type="text"
+                    value={creator}
+                    onChange={(e) => setCreator(e.target.value)}
+                    onBlur={() => handleSave(true)}
+                    placeholder="作成者の名前を入力"
+                    className="w-full text-xs font-bold border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 px-1">コンセプト</label>
                   <textarea 
                     value={concept}
                     onChange={(e) => setConcept(e.target.value)}
@@ -2600,6 +2623,7 @@ export default function CartEditor() {
                   />
                 </div>
               </div>
+
 
               {/* Cart A Comment */}
               <div className="space-y-4 pt-4 border-t border-slate-100">
@@ -2728,6 +2752,8 @@ export default function CartEditor() {
                           if (existing) {
                             setCartA(existing.cart_a);
                             setCartB(existing.cart_b);
+                            setCreator(existing.creator || "");
+                            setConcept(existing.concept || "");
                           }
                           setIsMobileActionMenuOpen(false);
                         }}
@@ -2798,16 +2824,30 @@ export default function CartEditor() {
                       <FileText className="w-3 h-3" /> コンセプトとコメント
                     </p>
                     
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-bold text-slate-500 px-1">コンセプト</label>
-                       <textarea 
-                         value={concept}
-                         onChange={(e) => setConcept(e.target.value)}
-                         onBlur={() => handleSave(true)}
-                         placeholder="コンセプトを入力してください"
-                         className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 h-24 resize-none"
-                       />
+                    <div className="space-y-3">
+                       <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 px-1">作成者</label>
+                          <input 
+                            type="text"
+                            value={creator}
+                            onChange={(e) => setCreator(e.target.value)}
+                            onBlur={() => handleSave(true)}
+                            placeholder="お名前を入力"
+                            className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 transition-all"
+                          />
+                       </div>
+                       <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-500 px-1">コンセプト</label>
+                          <textarea 
+                            value={concept}
+                            onChange={(e) => setConcept(e.target.value)}
+                            onBlur={() => handleSave(true)}
+                            placeholder="コンセプトを入力してください"
+                            className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 h-24 resize-none transition-all"
+                          />
+                       </div>
                     </div>
+
 
                     <div className="grid grid-cols-1 gap-3">
                       <div className="space-y-2">
