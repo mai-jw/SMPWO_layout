@@ -38,8 +38,10 @@ import {
 } from "@/lib/supabase";
 import { 
   SHELF_COORDINATES, 
-  GALLERY_FILTER_LABELS
+  GALLERY_FILTER_LABELS,
+  LANG_FILTER_OPTIONS
 } from "@/lib/config";
+
 
 const COLORS = {
   deepPurple: "#190933",
@@ -488,7 +490,21 @@ export function MobileWizard({
                     <button key={it.id} onClick={() => { (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => { if (activeShelfIdx === 3) return { ...prev, poster: it.id!, posterType: it.poster_type || prev.posterType }; return { ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, items: s.items.map((id, j) => j === activeSlotIdx ? it.id! : id) } : s) }; }); setSelectionMode("shelf-type"); }}
                       className="w-full flex items-center gap-5 p-4 rounded-[2rem] bg-white hover:shadow-lg transition-all active:scale-[0.98] text-left">
                       <img src={it.url} className="w-16 h-16 object-contain rounded-xl shrink-0" />
-                      <div className="flex-1 min-w-0"><p className="text-sm font-black truncate" style={{ color: COLORS.deepPurple }}>{it.name}</p><p className="text-[10px] font-bold opacity-30 uppercase tracking-widest mt-1">{GALLERY_FILTER_LABELS[it.category as GalleryFilterType] || it.category}</p></div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-black truncate" style={{ color: COLORS.deepPurple }}>{it.name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-[10px] font-bold opacity-30 uppercase tracking-widest">{GALLERY_FILTER_LABELS[it.category as GalleryFilterType] || it.category}</p>
+                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-lg ${
+                            it.language === 'ja' ? 'bg-blue-50 text-blue-500' :
+                            it.language === 'en' ? 'bg-orange-50 text-orange-500' :
+                            it.language.startsWith('zh') ? 'bg-red-50 text-red-500' :
+                            'bg-slate-100 text-slate-400'
+                          }`}>
+                            {LANG_FILTER_OPTIONS.find(o => o.key === it.language)?.label || it.language}
+                          </span>
+                        </div>
+                      </div>
+
                     </button>
                  ))}
             </div>
