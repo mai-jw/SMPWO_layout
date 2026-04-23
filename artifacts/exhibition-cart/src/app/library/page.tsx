@@ -316,16 +316,8 @@ export default function LibraryPage() {
                             {item.name}
                           </p>
                           <div className="flex flex-wrap gap-1 mt-auto">
-                            <span className="text-[10px] font-bold bg-slate-100 text-slate-600 rounded px-1.5 py-0.5 uppercase truncate max-w-[60%]">
+                            <span className="text-[10px] font-bold bg-slate-100 text-slate-600 rounded px-1.5 py-0.5 uppercase truncate max-w-full">
                               {GALLERY_FILTER_LABELS[item.category as GalleryFilterType] || item.category}
-                            </span>
-                            <span className={`text-[10px] font-black rounded px-1.5 py-0.5 truncate max-w-[40%] ${
-                              item.language === 'ja' ? 'bg-blue-100 text-blue-700' :
-                              item.language === 'en' ? 'bg-orange-100 text-orange-700' :
-                              item.language.startsWith('zh') ? 'bg-red-100 text-red-700' :
-                              'bg-zinc-100 text-zinc-600'
-                            }`}>
-                              {LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}
                             </span>
                           </div>
                         </div>

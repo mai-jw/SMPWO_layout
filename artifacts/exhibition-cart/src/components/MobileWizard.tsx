@@ -492,13 +492,12 @@ export function MobileWizard({
                       <img src={it.url} className="w-16 h-16 object-contain rounded-xl shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-black truncate" style={{ color: COLORS.deepPurple }}>{it.name}</p>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex gap-2 mt-1">
                           <p className="text-[10px] font-bold opacity-30 uppercase tracking-widest">{GALLERY_FILTER_LABELS[it.category as GalleryFilterType] || it.category}</p>
-                          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-lg ${
-                            it.language === 'ja' ? 'bg-blue-50 text-blue-500' :
-                            it.language === 'en' ? 'bg-orange-50 text-orange-500' :
-                            it.language.startsWith('zh') ? 'bg-red-50 text-red-500' :
-                            'bg-slate-100 text-slate-400'
+                          <span className={`text-[9px] font-black rounded px-1 py-0.5 tracking-tighter ${
+                            it.language === "ja" ? "bg-blue-50 text-blue-700 border border-blue-100" :
+                            it.language === "en" ? "bg-amber-50 text-amber-700 border border-amber-100" :
+                            "bg-slate-100 text-slate-600"
                           }`}>
                             {LANG_FILTER_OPTIONS.find(o => o.key === it.language)?.label || it.language}
                           </span>
