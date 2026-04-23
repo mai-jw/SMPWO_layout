@@ -1453,15 +1453,17 @@ export default function CartEditor() {
           syncStyles(container, clonedContainer);
 
           // If with-info, rearrange and add info panel
-          if (exportVersion === "with-info") {
+          if (version === "with-info") {
             const wrapper = clonedDoc.createElement("div");
             wrapper.style.display = "flex";
             wrapper.style.gap = "40px";
             wrapper.style.alignItems = "flex-start";
+            wrapper.style.justifyContent = "center";
             wrapper.style.width = "100%";
+            wrapper.style.backgroundColor = "#ffffff";
 
             const mainCol = clonedDoc.createElement("div");
-            mainCol.style.flex = "1";
+            mainCol.style.width = "820px";
             mainCol.style.display = "flex";
             mainCol.style.flexDirection = "column";
             mainCol.style.alignItems = "center";
@@ -1475,35 +1477,37 @@ export default function CartEditor() {
             // Create Info Panel
             const infoPanel = clonedDoc.createElement("div");
             infoPanel.style.width = "320px";
+            infoPanel.style.minWidth = "320px";
             infoPanel.style.backgroundColor = "#ffffff";
             infoPanel.style.borderLeft = "2px solid #f1f5f9";
             infoPanel.style.paddingLeft = "32px";
             infoPanel.style.display = "flex";
             infoPanel.style.flexDirection = "column";
             infoPanel.style.gap = "32px";
-            infoPanel.style.height = "100%";
+            infoPanel.style.height = "auto";
+            infoPanel.style.marginTop = "20px";
 
             const periodName = formatPeriodDisplay(period).split(' (')[0] || "コンセプト";
 
             infoPanel.innerHTML = `
-              <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 10px;">
                 <div style="display: flex; align-items: center; gap: 8px; color: #1e293b;">
-                  <div style="width: 4px; height: 14px; backgroundColor: #3b82f6; borderRadius: 999px;"></div>
-                  <span style="font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;">${periodName}</span>
+                  <div style="width: 4px; height: 16px; background-color: #3b82f6; border-radius: 999px;"></div>
+                  <span style="font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #1e293b;">${periodName}</span>
                 </div>
-                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 8px;">コンセプト</p>
-                  <p style="font-size: 13px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.6;">${concept || "—"}</p>
+                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 8px; text-transform: uppercase;">コンセプト</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.6;">${concept || "—"}</p>
                 </div>
               </div>
-              <div style="display: flex; flex-direction: column; gap: 16px;">
-                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 4px;">■ カートA コメント</p>
-                  <p style="font-size: 12px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.5;">${commentA || "—"}</p>
+              <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">■ カートA コメント</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${commentA || "—"}</p>
                 </div>
-                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 4px;">■ カートB コメント</p>
-                  <p style="font-size: 12px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.5;">${commentB || "—"}</p>
+                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">■ カートB コメント</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${commentB || "—"}</p>
                 </div>
               </div>
             `;
@@ -1518,6 +1522,7 @@ export default function CartEditor() {
             clonedContainer.style.setProperty("flex-direction", "column", "important");
             clonedContainer.style.setProperty("align-items", "center", "important");
           }
+
 
           clonedContainer.style.setProperty("height", "auto", "important");
           clonedContainer.style.setProperty("background-color", "#ffffff", "important");
@@ -1587,8 +1592,9 @@ export default function CartEditor() {
             if (isRoot) {
               cloned.style.transform = "none";
               cloned.style.scale = "none";
-              cloned.style.width = exportVersion === "with-info" ? "1180px" : "820px";
+              cloned.style.width = version === "with-info" ? "1180px" : "820px";
             }
+
 
             for (let i = 0; i < style.length; i++) {
               const prop = style[i];
@@ -1609,15 +1615,17 @@ export default function CartEditor() {
           syncStyles(container, clonedContainer);
 
           // If with-info, rearrange and add info panel
-          if (exportVersion === "with-info") {
+          if (version === "with-info") {
             const wrapper = clonedDoc.createElement("div");
             wrapper.style.display = "flex";
             wrapper.style.gap = "40px";
             wrapper.style.alignItems = "flex-start";
+            wrapper.style.justifyContent = "center";
             wrapper.style.width = "100%";
+            wrapper.style.backgroundColor = "#ffffff";
 
             const mainCol = clonedDoc.createElement("div");
-            mainCol.style.flex = "1";
+            mainCol.style.width = "820px";
             mainCol.style.display = "flex";
             mainCol.style.flexDirection = "column";
             mainCol.style.alignItems = "center";
@@ -1629,35 +1637,37 @@ export default function CartEditor() {
 
             const infoPanel = clonedDoc.createElement("div");
             infoPanel.style.width = "320px";
+            infoPanel.style.minWidth = "320px";
             infoPanel.style.backgroundColor = "#ffffff";
             infoPanel.style.borderLeft = "2px solid #f1f5f9";
             infoPanel.style.paddingLeft = "32px";
             infoPanel.style.display = "flex";
             infoPanel.style.flexDirection = "column";
             infoPanel.style.gap = "32px";
-            infoPanel.style.height = "100%";
+            infoPanel.style.height = "auto";
+            infoPanel.style.marginTop = "20px";
 
             const periodName = formatPeriodDisplay(period).split(' (')[0] || "コンセプト";
 
             infoPanel.innerHTML = `
-              <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 10px;">
                 <div style="display: flex; align-items: center; gap: 8px; color: #1e293b;">
-                  <div style="width: 4px; height: 14px; backgroundColor: #3b82f6; borderRadius: 999px;"></div>
-                  <span style="font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;">${periodName}</span>
+                  <div style="width: 4px; height: 16px; background-color: #3b82f6; border-radius: 999px;"></div>
+                  <span style="font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #1e293b;">${periodName}</span>
                 </div>
-                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 8px;">コンセプト</p>
-                  <p style="font-size: 13px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.6;">${concept || "—"}</p>
+                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 8px; text-transform: uppercase;">コンセプト</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.6;">${concept || "—"}</p>
                 </div>
               </div>
-              <div style="display: flex; flex-direction: column; gap: 16px;">
-                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 4px;">■ カートA コメント</p>
-                  <p style="font-size: 12px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.5;">${commentA || "—"}</p>
+              <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">■ カートA コメント</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${commentA || "—"}</p>
                 </div>
-                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 4px;">■ カートB コメント</p>
-                  <p style="font-size: 12px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.5;">${commentB || "—"}</p>
+                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">■ カートB コメント</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${commentB || "—"}</p>
                 </div>
               </div>
             `;
@@ -1673,6 +1683,8 @@ export default function CartEditor() {
             clonedContainer.style.padding = "100px 300px 40px 300px";
             clonedContainer.style.display = "flex";
           }
+
+
         }
       });
 
@@ -1734,8 +1746,9 @@ export default function CartEditor() {
             const rect = orig.getBoundingClientRect();
             
             const baseWidth = rect.width / scaleFactor;
-            cloned.style.width = exportVersion === "with-info" ? "1180px" : `${baseWidth}px`;
+            cloned.style.width = version === "with-info" ? "1180px" : `${baseWidth}px`;
             cloned.style.height = `${rect.height / scaleFactor}px`;
+
             
             if (isRoot) {
               cloned.style.transform = "none";
@@ -1754,15 +1767,18 @@ export default function CartEditor() {
           };
           syncStyles(originalContainer, clonedContainer);
 
-          if (exportVersion === "with-info") {
+          // If with-info, rearrange and add info panel
+          if (version === "with-info") {
             const wrapper = clonedDoc.createElement("div");
             wrapper.style.display = "flex";
             wrapper.style.gap = "40px";
             wrapper.style.alignItems = "flex-start";
+            wrapper.style.justifyContent = "center";
             wrapper.style.width = "100%";
+            wrapper.style.backgroundColor = "#ffffff";
 
             const mainCol = clonedDoc.createElement("div");
-            mainCol.style.flex = "1";
+            mainCol.style.width = "820px";
             mainCol.style.display = "flex";
             mainCol.style.flexDirection = "column";
             mainCol.style.alignItems = "center";
@@ -1774,35 +1790,37 @@ export default function CartEditor() {
 
             const infoPanel = clonedDoc.createElement("div");
             infoPanel.style.width = "320px";
+            infoPanel.style.minWidth = "320px";
             infoPanel.style.backgroundColor = "#ffffff";
             infoPanel.style.borderLeft = "2px solid #f1f5f9";
             infoPanel.style.paddingLeft = "32px";
             infoPanel.style.display = "flex";
             infoPanel.style.flexDirection = "column";
             infoPanel.style.gap = "32px";
-            infoPanel.style.height = "100%";
+            infoPanel.style.height = "auto";
+            infoPanel.style.marginTop = "20px";
 
             const periodName = formatPeriodDisplay(period).split(' (')[0] || "コンセプト";
 
             infoPanel.innerHTML = `
-              <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 10px;">
                 <div style="display: flex; align-items: center; gap: 8px; color: #1e293b;">
-                  <div style="width: 4px; height: 14px; backgroundColor: #3b82f6; borderRadius: 999px;"></div>
-                  <span style="font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;">${periodName}</span>
+                  <div style="width: 4px; height: 16px; background-color: #3b82f6; border-radius: 999px;"></div>
+                  <span style="font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #1e293b;">${periodName}</span>
                 </div>
-                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 8px;">コンセプト</p>
-                  <p style="font-size: 13px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.6;">${concept || "—"}</p>
+                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 8px; text-transform: uppercase;">コンセプト</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.6;">${concept || "—"}</p>
                 </div>
               </div>
-              <div style="display: flex; flex-direction: column; gap: 16px;">
-                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 4px;">■ カートA コメント</p>
-                  <p style="font-size: 12px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.5;">${commentA || "—"}</p>
+              <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">■ カートA コメント</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${commentA || "—"}</p>
                 </div>
-                <div style="padding: 16px; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 700; margin-bottom: 4px;">■ カートB コメント</p>
-                  <p style="font-size: 12px; font-weight: 500; color: #1e293b; white-space: pre-wrap; line-height: 1.5;">${commentB || "—"}</p>
+                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">■ カートB コメント</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${commentB || "—"}</p>
                 </div>
               </div>
             `;
@@ -1818,6 +1836,7 @@ export default function CartEditor() {
             clonedContainer.style.padding = "100px 300px 40px 300px";
             clonedContainer.style.display = "flex";
           }
+
         }
       });
 
@@ -2926,7 +2945,7 @@ export default function CartEditor() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
               className="relative bg-white rounded-[2.5rem] shadow-2xl p-8 w-full max-w-sm flex flex-col items-center text-center gap-8 border border-white/20"
             >
-              <div className="w-20 h-20 bg-amber-50 text-amber-500 rounded-3xl flex items-center justify-center shadow-inner rotate-3">
+              <div className="w-20 h-20 bg-sky-50 text-sky-600 rounded-3xl flex items-center justify-center shadow-inner rotate-3">
                 <Download className="w-10 h-10" strokeWidth={2.5} />
               </div>
               <div className="space-y-2">
@@ -2944,7 +2963,7 @@ export default function CartEditor() {
                     else if (target === "pdf") await handleExportPdf("standard");
                     else if (target === "xlsx") await handleExportXlsx("standard");
                   }}
-                  className="w-full bg-slate-800 text-white py-4.5 rounded-2xl font-black text-sm shadow-xl shadow-slate-200 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-0.5 group"
+                  className="w-full bg-[#1e293b] text-white py-4.5 rounded-2xl font-black text-sm shadow-xl shadow-slate-200 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-0.5 group"
                 >
                   <span className="text-base">通常スタイルで保存</span>
                   <span className="text-[10px] opacity-40 font-bold uppercase tracking-widest group-hover:opacity-60 transition-opacity">Standard Layout</span>
@@ -2957,10 +2976,10 @@ export default function CartEditor() {
                     else if (target === "pdf") await handleExportPdf("with-info");
                     else if (target === "xlsx") await handleExportXlsx("with-info");
                   }}
-                  className="w-full bg-white text-slate-800 border-2 border-slate-100 py-4.5 rounded-2xl font-black text-sm shadow-lg shadow-black/5 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-0.5 group hover:border-amber-200 hover:bg-amber-50/30"
+                  className="w-full bg-white text-slate-800 border-2 border-slate-100 py-4.5 rounded-2xl font-black text-sm shadow-lg shadow-black/5 active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-0.5 group hover:border-sky-200 hover:bg-sky-50/30"
                 >
-                  <span className="text-base text-amber-600">コンセプト・コメント付</span>
-                  <span className="text-[10px] text-amber-600/40 font-bold uppercase tracking-widest group-hover:text-amber-600/60 transition-opacity">With Concept & Comments</span>
+                  <span className="text-base text-[#2563eb]">コンセプト・コメント付</span>
+                  <span className="text-[10px] text-[#2563eb]/40 font-bold uppercase tracking-widest group-hover:text-[#2563eb]/60 transition-opacity">With Concept & Comments</span>
                 </button>
                 <button 
                   onClick={() => setExportTarget(null)}
