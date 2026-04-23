@@ -2076,14 +2076,10 @@ export default function CartEditor() {
             <select 
               value={period} 
               onChange={(e) => {
-                const val = e.target.value;
-                setPeriod(val);
-                const existing = layouts.find(l => l.period === val);
-                if (existing) {
-                  setCartA(existing.cart_a);
-                  setCartB(existing.cart_b);
-                }
+                setPeriod(e.target.value);
               }}
+
+
               className="text-xs sm:text-sm font-semibold text-foreground bg-transparent outline-none w-32 sm:w-56 cursor-pointer"
             >
               {!layouts.some(l => l.period === period) && (
@@ -2760,17 +2756,11 @@ export default function CartEditor() {
                       <select
                         value={period}
                         onChange={(e) => {
-                          const val = e.target.value;
-                          setPeriod(val);
-                          const existing = layouts.find(l => l.period === val);
-                          if (existing) {
-                            setCartA(existing.cart_a);
-                            setCartB(existing.cart_b);
-                            setCreator(existing.creator || "");
-                            setConcept(existing.concept || "");
-                          }
+                          setPeriod(e.target.value);
                           setIsMobileActionMenuOpen(false);
                         }}
+
+
                         className="flex-1 text-sm font-bold text-slate-800 bg-transparent outline-none cursor-pointer"
                       >
                         {!layouts.some(l => l.period === period) && (
