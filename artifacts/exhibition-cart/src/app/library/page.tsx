@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useItems, useUpdateItem, useDeleteItem } from "@/hooks/use-items";
+import { useItems, useUpdateItem, useDeleteItem, useCopyItem } from "@/hooks/use-items";
 import { useUI } from "@/context/ui-context";
 import type { Item } from "@/lib/supabase";
 import {
