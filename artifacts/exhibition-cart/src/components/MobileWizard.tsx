@@ -501,6 +501,11 @@ export function MobileWizard({
                           }`}>
                             {LANG_FILTER_OPTIONS.find(o => o.key === it.language)?.label || it.language}
                           </span>
+                          {it.category === "poster" && it.poster_type && (
+                            <span className="text-[9px] font-black bg-purple-50 text-purple-700 border border-purple-100 rounded px-1 py-0.5 tracking-tighter">
+                              {it.poster_type}
+                            </span>
+                          )}
                         </div>
                       </div>
 

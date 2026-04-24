@@ -166,3 +166,63 @@ export function useUpdateItem() {
     },
   });
 }
+
+// COPY /items
+export function useCopyItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (item: Item) => {
+      if (!item.id) throw new Error("Item ID is required");
+
+      // 1. Extract filename from URL
+      const urlParts = item.url.split("/");
+      const originalFileName = urlParts[urlParts.length - 1];
+
+      // 2. Generate new safe unique filename
+      const ext = originalFileName.split(".").pop() || "bin";
+      const newFileName = `${Date.now()}-${uuidv4()}.${ext}`;
+
+      // 3. Copy file in Storage
+      const { error: copyError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .copy(originalFileName, newFileName);
+
+      if (copyError) {
+        console.error("Supabase storage copy error:", copyError);
+        throw new Error(`Failed to copy image file: ${copyError.message}`);
+      }
+
+      // 4. Get Public URL for the new file
+      const { data: publicUrlData } = supabase.storage
+        .from(STORAGE_BUCKET)
+        .getPublicUrl(newFileName);
+
+      // 5. Insert into Database
+      const { data: insertData, error: dbError } = await supabase
+        .from("items")
+        .insert([
+          {
+            name: `${item.name} (コピー)`,
+            url: publicUrlData.publicUrl,
+            category: item.category,
+            language: item.language,
+            poster_type: item.poster_type,
+          },
+        ])
+        .select()
+        .single();
+
+      if (dbError) {
+        // Cleanup storage if DB insert fails
+        await supabase.storage.from(STORAGE_BUCKET).remove([newFileName]);
+        throw new Error(`Failed to save record copy: ${dbError.message}`);
+      }
+
+      return insertData as Item;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ITEMS_QUERY_KEY });
+    },
+  });
+}

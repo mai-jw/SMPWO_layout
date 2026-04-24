@@ -6,7 +6,7 @@ import { useUI } from "@/context/ui-context";
 import type { Item } from "@/lib/supabase";
 import {
   Library, Search, Upload, Languages, ChevronDown, Pencil,
-  Trash2, X, Check, ArrowLeft, Image as ImageIcon, Home
+  Trash2, X, Check, ArrowLeft, Image as ImageIcon, Home, Copy
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -17,6 +17,7 @@ export default function LibraryPage() {
   const { data: items = [], isLoading } = useItems();
   const updateMutation = useUpdateItem();
   const deleteMutation = useDeleteItem();
+  const copyMutation = useCopyItem();
   const { openUploadPanel } = useUI();
 
   const [filter, setFilter] = useState<GalleryFilterType>("all");
@@ -68,6 +69,17 @@ export default function LibraryPage() {
     } catch (err: any) {
       console.error("Failed to delete item:", err);
       alert(`削除に失敗しました: ${err.message || "詳細なエラー内容はコンソールを確認してください。"}`);
+    }
+  };
+
+  const handleCopyItem = async (e: React.MouseEvent, item: Item) => {
+    e.stopPropagation();
+    if (!confirm(`${item.name} のコピーを作成しますか？`)) return;
+    try {
+      await copyMutation.mutateAsync(item);
+    } catch (err: any) {
+      console.error("Failed to copy item:", err);
+      alert(`コピーに失敗しました: ${err.message}`);
     }
   };
 
@@ -232,13 +244,24 @@ export default function LibraryPage() {
                           loading="lazy"
                         />
                         {editingId !== item.id && (
-                          <button
-                            onClick={(e) => handleStartEdit(e, item)}
-                            className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-sm"
-                            title="編集"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="absolute top-2 right-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                            <button
+                              onClick={(e) => handleStartEdit(e, item)}
+                              className="p-1.5 bg-white/90 backdrop-blur text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg shadow-sm"
+                              title="編集"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            {item.category === "poster" && (
+                              <button
+                                onClick={(e) => handleCopyItem(e, item)}
+                                className="p-1.5 bg-white/90 backdrop-blur text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg shadow-sm"
+                                title="コピーを作成"
+                              >
+                                <Copy className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
 
@@ -326,6 +349,11 @@ export default function LibraryPage() {
                             }`}>
                               {LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}
                             </span>
+                            {item.category === "poster" && item.poster_type && (
+                              <span className="text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100 rounded px-1.5 py-0.5 tracking-tighter">
+                                {item.poster_type}
+                              </span>
+                            )}
                           </div>
                         </div>
                       )}

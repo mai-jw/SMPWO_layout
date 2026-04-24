@@ -11,7 +11,7 @@ import {
   Map, BookText, Languages, Cloud, Monitor, Smartphone, Home, LayoutGrid, Menu, LayoutDashboard,
 } from "lucide-react";
 import Link from "next/link";
-import { useItems, useUpdateItem, useDeleteItem } from "@/hooks/use-items";
+import { useItems, useUpdateItem, useDeleteItem, useCopyItem } from "@/hooks/use-items";
 import { useLayouts, useSaveLayout, useDeleteLayout, useLocationsConfig, useSaveLocationsConfig, DEFAULT_LOCATIONS } from "@/hooks/use-layouts";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { useUI } from "@/context/ui-context";
@@ -378,6 +378,18 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
   
   const updateMutation = useUpdateItem();
   const deleteMutation = useDeleteItem();
+  const copyMutation = useCopyItem();
+
+  const handleCopyItem = async (e: React.MouseEvent, item: Item) => {
+    e.stopPropagation();
+    if (!confirm(`${item.name} のコピーを作成しますか？`)) return;
+    try {
+      await copyMutation.mutateAsync(item);
+    } catch (err: any) {
+      console.error("Failed to copy item:", err);
+      alert(`コピーに失敗しました: ${err.message}`);
+    }
+  };
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
@@ -624,13 +636,24 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
                 ) : (
                   <>
                     <p className="text-xs font-black text-foreground truncate leading-tight mb-1" title={item.name}>{item.name}</p>
-                    <button 
-                      onClick={(e) => handleStartEdit(e, item)}
-                      className="absolute right-0 top-0 p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-full opacity-60 group-hover:opacity-100 transition-all"
-                      title="編集"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
+                    <div className="absolute right-0 top-0 flex flex-col gap-1.5">
+                      <button 
+                        onClick={(e) => handleStartEdit(e, item)}
+                        className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-full opacity-60 group-hover:opacity-100 transition-all"
+                        title="編集"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      {item.category === "poster" && (
+                        <button 
+                          onClick={(e) => handleCopyItem(e, item)}
+                          className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                          title="コピーを作成"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </>
                 )}
                 
@@ -646,6 +669,11 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
                     }`}>
                       {LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}
                     </span>
+                    {item.category === "poster" && item.poster_type && (
+                      <span className="text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-100 rounded px-1.5 py-0.5 tracking-tighter">
+                        {item.poster_type}
+                      </span>
+                    )}
                   </div>
 
                 )}
@@ -983,6 +1011,11 @@ function SelectionSidebar({
                         }`}>
                           {LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}
                         </span>
+                        {item.category === "poster" && item.poster_type && (
+                          <span className="text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-100 rounded px-1.5 py-0.5 tracking-tighter">
+                            {item.poster_type}
+                          </span>
+                        )}
                       </div>
 
                     </div>
