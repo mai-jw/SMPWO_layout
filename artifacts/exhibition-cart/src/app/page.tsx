@@ -8,7 +8,7 @@ import {
   ChevronDown, Tag, Pencil, ChevronRight, Search, Layers, Upload,
   Check, Trash2, Library, Settings, Star, Book, BookOpen, FileText,
   Mail, Bookmark, Notebook, Scroll, Contact, Newspaper, BookCopy, Files,
-  Map, BookText, Languages, Cloud, Monitor, Smartphone, Home, LayoutGrid, Menu, LayoutDashboard,
+  Map, BookText, Languages, Cloud, Monitor, Smartphone, Home, LayoutGrid, Menu, LayoutDashboard, SortAsc,
 } from "lucide-react";
 import Link from "next/link";
 import { useItems, useUpdateItem, useDeleteItem, useCopyItem } from "@/hooks/use-items";
@@ -367,6 +367,7 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
   const [filter, setFilter] = useState<GalleryFilterType>("all");
   const [langFilter, setLangFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState<"newest" | "name_asc" | "name_desc">("newest");
   
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -392,7 +393,7 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
   };
 
   const filteredItems = useMemo(() => {
-    return items.filter((item) => {
+    let result = items.filter((item) => {
       const matchCat = filter === "all" || item.category === filter;
       
       // "Foreign" means not in the explicit list in EXPLICIT_LANG_KEYS
@@ -402,7 +403,15 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
       const matchSearch = !searchQuery || item.name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchCat && matchLang && matchSearch;
     });
-  }, [items, filter, langFilter, searchQuery]);
+
+    if (sortOrder === "name_asc") {
+      result.sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    } else if (sortOrder === "name_desc") {
+      result.sort((a, b) => b.name.localeCompare(a.name, "ja"));
+    }
+
+    return result;
+  }, [items, filter, langFilter, searchQuery, sortOrder]);
 
   const handleStartEdit = (e: React.MouseEvent, item: Item) => {
     e.stopPropagation();
@@ -517,19 +526,34 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
           })}
         </div>
         
-        {/* Language Filter Dropdown */}
-        <div className="relative w-2/3">
-          <select
-            value={langFilter}
-            onChange={(e) => setLangFilter(e.target.value)}
-            className="w-full text-[11px] font-bold bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 outline-none text-slate-600 focus:border-sky-400 transition-all appearance-none cursor-pointer"
-          >
-            {LANG_FILTER_OPTIONS.filter(opt => opt.key !== "sign_ja" || filter === "poster").map((opt) => (
-              <option key={opt.key} value={opt.key}>{opt.key === "all" ? "すべての言語" : opt.label}</option>
-            ))}
-          </select>
-          <Languages className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+        {/* Language & Sort Filters */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <select
+              value={langFilter}
+              onChange={(e) => setLangFilter(e.target.value)}
+              className="w-full text-[11px] font-bold bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 outline-none text-slate-600 focus:border-sky-400 transition-all appearance-none cursor-pointer"
+            >
+              {LANG_FILTER_OPTIONS.filter(opt => opt.key !== "sign_ja" || filter === "poster").map((opt) => (
+                <option key={opt.key} value={opt.key}>{opt.key === "all" ? "すべての言語" : opt.label}</option>
+              ))}
+            </select>
+            <Languages className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+          </div>
+          <div className="relative flex-1">
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as any)}
+              className="w-full text-[11px] font-bold bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 outline-none text-slate-600 focus:border-sky-400 transition-all appearance-none cursor-pointer"
+            >
+              <option value="newest">新着順</option>
+              <option value="name_asc">名前 A-Z</option>
+              <option value="name_desc">名前 Z-A</option>
+            </select>
+            <SortAsc className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+          </div>
         </div>
       </div>
 
@@ -670,7 +694,11 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
                       {LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}
                     </span>
                     {item.category === "poster" && item.poster_type && (
-                      <span className="text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-100 rounded px-1.5 py-0.5 tracking-tighter">
+                      <span className={`text-[10px] font-black rounded px-1.5 py-0.5 tracking-tighter border ${
+                        item.poster_type === "マグポス" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
+                        item.poster_type === "コルトン" ? "bg-rose-50 text-rose-700 border-rose-100" :
+                        "bg-slate-50 text-slate-600 border-slate-100"
+                      }`}>
                         {item.poster_type}
                       </span>
                     )}
@@ -706,6 +734,7 @@ function SelectionSidebar({
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<SidebarFilter>("all");
   const [langFilter, setLangFilter] = useState<string>("all");
+  const [sortOrder, setSortOrder] = useState<"newest" | "name_asc" | "name_desc">("newest");
 
   const cart = activeTarget ? (activeTarget.cart === "A" ? cartA : cartB) : null;
   const isPoster = activeTarget?.section === "poster";
@@ -727,7 +756,7 @@ function SelectionSidebar({
   };
 
   const filteredItems = useMemo(() => {
-    return items.filter(item => {
+    let result = items.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
       
       const isForeign = !EXPLICIT_LANG_KEYS.includes(item.language) && item.language !== "all";
@@ -743,7 +772,15 @@ function SelectionSidebar({
       const matchesFilter = filter === "all" || item.category === filter;
       return matchesSearch && matchesLang && matchesFilter;
     });
-  }, [items, searchQuery, activeTarget, shelf, filter, langFilter]);
+
+    if (sortOrder === "name_asc") {
+      result.sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    } else if (sortOrder === "name_desc") {
+      result.sort((a, b) => b.name.localeCompare(a.name, "ja"));
+    }
+
+    return result;
+  }, [items, searchQuery, activeTarget, shelf, filter, langFilter, sortOrder]);
 
   const renderShelfSettings = () => {
     if (!shelf) return null;
@@ -975,18 +1012,33 @@ function SelectionSidebar({
                     className="w-full text-sm font-bold border border-border rounded-xl pl-10 pr-4 py-3 bg-background text-foreground outline-none focus:ring-4 focus:ring-primary/10 placeholder:text-muted-foreground/50 transition-all shadow-sm" />
                 </div>
                 
-                <div className="relative">
-                  <Languages className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                  <select
-                    value={langFilter}
-                    onChange={(e) => setLangFilter(e.target.value)}
-                    className="w-full text-[11px] font-bold bg-white border border-border rounded-xl pl-9 pr-8 py-2.5 outline-none text-slate-600 focus:border-primary/30 appearance-none cursor-pointer"
-                  >
-                    {LANG_FILTER_OPTIONS.filter(opt => opt.key !== "sign_ja" || isPoster).map((opt) => (
-                      <option key={opt.key} value={opt.key}>{opt.key === "all" ? "すべての言語" : opt.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Languages className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                    <select
+                      value={langFilter}
+                      onChange={(e) => setLangFilter(e.target.value)}
+                      className="w-full text-[11px] font-bold bg-white border border-border rounded-xl pl-9 pr-8 py-2.5 outline-none text-slate-600 focus:border-primary/30 appearance-none cursor-pointer"
+                    >
+                      {LANG_FILTER_OPTIONS.filter(opt => opt.key !== "sign_ja" || isPoster).map((opt) => (
+                        <option key={opt.key} value={opt.key}>{opt.key === "all" ? "すべての言語" : opt.label}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                  </div>
+                  <div className="relative flex-1">
+                    <SortAsc className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                    <select
+                      value={sortOrder}
+                      onChange={(e) => setSortOrder(e.target.value as any)}
+                      className="w-full text-[11px] font-bold bg-white border border-border rounded-xl pl-9 pr-8 py-2.5 outline-none text-slate-600 focus:border-primary/30 appearance-none cursor-pointer"
+                    >
+                      <option value="newest">新着順</option>
+                      <option value="name_asc">名前 A-Z</option>
+                      <option value="name_desc">名前 Z-A</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                  </div>
                 </div>
 
                 {/* Category label removed as requested */}
@@ -1012,7 +1064,11 @@ function SelectionSidebar({
                           {LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}
                         </span>
                         {item.category === "poster" && item.poster_type && (
-                          <span className="text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-100 rounded px-1.5 py-0.5 tracking-tighter">
+                          <span className={`text-[10px] font-black rounded px-1.5 py-0.5 tracking-tighter border ${
+                            item.poster_type === "マグポス" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
+                            item.poster_type === "コルトン" ? "bg-rose-50 text-rose-700 border-rose-100" :
+                            "bg-slate-50 text-slate-600 border-slate-100"
+                          }`}>
                             {item.poster_type}
                           </span>
                         )}

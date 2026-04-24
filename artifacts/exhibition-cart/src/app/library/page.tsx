@@ -6,7 +6,7 @@ import { useUI } from "@/context/ui-context";
 import type { Item } from "@/lib/supabase";
 import {
   Library, Search, Upload, Languages, ChevronDown, Pencil,
-  Trash2, X, Check, ArrowLeft, Image as ImageIcon, Home, Copy
+  Trash2, X, Check, ArrowLeft, Image as ImageIcon, Home, Copy, SortAsc
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -23,6 +23,7 @@ export default function LibraryPage() {
   const [filter, setFilter] = useState<GalleryFilterType>("all");
   const [langFilter, setLangFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState<"newest" | "name_asc" | "name_desc">("newest");
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -32,14 +33,25 @@ export default function LibraryPage() {
   const [editPosterType, setEditPosterType] = useState("");
 
   const filteredItems = useMemo(() => {
-    return items.filter((item) => {
+    let result = items.filter((item) => {
       const matchCat = filter === "all" || item.category === filter;
       const isForeign = !EXPLICIT_LANG_KEYS.includes(item.language) && item.language !== "all";
       const matchLang = langFilter === "all" || (langFilter === "foreign" ? isForeign : item.language === langFilter);
       const matchSearch = !searchQuery || item.name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchCat && matchLang && matchSearch;
     });
-  }, [items, filter, langFilter, searchQuery]);
+
+    if (sortOrder === "name_asc") {
+      result.sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    } else if (sortOrder === "name_desc") {
+      result.sort((a, b) => b.name.localeCompare(a.name, "ja"));
+    } else {
+      // newest is handled by Supabase order by created_at desc
+      // but since we might be sorting a filtered list, we ensure it's still sorted if it was somehow lost
+    }
+
+    return result;
+  }, [items, filter, langFilter, searchQuery, sortOrder]);
 
   const handleStartEdit = (e: React.MouseEvent, item: Item) => {
     e.stopPropagation();
@@ -144,7 +156,6 @@ export default function LibraryPage() {
                 );
               })}
             </div>
-
             {/* Language Filter */}
             <div className="relative flex-none">
               <Languages className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -156,6 +167,21 @@ export default function LibraryPage() {
                 {LANG_FILTER_OPTIONS.filter(opt => opt.key !== "sign_ja" || filter === "poster").map((opt) => (
                   <option key={opt.key} value={opt.key}>{opt.key === "all" ? "すべての言語" : opt.label}</option>
                 ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+            </div>
+
+            {/* Sort Order */}
+            <div className="relative flex-none">
+              <SortAsc className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as any)}
+                className="text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-7 py-2 outline-none text-slate-600 focus:border-sky-400 transition-all appearance-none cursor-pointer"
+              >
+                <option value="newest">新着順</option>
+                <option value="name_asc">名前順 (昇順)</option>
+                <option value="name_desc">名前順 (降順)</option>
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
             </div>
@@ -350,7 +376,11 @@ export default function LibraryPage() {
                               {LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}
                             </span>
                             {item.category === "poster" && item.poster_type && (
-                              <span className="text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100 rounded px-1.5 py-0.5 tracking-tighter">
+                              <span className={`text-[10px] font-bold rounded px-1.5 py-0.5 tracking-tighter border ${
+                                item.poster_type === "マグポス" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
+                                item.poster_type === "コルトン" ? "bg-rose-50 text-rose-700 border-rose-100" :
+                                "bg-slate-50 text-slate-600 border-slate-100"
+                              }`}>
                                 {item.poster_type}
                               </span>
                             )}

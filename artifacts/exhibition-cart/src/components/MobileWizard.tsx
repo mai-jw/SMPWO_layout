@@ -22,7 +22,8 @@ import {
   Search,
   ChevronDown,
   Check,
-  FileText
+  FileText,
+  SortAsc
 } from "lucide-react";
 import { 
   CartId, 
@@ -113,6 +114,7 @@ export function MobileWizard({
   const [selectionMode, setSelectionMode] = useState<"shelf-type" | "items">("shelf-type");
   const [activeSlotIdx, setActiveSlotIdx] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState<"newest" | "name_asc" | "name_desc">("newest");
 
   const currentCart = activeCart === "A" ? cartA : cartB;
   const currentShelf = activeShelfIdx < 3 ? currentCart.shelves[activeShelfIdx] : null;
@@ -469,24 +471,45 @@ export function MobileWizard({
         {selectionMode === "items" && (
           <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="fixed inset-0 z-[200] bg-cream flex flex-col">
             <WizardHeader title="配置を選ぶ" onBack={() => setSelectionMode("shelf-type")} />
-            <div className="px-6 py-4">
+            <div className="px-6 py-4 space-y-3">
                <div className="relative">
                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 opacity-20" />
                  <input type="text" placeholder="名前で検索..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                    className="w-full h-16 bg-white rounded-[1.5rem] pl-14 pr-6 font-black outline-none shadow-sm focus:ring-4 ring-coral/10" style={{ color: COLORS.deepPurple }} />
                </div>
+               <div className="relative">
+                 <SortAsc className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 opacity-20" />
+                 <select 
+                   value={sortOrder} 
+                   onChange={e => setSortOrder(e.target.value as any)}
+                   className="w-full h-12 bg-white rounded-xl pl-14 pr-6 font-black outline-none shadow-sm appearance-none" 
+                   style={{ color: COLORS.deepPurple }}
+                 >
+                   <option value="newest">新着順</option>
+                   <option value="name_asc">名前順 (昇順)</option>
+                   <option value="name_desc">名前順 (降順)</option>
+                 </select>
+                 <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20 pointer-events-none" />
+               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-6 space-y-2 no-scrollbar">
-               {items
-                 .filter(it => {
+               {(() => {
+                 let result = items.filter(it => {
                     if (activeShelfIdx === 3) return it.category === "poster";
                     const allowed = currentShelf?.layout_type === "booklet" ? ["booklet", "magazine"]
                       : currentShelf?.layout_type === "booklet_doc" ? ["booklet_doc"]
                       : (currentShelf?.layout_type === "document" || currentShelf?.layout_type === "bible") ? ["document", "bible"]
                       : ["pamphlet", "invitation"];
                     return allowed.includes(it.category) && it.name.toLowerCase().includes(searchQuery.toLowerCase());
-                 })
-                 .map(it => (
+                 });
+
+                 if (sortOrder === "name_asc") {
+                   result.sort((a, b) => a.name.localeCompare(b.name, "ja"));
+                 } else if (sortOrder === "name_desc") {
+                   result.sort((a, b) => b.name.localeCompare(a.name, "ja"));
+                 }
+
+                 return result.map(it => (
                     <button key={it.id} onClick={() => { (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => { if (activeShelfIdx === 3) return { ...prev, poster: it.id!, posterType: it.poster_type || prev.posterType }; return { ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, items: s.items.map((id, j) => j === activeSlotIdx ? it.id! : id) } : s) }; }); setSelectionMode("shelf-type"); }}
                       className="w-full flex items-center gap-5 p-4 rounded-[2rem] bg-white hover:shadow-lg transition-all active:scale-[0.98] text-left">
                       <img src={it.url} className="w-16 h-16 object-contain rounded-xl shrink-0" />
@@ -502,7 +525,11 @@ export function MobileWizard({
                             {LANG_FILTER_OPTIONS.find(o => o.key === it.language)?.label || it.language}
                           </span>
                           {it.category === "poster" && it.poster_type && (
-                            <span className="text-[9px] font-black bg-purple-50 text-purple-700 border border-purple-100 rounded px-1 py-0.5 tracking-tighter">
+                            <span className={`text-[9px] font-black rounded px-1 py-0.5 tracking-tighter border ${
+                              it.poster_type === "マグポス" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
+                              it.poster_type === "コルトン" ? "bg-rose-50 text-rose-700 border-rose-100" :
+                              "bg-slate-100 text-slate-600 border-slate-200"
+                            }`}>
                               {it.poster_type}
                             </span>
                           )}
@@ -510,7 +537,8 @@ export function MobileWizard({
                       </div>
 
                     </button>
-                 ))}
+                 ));
+               })()}
             </div>
           </motion.div>
         )}
