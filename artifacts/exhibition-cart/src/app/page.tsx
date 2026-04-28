@@ -905,19 +905,6 @@ function SelectionSidebar({
                   </div>
                 </div>
               )}
-
-            {canFreeDist && (
-              <button onClick={() => setMode("free_dist")}
-                className={`w-full text-left px-4 py-3 text-xs flex items-center justify-between rounded-xl transition-all border ${
-                  mode === "free_dist" ? "bg-zinc-900 text-white font-black border-zinc-950 shadow-md scale-[1.02]" : "bg-zinc-50 text-zinc-500 border-transparent hover:bg-zinc-100"
-                }`}>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-current" />
-                  <span>無料で差し上げています</span>
-                </div>
-                {mode === "free_dist" && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-              </button>
-            )}
           </div>
         </div>
       </div>
