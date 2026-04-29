@@ -87,7 +87,12 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
     if (mode === "free_dist") {
       return (
         <div className="w-full h-full flex items-center justify-center">
-          <span className="text-[10px] font-black tracking-widest truncate uppercase leading-none">無料で差し上げています</span>
+          <span 
+            className="text-[10px] font-black tracking-widest truncate uppercase leading-none"
+            style={{ transform: "translateY(var(--tag-v-nudge))" }}
+          >
+            無料で差し上げています
+          </span>
         </div>
       );
     }
@@ -99,7 +104,10 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
             {shelf.tag_1.value && (
               <span 
                 className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap"
-                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
+                style={{ 
+                  textShadow: "0 1px 2px rgba(0,0,0,0.8)",
+                  transform: "translateY(var(--tag-v-nudge))"
+                }}
               >
                 {shelf.tag_1.value}
               </span>
@@ -110,7 +118,10 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
             {shelf.tag_2.value && (
               <span 
                 className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap"
-                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
+                style={{ 
+                  textShadow: "0 1px 2px rgba(0,0,0,0.8)",
+                  transform: "translateY(var(--tag-v-nudge))"
+                }}
               >
                 {shelf.tag_2.value}
               </span>
@@ -121,7 +132,12 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
     }
     return (
       <div className="w-full h-full flex items-center justify-center">
-         <span className="text-[10px] font-black tracking-widest truncate uppercase leading-none">{shelfIndex + 1}段目を選択</span>
+         <span 
+           className="text-[10px] font-black tracking-widest truncate uppercase leading-none"
+           style={{ transform: "translateY(var(--tag-v-nudge))" }}
+         >
+           {shelfIndex + 1}段目を選択
+         </span>
       </div>
     );
   };
@@ -1531,6 +1547,7 @@ export default function CartEditor() {
         logging: false,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
+          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-4px');
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
@@ -1694,6 +1711,7 @@ export default function CartEditor() {
         logging: false,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
+          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-4px');
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
@@ -1851,6 +1869,7 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
+          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-4px');
           const originalContainer = container;
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!originalContainer || !clonedContainer) return;
