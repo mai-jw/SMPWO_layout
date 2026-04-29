@@ -88,8 +88,8 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
       return (
         <div className="w-full h-full flex items-center justify-center">
           <span 
-            className="text-[10px] font-black tracking-widest truncate uppercase leading-none"
-            style={{ transform: "translateY(var(--tag-v-nudge))" }}
+            className="text-[10px] font-black tracking-widest truncate uppercase leading-none relative"
+            style={{ top: "var(--tag-v-nudge)" }}
           >
             無料で差し上げています
           </span>
@@ -103,10 +103,10 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
           <div className="flex items-center justify-center">
             {shelf.tag_1.value && (
               <span 
-                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap"
+                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap relative"
                 style={{ 
                   textShadow: "0 1px 2px rgba(0,0,0,0.8)",
-                  transform: "translateY(var(--tag-v-nudge))"
+                  top: "var(--tag-v-nudge)"
                 }}
               >
                 {shelf.tag_1.value}
@@ -117,10 +117,10 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
           <div className="flex items-center justify-center">
             {shelf.tag_2.value && (
               <span 
-                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap"
+                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap relative"
                 style={{ 
                   textShadow: "0 1px 2px rgba(0,0,0,0.8)",
-                  transform: "translateY(var(--tag-v-nudge))"
+                  top: "var(--tag-v-nudge)"
                 }}
               >
                 {shelf.tag_2.value}
@@ -133,8 +133,8 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
     return (
       <div className="w-full h-full flex items-center justify-center">
          <span 
-           className="text-[10px] font-black tracking-widest truncate uppercase leading-none"
-           style={{ transform: "translateY(var(--tag-v-nudge))" }}
+           className="text-[10px] font-black tracking-widest truncate uppercase leading-none relative"
+           style={{ top: "var(--tag-v-nudge)" }}
          >
            {shelfIndex + 1}段目を選択
          </span>
@@ -1547,7 +1547,7 @@ export default function CartEditor() {
         logging: false,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-4px');
+          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-7px');
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
@@ -1711,7 +1711,7 @@ export default function CartEditor() {
         logging: false,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-4px');
+          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-7px');
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
@@ -1869,7 +1869,7 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-4px');
+          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-7px');
           const originalContainer = container;
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!originalContainer || !clonedContainer) return;
@@ -3158,12 +3158,8 @@ export default function CartEditor() {
                     <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-indigo-500 rounded-full blur-3xl" />
                   </div>
                   <div className="relative z-10">
-                    <div className="w-16 h-12 flex items-center justify-center mb-6 relative">
-                      <img 
-                        src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/samesame.gif" 
-                        alt="Shark Logo" 
-                        className="w-full h-full object-contain scale-[1.8]" 
-                      />
+                    <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-6">
+                      <LayoutDashboard className="w-6 h-6" />
                     </div>
                     <h2 className="text-2xl font-black leading-tight tracking-tight uppercase">SMPWO<br/>LAYOUT</h2>
                   </div>
@@ -3174,8 +3170,15 @@ export default function CartEditor() {
                 <div className="flex-1 p-10 flex flex-col">
                   {welcomeStep === "choice" && (
                     <div className="flex-1 flex flex-col justify-center gap-8">
-                      <div className="space-y-2">
-                        <h3 className="text-2xl font-black text-slate-800 tracking-tight">Welcom!</h3>
+                      <div className="flex items-center gap-4">
+                        <h3 className="text-3xl font-black text-slate-800 tracking-tight">Welcom!</h3>
+                        <div className="w-16 h-12 flex items-center justify-center relative">
+                          <img 
+                            src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/samesame.gif" 
+                            alt="Shark Logo" 
+                            className="w-full h-full object-contain scale-[1.6]" 
+                          />
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 gap-4">
