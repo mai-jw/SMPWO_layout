@@ -3156,7 +3156,7 @@ export default function CartEditor() {
                     <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-6">
                       <LayoutDashboard className="w-6 h-6" />
                     </div>
-                    <h2 className="text-2xl font-black leading-tight tracking-tight">CART<br/>LAYOUT<br/>SYSTEM</h2>
+                    <h2 className="text-2xl font-black leading-tight tracking-tight uppercase">SMPWO<br/>LAYOUT</h2>
                   </div>
                   <div className="relative z-10">
                     <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Version 2.5</p>
@@ -3195,7 +3195,7 @@ export default function CartEditor() {
                             <FolderOpen className="w-7 h-7" />
                           </div>
                           <div>
-                            <p className="text-lg font-black text-slate-800">既存データの編集</p>
+                            <p className="text-lg font-black text-slate-800">編集</p>
                             <p className="text-xs font-bold text-slate-400">保存済みのレイアウトを編集します</p>
                           </div>
                           <ChevronRight className="w-5 h-5 ml-auto text-slate-300" />
@@ -3283,7 +3283,7 @@ export default function CartEditor() {
                         <button onClick={() => setWelcomeStep("choice")} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
                           <ChevronLeft className="w-5 h-5 text-slate-400" />
                         </button>
-                        <h3 className="text-xl font-black text-slate-800">既存データの編集</h3>
+                        <h3 className="text-xl font-black text-slate-800">編集</h3>
                       </div>
 
                       <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide space-y-3">
