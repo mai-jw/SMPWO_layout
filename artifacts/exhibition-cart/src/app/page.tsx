@@ -86,8 +86,8 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
     if (isHidden) return null;
     if (mode === "free_dist") {
       return (
-        <div className="flex-1 flex justify-center items-center h-full">
-          <span className="text-[10px] font-black tracking-widest truncate uppercase leading-[1.2]">無料で差し上げています</span>
+        <div className="w-full h-full flex items-center justify-center">
+          <span className="text-[10px] font-black tracking-widest truncate uppercase leading-none">無料で差し上げています</span>
         </div>
       );
     }
@@ -98,7 +98,7 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
           <div className="flex items-center justify-center">
             {shelf.tag_1.value && (
               <span 
-                className="text-[10px] font-black tracking-tight text-white leading-[1.2] whitespace-nowrap"
+                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap"
                 style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
               >
                 {shelf.tag_1.value}
@@ -109,7 +109,7 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
           <div className="flex items-center justify-center">
             {shelf.tag_2.value && (
               <span 
-                className="text-[10px] font-black tracking-tight text-white leading-[1.2] whitespace-nowrap"
+                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap"
                 style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
               >
                 {shelf.tag_2.value}
@@ -120,8 +120,8 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
       );
     }
     return (
-      <div className="flex-1 flex justify-center items-center h-full">
-         <span className="text-[10px] font-black tracking-widest truncate uppercase leading-[1.2]">{shelfIndex + 1}段目を選択</span>
+      <div className="w-full h-full flex items-center justify-center">
+         <span className="text-[10px] font-black tracking-widest truncate uppercase leading-none">{shelfIndex + 1}段目を選択</span>
       </div>
     );
   };
@@ -130,13 +130,11 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
     <div
       role="button"
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={`w-full h-full flex items-center text-white transition-all duration-200 shadow-sm border cursor-pointer select-none ${barBg} ${
+      className={`w-full h-full text-white transition-all duration-200 shadow-sm border cursor-pointer select-none ${barBg} ${
         isActive ? "ring-2 ring-yellow-400 brightness-110 z-50" : "hover:brightness-105"
       }`}
     >
-      <div className="w-full h-full overflow-visible">
-        {renderContent()}
-      </div>
+      {renderContent()}
     </div>
   );
 });
