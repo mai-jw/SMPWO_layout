@@ -3158,14 +3158,16 @@ export default function CartEditor() {
                     <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-indigo-500 rounded-full blur-3xl" />
                   </div>
                   <div className="relative z-10">
-                    <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-6">
-                      <LayoutDashboard className="w-6 h-6" />
+                    <div className="w-16 h-12 flex items-center justify-center mb-6 relative">
+                      <img 
+                        src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/samesame.gif" 
+                        alt="Shark Logo" 
+                        className="w-full h-full object-contain scale-[1.8]" 
+                      />
                     </div>
                     <h2 className="text-2xl font-black leading-tight tracking-tight uppercase">SMPWO<br/>LAYOUT</h2>
                   </div>
-                  <div className="relative z-10">
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Version 2.5</p>
-                  </div>
+                  <div className="relative z-10" />
                 </div>
 
                 {/* Right Side: Content */}
@@ -3173,8 +3175,7 @@ export default function CartEditor() {
                   {welcomeStep === "choice" && (
                     <div className="flex-1 flex flex-col justify-center gap-8">
                       <div className="space-y-2">
-                        <h3 className="text-2xl font-black text-slate-800 tracking-tight">作業を開始しましょう</h3>
-                        <p className="text-sm font-bold text-slate-400">どちらの作業をおこないますか？</p>
+                        <h3 className="text-2xl font-black text-slate-800 tracking-tight">Welcom!</h3>
                       </div>
 
                       <div className="grid grid-cols-1 gap-4">
