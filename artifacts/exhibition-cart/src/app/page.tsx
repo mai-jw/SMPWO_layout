@@ -86,13 +86,12 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
     if (isHidden) return null;
     if (mode === "free_dist") {
       return (
-        <div className="w-full h-full flex items-center justify-center">
-          <span 
-            className="text-[10px] font-black tracking-widest truncate uppercase leading-none relative"
-            style={{ top: "var(--tag-v-nudge)" }}
-          >
-            無料で差し上げています
-          </span>
+        <div className="export-tag-container">
+          <div className="export-tag-cell">
+            <span className="text-[10px] font-black tracking-widest truncate uppercase leading-none export-tag-label">
+              無料で差し上げています
+            </span>
+          </div>
         </div>
       );
     }
@@ -100,44 +99,41 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
       const isThreeCols = layout === "document" || layout === "bible";
       return (
         <div className={`grid ${isThreeCols ? "grid-cols-3" : "grid-cols-2"} w-full h-full`}>
-          <div className="flex items-center justify-center">
-            {shelf.tag_1.value && (
-              <span 
-                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap relative"
-                style={{ 
-                  textShadow: "0 1px 2px rgba(0,0,0,0.8)",
-                  top: "var(--tag-v-nudge)"
-                }}
-              >
-                {shelf.tag_1.value}
-              </span>
-            )}
+          <div className="export-tag-container">
+            <div className="export-tag-cell">
+              {shelf.tag_1.value && (
+                <span 
+                  className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap export-tag-label"
+                  style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
+                >
+                  {shelf.tag_1.value}
+                </span>
+              )}
+            </div>
           </div>
           {isThreeCols && <div />}
-          <div className="flex items-center justify-center">
-            {shelf.tag_2.value && (
-              <span 
-                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap relative"
-                style={{ 
-                  textShadow: "0 1px 2px rgba(0,0,0,0.8)",
-                  top: "var(--tag-v-nudge)"
-                }}
-              >
-                {shelf.tag_2.value}
-              </span>
-            )}
+          <div className="export-tag-container">
+            <div className="export-tag-cell">
+              {shelf.tag_2.value && (
+                <span 
+                  className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap export-tag-label"
+                  style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
+                >
+                  {shelf.tag_2.value}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       );
     }
     return (
-      <div className="w-full h-full flex items-center justify-center">
-         <span 
-           className="text-[10px] font-black tracking-widest truncate uppercase leading-none relative"
-           style={{ top: "var(--tag-v-nudge)" }}
-         >
-           {shelfIndex + 1}段目を選択
-         </span>
+      <div className="export-tag-container">
+        <div className="export-tag-cell">
+          <span className="text-[10px] font-black tracking-widest truncate uppercase leading-none export-tag-label">
+            {shelfIndex + 1}段目を選択
+          </span>
+        </div>
       </div>
     );
   };
@@ -1547,7 +1543,7 @@ export default function CartEditor() {
         logging: false,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-7px');
+          clonedDoc.body.classList.add('export-mode');
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
@@ -1711,7 +1707,7 @@ export default function CartEditor() {
         logging: false,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-7px');
+          clonedDoc.body.classList.add('export-mode');
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
@@ -1869,7 +1865,7 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-7px');
+          clonedDoc.body.classList.add('export-mode');
           const originalContainer = container;
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!originalContainer || !clonedContainer) return;
