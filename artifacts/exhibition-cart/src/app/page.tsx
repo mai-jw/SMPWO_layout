@@ -86,19 +86,19 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
     if (isHidden) return null;
     if (mode === "free_dist") {
       return (
-        <div className="flex-1 flex justify-center items-center">
-          <span className="text-[10px] font-black tracking-widest truncate uppercase leading-none relative -top-[4px]">無料で差し上げています</span>
+        <div className="flex-1 flex justify-center items-center h-full">
+          <span className="text-[10px] font-black tracking-widest truncate uppercase leading-[1.2]">無料で差し上げています</span>
         </div>
       );
     }
     if (mode === "lang") {
       const isThreeCols = layout === "document" || layout === "bible";
       return (
-        <div className={`grid ${isThreeCols ? "grid-cols-3" : "grid-cols-2"} w-full h-full min-h-[20px]`}>
+        <div className={`grid ${isThreeCols ? "grid-cols-3" : "grid-cols-2"} w-full h-full`}>
           <div className="flex items-center justify-center">
             {shelf.tag_1.value && (
               <span 
-                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap relative -top-[4px]"
+                className="text-[10px] font-black tracking-tight text-white leading-[1.2] whitespace-nowrap"
                 style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
               >
                 {shelf.tag_1.value}
@@ -109,7 +109,7 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
           <div className="flex items-center justify-center">
             {shelf.tag_2.value && (
               <span 
-                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap relative -top-[4px]"
+                className="text-[10px] font-black tracking-tight text-white leading-[1.2] whitespace-nowrap"
                 style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
               >
                 {shelf.tag_2.value}
@@ -120,8 +120,8 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
       );
     }
     return (
-      <div className="flex-1 flex justify-center items-center">
-         <span className="text-[10px] font-black tracking-widest truncate uppercase leading-none relative -top-[4px]">{shelfIndex + 1}段目を選択</span>
+      <div className="flex-1 flex justify-center items-center h-full">
+         <span className="text-[10px] font-black tracking-widest truncate uppercase leading-[1.2]">{shelfIndex + 1}段目を選択</span>
       </div>
     );
   };
@@ -130,11 +130,11 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
     <div
       role="button"
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={`w-full h-full flex flex-col justify-center text-white transition-all duration-200 shadow-sm border cursor-pointer select-none ${barBg} ${
+      className={`w-full h-full flex items-center text-white transition-all duration-200 shadow-sm border cursor-pointer select-none ${barBg} ${
         isActive ? "ring-2 ring-yellow-400 brightness-110 z-50" : "hover:brightness-105"
       }`}
     >
-      <div className="relative flex-1 w-full h-full min-h-[20px] overflow-visible">
+      <div className="w-full h-full overflow-visible">
         {renderContent()}
       </div>
     </div>
