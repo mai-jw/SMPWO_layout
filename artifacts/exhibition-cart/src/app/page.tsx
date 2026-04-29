@@ -3170,13 +3170,13 @@ export default function CartEditor() {
                 <div className="flex-1 p-10 flex flex-col">
                   {welcomeStep === "choice" && (
                     <div className="flex-1 flex flex-col justify-center gap-8">
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-6">
                         <h3 className="text-3xl font-black text-slate-800 tracking-tight">Welcom!</h3>
-                        <div className="w-16 h-12 flex items-center justify-center relative">
+                        <div className="w-24 h-16 flex items-center justify-center relative -mt-1">
                           <img 
                             src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/samesame.gif" 
                             alt="Shark Logo" 
-                            className="w-full h-full object-contain scale-[1.6]" 
+                            className="w-full h-full object-contain" 
                           />
                         </div>
                       </div>
