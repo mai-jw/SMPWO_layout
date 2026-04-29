@@ -87,7 +87,7 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
     if (mode === "free_dist") {
       return (
         <div className="flex-1 flex justify-center items-center">
-          <span className="text-[10px] font-black tracking-widest truncate uppercase">無料で差し上げています</span>
+          <span className="text-[10px] font-black tracking-widest truncate uppercase leading-none">無料で差し上げています</span>
         </div>
       );
     }
@@ -99,7 +99,7 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
               className="absolute inset-y-0 -translate-x-1/2 flex items-center justify-center"
               style={{ left: positions[0] }}
             >
-              <span className="text-[10px] font-black tracking-tight text-white whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]">
+              <span className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
                 {shelf.tag_1.value}
               </span>
             </div>
@@ -109,7 +109,7 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
               className="absolute inset-y-0 -translate-x-1/2 flex items-center justify-center"
               style={{ left: positions[1] }}
             >
-              <span className="text-[10px] font-black tracking-tight text-white whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]">
+              <span className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
                 {shelf.tag_2.value}
               </span>
             </div>
@@ -119,7 +119,7 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
     }
     return (
       <div className="flex-1 flex justify-center items-center">
-         <span className="text-[10px] font-black tracking-widest truncate uppercase">{shelfIndex + 1}段目を選択</span>
+         <span className="text-[10px] font-black tracking-widest truncate uppercase leading-none">{shelfIndex + 1}段目を選択</span>
       </div>
     );
   };
