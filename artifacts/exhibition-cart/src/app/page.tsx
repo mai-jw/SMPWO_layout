@@ -1115,8 +1115,7 @@ export default function CartEditor() {
   const [newLocations, setNewLocations] = useState<string[]>(["すべて"]);
   const [notes, setNotes] = useState("外国語の出版物は、奉仕者が好きな位置に変更できます。\n自分の得意な言語や地点の特色を考えて、自由に動かしてください。");
   const [concept, setConcept] = useState("");
-  const [commentA, setCommentA] = useState("");
-  const [commentB, setCommentB] = useState("");
+  const [comment, setComment] = useState("");
   const [creator, setCreator] = useState("");
   const [isEditingNotes, setIsEditingNotes] = useState(false);
 
@@ -1193,8 +1192,7 @@ export default function CartEditor() {
         // Extract multi-notes from JSON-based cart objects
         setNotes(existing.cart_a.supplementary || "外国語の出版物は、奉仕者が好きな位置に変更できます。\n自分の得意な言語や地点の特色を考えて、自由に動かしてください。");
         setConcept(existing.cart_a.concept || "");
-        setCommentA(existing.cart_a.comment || "");
-        setCommentB(existing.cart_b.comment || "");
+        setComment(existing.cart_a.comment || "");
         setCreator(existing.cart_a.creator || "");
       }
 
@@ -1334,8 +1332,7 @@ export default function CartEditor() {
     setCartA(makeInitialCartLayoutV2());
     setCartB(makeInitialCartLayoutV2());
     setConcept("");
-    setCommentA("");
-    setCommentB("");
+    setComment("");
     setActiveTarget(null);
   };
 
@@ -1348,8 +1345,8 @@ export default function CartEditor() {
     setSaveStatus("saving");
     
     // Merge metadata into JSON-based objects to avoid missing DB columns
-    const finalCartA = { ...cartA, concept, creator, comment: commentA, supplementary: notes };
-    const finalCartB = { ...cartB, comment: commentB };
+    const finalCartA = { ...cartA, concept, creator, comment, supplementary: notes };
+    const finalCartB = { ...cartB, comment: "" };
 
 
     try {
@@ -1426,8 +1423,7 @@ export default function CartEditor() {
 
     setPeriod(targetPeriod);
     setConcept("");
-    setCommentA("");
-    setCommentB("");
+    setComment("");
     
     // カートA: 直近レイアウトを引き継ぐ / カートB: 常に白紙にリセット
     const newCartA = layouts.length > 0 ? layouts[0].cart_a : makeInitialCartLayoutV2();
@@ -1599,12 +1595,8 @@ export default function CartEditor() {
               </div>
               <div style="display: flex; flex-direction: column; gap: 20px;">
                 <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">■ カートA コメント</p>
-                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${commentA || "—"}</p>
-                </div>
-                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">■ カートB コメント</p>
-                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${commentB || "—"}</p>
+                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">コメント</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${comment || "—"}</p>
                 </div>
               </div>
             `;
@@ -1763,12 +1755,8 @@ export default function CartEditor() {
               </div>
               <div style="display: flex; flex-direction: column; gap: 20px;">
                 <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">■ カートA コメント</p>
-                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${commentA || "—"}</p>
-                </div>
-                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">■ カートB コメント</p>
-                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${commentB || "—"}</p>
+                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">コメント</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${comment || "—"}</p>
                 </div>
               </div>
             `;
@@ -1917,12 +1905,8 @@ export default function CartEditor() {
               </div>
               <div style="display: flex; flex-direction: column; gap: 20px;">
                 <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">■ カートA コメント</p>
-                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${commentA || "—"}</p>
-                </div>
-                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">■ カートB コメント</p>
-                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${commentB || "—"}</p>
+                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">コメント</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${comment || "—"}</p>
                 </div>
               </div>
             `;
@@ -2711,36 +2695,15 @@ export default function CartEditor() {
               </div>
 
 
-              {/* Cart A Comment */}
               <div className="space-y-4 pt-4 border-t border-slate-100">
                 <div className="space-y-2">
-                  <div className="text-[11px] font-black text-slate-800 px-1 flex items-center justify-between">
-                     <span>■ カートA</span>
-                  </div>
                   <div className="text-[10px] font-bold text-slate-400 px-1">コメント</div>
                   <textarea 
-                    value={commentA}
-                    onChange={(e) => setCommentA(e.target.value)}
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
                     onBlur={() => handleSave(true)}
-                    placeholder="カートAのコメントを入力してください"
-                    className="w-full text-xs font-medium border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none h-[100px]"
-                  />
-                </div>
-              </div>
-
-              {/* Cart B Comment */}
-              <div className="space-y-4 pt-4 border-t border-slate-100">
-                <div className="space-y-2">
-                  <div className="text-[11px] font-black text-slate-800 px-1 flex items-center justify-between">
-                     <span>■ カートB</span>
-                  </div>
-                  <div className="text-[10px] font-bold text-slate-400 px-1">コメント</div>
-                  <textarea 
-                    value={commentB}
-                    onChange={(e) => setCommentB(e.target.value)}
-                    onBlur={() => handleSave(true)}
-                    placeholder="カートBのコメントを入力してください"
-                    className="w-full text-xs font-medium border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none h-[100px]"
+                    placeholder="コメントを入力してください"
+                    className="w-full text-xs font-medium border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none h-[150px]"
                   />
                 </div>
               </div>
@@ -2929,31 +2892,15 @@ export default function CartEditor() {
                     </div>
 
 
-                    <div className="grid grid-cols-1 gap-3">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-500 px-1 flex items-center gap-1.5">
-                          ■ カートA コメント
-                        </label>
+                    <div className="space-y-2 pt-2 border-t border-slate-100">
+                        <label className="text-[10px] font-bold text-slate-500 px-1">コメント</label>
                         <textarea 
-                          value={commentA}
-                          onChange={(e) => setCommentA(e.target.value)}
+                          value={comment}
+                          onChange={(e) => setComment(e.target.value)}
                           onBlur={() => handleSave(true)}
-                          placeholder="カートAのコメントを入力してください"
-                          className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 h-16 resize-none"
+                          placeholder="コメントを入力してください"
+                          className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 h-24 resize-none transition-all"
                         />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-500 px-1 flex items-center gap-1.5">
-                          ■ カートB コメント
-                        </label>
-                        <textarea 
-                          value={commentB}
-                          onChange={(e) => setCommentB(e.target.value)}
-                          onBlur={() => handleSave(true)}
-                          placeholder="カートBのコメントを入力してください"
-                          className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 h-16 resize-none"
-                        />
-                      </div>
                     </div>
                   </div>
 
