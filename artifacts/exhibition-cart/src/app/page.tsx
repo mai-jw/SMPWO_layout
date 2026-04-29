@@ -92,28 +92,30 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
       );
     }
     if (mode === "lang") {
+      const isThreeCols = layout === "document" || layout === "bible";
       return (
-        <div className="absolute inset-0 flex items-center">
-          {shelf.tag_1.value && (
-            <div 
-              className="absolute inset-y-0 -translate-x-1/2 flex items-center justify-center"
-              style={{ left: positions[0] }}
-            >
-              <span className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
+        <div className={`grid ${isThreeCols ? "grid-cols-3" : "grid-cols-2"} w-full h-full`}>
+          <div className="flex items-center justify-center">
+            {shelf.tag_1.value && (
+              <span 
+                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap"
+                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
+              >
                 {shelf.tag_1.value}
               </span>
-            </div>
-          )}
-          {shelf.tag_2.value && (
-            <div 
-              className="absolute inset-y-0 -translate-x-1/2 flex items-center justify-center"
-              style={{ left: positions[1] }}
-            >
-              <span className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
+            )}
+          </div>
+          {isThreeCols && <div />}
+          <div className="flex items-center justify-center">
+            {shelf.tag_2.value && (
+              <span 
+                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap"
+                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
+              >
                 {shelf.tag_2.value}
               </span>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       );
     }
@@ -131,7 +133,7 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
         isActive ? "ring-2 ring-yellow-400 brightness-110 z-50" : "hover:brightness-105"
       }`}
     >
-      <div className="relative flex-1 h-full flex items-center overflow-visible">
+      <div className="relative flex-1 h-full overflow-visible">
         {renderContent()}
       </div>
     </button>
