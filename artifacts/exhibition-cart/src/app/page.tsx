@@ -1630,12 +1630,7 @@ export default function CartEditor() {
                   <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">コメント</p>
                   <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${comment || "—"}</p>
                 </div>
-                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">補足事項</p>
-                  <div style="display: flex; flex-direction: column; gap: 4px;">
-                    ${notes.length === 0 ? '<p style="font-size: 13px; color: #94a3b8;">—</p>' : notes.map(line => `<p style="font-size: 13px; font-weight: 600; color: ${line.color !== 'inherit' ? line.color : '#334155'}; white-space: pre-wrap; line-height: 1.5; margin: 0;">${line.text}</p>`).join('')}
-                  </div>
-                </div>
+
               </div>
             `;
             wrapper.appendChild(infoPanel);
@@ -1796,12 +1791,7 @@ export default function CartEditor() {
                   <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">コメント</p>
                   <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${comment || "—"}</p>
                 </div>
-                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">補足事項</p>
-                  <div style="display: flex; flex-direction: column; gap: 4px;">
-                    ${notes.length === 0 ? '<p style="font-size: 13px; color: #94a3b8;">—</p>' : notes.map(line => `<p style="font-size: 13px; font-weight: 600; color: ${line.color !== 'inherit' ? line.color : '#334155'}; white-space: pre-wrap; line-height: 1.5; margin: 0;">${line.text}</p>`).join('')}
-                  </div>
-                </div>
+
               </div>
             `;
             wrapper.appendChild(infoPanel);
@@ -1952,12 +1942,7 @@ export default function CartEditor() {
                   <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">コメント</p>
                   <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${comment || "—"}</p>
                 </div>
-                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
-                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">補足事項</p>
-                  <div style="display: flex; flex-direction: column; gap: 4px;">
-                    ${notes.length === 0 ? '<p style="font-size: 13px; color: #94a3b8;">—</p>' : notes.map(line => `<p style="font-size: 13px; font-weight: 600; color: ${line.color !== 'inherit' ? line.color : '#334155'}; white-space: pre-wrap; line-height: 1.5; margin: 0;">${line.text}</p>`).join('')}
-                  </div>
-                </div>
+
               </div>
             `;
             wrapper.appendChild(infoPanel);
