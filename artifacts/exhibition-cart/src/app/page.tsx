@@ -86,42 +86,31 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
     if (isHidden) return null;
     if (mode === "free_dist") {
       return (
-        <div className="w-full h-full flex items-center justify-center">
-          <span 
-            className="text-[10px] font-black tracking-widest truncate uppercase leading-none relative"
-            style={{ top: "var(--tag-v-nudge)" }}
-          >
-            無料で差し上げています
-          </span>
+        <div className="w-full text-center">
+          <span className="text-[10px] font-black tracking-widest truncate uppercase">無料で差し上げています</span>
         </div>
       );
     }
     if (mode === "lang") {
       const isThreeCols = layout === "document" || layout === "bible";
       return (
-        <div className={`grid ${isThreeCols ? "grid-cols-3" : "grid-cols-2"} w-full h-full`}>
-          <div className="flex items-center justify-center">
+        <div className={`grid ${isThreeCols ? "grid-cols-3" : "grid-cols-2"} w-full`}>
+          <div className="text-center">
             {shelf.tag_1.value && (
               <span 
-                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap relative"
-                style={{ 
-                  textShadow: "0 1px 2px rgba(0,0,0,0.8)",
-                  top: "var(--tag-v-nudge)"
-                }}
+                className="text-[10px] font-black tracking-tight text-white whitespace-nowrap"
+                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
               >
                 {shelf.tag_1.value}
               </span>
             )}
           </div>
           {isThreeCols && <div />}
-          <div className="flex items-center justify-center">
+          <div className="text-center">
             {shelf.tag_2.value && (
               <span 
-                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap relative"
-                style={{ 
-                  textShadow: "0 1px 2px rgba(0,0,0,0.8)",
-                  top: "var(--tag-v-nudge)"
-                }}
+                className="text-[10px] font-black tracking-tight text-white whitespace-nowrap"
+                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
               >
                 {shelf.tag_2.value}
               </span>
@@ -131,13 +120,8 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
       );
     }
     return (
-      <div className="w-full h-full flex items-center justify-center">
-         <span 
-           className="text-[10px] font-black tracking-widest truncate uppercase leading-none relative"
-           style={{ top: "var(--tag-v-nudge)" }}
-         >
-           {shelfIndex + 1}段目を選択
-         </span>
+      <div className="w-full text-center">
+         <span className="text-[10px] font-black tracking-widest truncate uppercase">{shelfIndex + 1}段目を選択</span>
       </div>
     );
   };
@@ -149,8 +133,11 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
       className={`w-full h-full text-white transition-all duration-200 shadow-sm border cursor-pointer select-none ${barBg} ${
         isActive ? "ring-2 ring-yellow-400 brightness-110 z-50" : "hover:brightness-105"
       }`}
+      style={{ display: "table" }}
     >
-      {renderContent()}
+      <div style={{ display: "table-cell", verticalAlign: "middle", width: "100%", height: "100%" }}>
+        {renderContent()}
+      </div>
     </div>
   );
 });
@@ -1547,7 +1534,6 @@ export default function CartEditor() {
         logging: false,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-7px');
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
@@ -1711,7 +1697,6 @@ export default function CartEditor() {
         logging: false,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-7px');
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
@@ -1869,7 +1854,6 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-7px');
           const originalContainer = container;
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!originalContainer || !clonedContainer) return;
