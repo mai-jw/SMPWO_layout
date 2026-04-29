@@ -24,7 +24,7 @@ import {
 import { MobileWizard } from "@/components/MobileWizard";
 import {
   type Item, type ShelfKey, type ShelfData, type CartLayoutV2,
-  type TagData, type ShelfLayoutType,
+  type TagData, type ShelfLayoutType, type NoteLine,
   makeInitialCartLayoutV2, makeDefaultShelf, filledCountV2, maxCountV2,
 } from "@/lib/supabase";
 import html2canvas from "html2canvas";
@@ -1101,7 +1101,6 @@ function GuidePanel() {
   );
 }
 
-type NoteLine = { text: string; color: string };
 
 /* ═══════════════════════════════════════════════════════
      CartEditor — Main Page

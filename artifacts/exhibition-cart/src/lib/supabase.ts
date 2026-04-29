@@ -49,6 +49,7 @@ export interface Item {
 /* ─── Cart Layout V2 ─── */
 export type ShelfLayoutType = "booklet" | "booklet_doc" | "document" | "pamphlet" | "bible" | "none";
 export type TagType = "lang" | "free" | "free_dist" | "none";
+export type NoteLine = { text: string; color: string };
 export type ShelfKey = "shelf1" | "shelf2" | "shelf3";
 
 export interface TagData {
