@@ -49,6 +49,7 @@ function hydrateLayout(raw: unknown): CartLayoutV2 {
     shelves: shelves as ShelfData[],
     comment: typeof r.comment === "string" ? r.comment : "",
     concept: typeof r.concept === "string" ? r.concept : "",
+    creator: typeof r.creator === "string" ? r.creator : "",
     supplementary: typeof r.supplementary === "string" ? r.supplementary : "",
   };
 }
