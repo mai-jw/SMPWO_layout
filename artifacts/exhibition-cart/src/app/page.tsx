@@ -9,6 +9,7 @@ import {
   Check, Trash2, Library, Settings, Star, Book, BookOpen, FileText,
   Mail, Bookmark, Notebook, Scroll, Contact, Newspaper, BookCopy, Files,
   Map, BookText, Languages, Cloud, Monitor, Smartphone, Home, LayoutGrid, Menu, LayoutDashboard, SortAsc,
+  Plus, PlusCircle, ChevronLeft, FolderOpen,
 } from "lucide-react";
 import Link from "next/link";
 import { useItems, useUpdateItem, useDeleteItem, useCopyItem } from "@/hooks/use-items";
