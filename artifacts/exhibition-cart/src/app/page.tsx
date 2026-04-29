@@ -87,12 +87,7 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
     if (mode === "free_dist") {
       return (
         <div className="w-full h-full flex items-center justify-center">
-          <span 
-            className="text-[10px] font-black tracking-widest truncate uppercase leading-none relative"
-            style={{ top: "var(--tag-v-nudge)" }}
-          >
-            無料で差し上げています
-          </span>
+          <span className="text-[10px] font-black tracking-widest truncate uppercase leading-none tag-label-span">無料で差し上げています</span>
         </div>
       );
     }
@@ -103,11 +98,8 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
           <div className="flex items-center justify-center">
             {shelf.tag_1.value && (
               <span 
-                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap relative"
-                style={{ 
-                  textShadow: "0 1px 2px rgba(0,0,0,0.8)",
-                  top: "var(--tag-v-nudge)"
-                }}
+                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap tag-label-span"
+                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
               >
                 {shelf.tag_1.value}
               </span>
@@ -117,11 +109,8 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
           <div className="flex items-center justify-center">
             {shelf.tag_2.value && (
               <span 
-                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap relative"
-                style={{ 
-                  textShadow: "0 1px 2px rgba(0,0,0,0.8)",
-                  top: "var(--tag-v-nudge)"
-                }}
+                className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap tag-label-span"
+                style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
               >
                 {shelf.tag_2.value}
               </span>
@@ -132,12 +121,7 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
     }
     return (
       <div className="w-full h-full flex items-center justify-center">
-         <span 
-           className="text-[10px] font-black tracking-widest truncate uppercase leading-none relative"
-           style={{ top: "var(--tag-v-nudge)" }}
-         >
-           {shelfIndex + 1}段目を選択
-         </span>
+         <span className="text-[10px] font-black tracking-widest truncate uppercase leading-none tag-label-span">{shelfIndex + 1}段目を選択</span>
       </div>
     );
   };
@@ -1547,7 +1531,9 @@ export default function CartEditor() {
         logging: false,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-7px');
+          const exportStyle = clonedDoc.createElement("style");
+          exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -8px !important; }";
+          clonedDoc.head.appendChild(exportStyle);
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
@@ -1711,7 +1697,9 @@ export default function CartEditor() {
         logging: false,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-7px');
+          const exportStyle = clonedDoc.createElement("style");
+          exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -8px !important; }";
+          clonedDoc.head.appendChild(exportStyle);
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
@@ -1869,7 +1857,9 @@ export default function CartEditor() {
         logging: true,
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
-          clonedDoc.documentElement.style.setProperty('--tag-v-nudge', '-7px');
+          const exportStyle = clonedDoc.createElement("style");
+          exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -8px !important; }";
+          clonedDoc.head.appendChild(exportStyle);
           const originalContainer = container;
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!originalContainer || !clonedContainer) return;
