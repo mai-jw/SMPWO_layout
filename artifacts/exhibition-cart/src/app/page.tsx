@@ -96,20 +96,20 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
         <div className="absolute inset-0 flex items-center">
           {shelf.tag_1.value && (
             <div 
-              className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
+              className="absolute inset-y-0 -translate-x-1/2 flex items-center justify-center"
               style={{ left: positions[0] }}
             >
-              <span className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
+              <span className="text-[10px] font-black tracking-tight text-white whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]">
                 {shelf.tag_1.value}
               </span>
             </div>
           )}
           {shelf.tag_2.value && (
             <div 
-              className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
+              className="absolute inset-y-0 -translate-x-1/2 flex items-center justify-center"
               style={{ left: positions[1] }}
             >
-              <span className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
+              <span className="text-[10px] font-black tracking-tight text-white whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]">
                 {shelf.tag_2.value}
               </span>
             </div>
