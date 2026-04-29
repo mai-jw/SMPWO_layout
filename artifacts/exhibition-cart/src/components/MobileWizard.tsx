@@ -35,7 +35,8 @@ import {
   Item, 
   ShelfLayoutType, 
   TagData,
-  TagType
+  TagType,
+  NoteLine
 } from "@/lib/supabase";
 import { 
   SHELF_COORDINATES, 
@@ -86,6 +87,8 @@ interface MobileWizardProps {
   formatPeriodDisplay: (p: string) => string;
   exportTarget: "png" | "pdf" | "xlsx" | null;
   setExportTarget: (t: "png" | "pdf" | "xlsx" | null) => void;
+  notes: NoteLine[];
+  setNotes: React.Dispatch<React.SetStateAction<NoteLine[]>>;
 }
 
 
@@ -104,7 +107,8 @@ export function MobileWizard({
   onOpenUpload, saveStatus, exporting, step, setStep, onToggleStandard,
   newMonth, setNewMonth, newHalf, setNewHalf, newLocations, setNewLocations, locationsConfig, handleCreateNew, formatPeriodDisplay,
   executeDeleteLayoutForPeriod, loadLayoutForEdit,
-  exportTarget, setExportTarget
+  exportTarget, setExportTarget,
+  notes, setNotes
 }: MobileWizardProps) {
 
 
@@ -451,6 +455,47 @@ export function MobileWizard({
                   </div>
                </div>
                 <div className="space-y-4">
+                   {/* Supplementary Notes (Wizard Preview) */}
+                   <div className="bg-white rounded-[3rem] p-8 shadow-xl space-y-6">
+                      <div className="flex items-center justify-between">
+                         <SectionLabel label="補足事項" />
+                         <Plus className="w-5 h-5 text-coral" onClick={() => setNotes(prev => [...prev, { text: "", color: "inherit" }])} />
+                      </div>
+                      <div className="space-y-4">
+                         {notes.length === 0 ? (
+                            <p className="text-center text-slate-300 font-bold text-xs py-4">補足事項はありません</p>
+                         ) : notes.map((line, idx) => (
+                            <div key={idx} className="flex gap-4 items-start bg-cream/30 p-4 rounded-3xl border border-cream/50 relative group">
+                               <div className="flex flex-col gap-3 pt-1">
+                                  {[
+                                     { val: "inherit", color: "bg-slate-800" },
+                                     { val: "#dc2626", color: "bg-red-600" },
+                                     { val: "#2563eb", color: "bg-blue-600" },
+                                     { val: "#059669", color: "bg-emerald-600" }
+                                  ].map(c => (
+                                     <button
+                                        key={c.val}
+                                        onClick={() => setNotes(prev => prev.map((l, i) => i === idx ? { ...l, color: c.val } : l))}
+                                        className={`w-4 h-4 rounded-full ${c.color} ${line.color === c.val ? "ring-4 ring-offset-2 ring-slate-200" : "opacity-30"}`}
+                                     />
+                                  ))}
+                               </div>
+                               <textarea
+                                  value={line.text}
+                                  onChange={(e) => setNotes(prev => prev.map((l, i) => i === idx ? { ...l, text: e.target.value } : l))}
+                                  rows={1}
+                                  className="flex-1 bg-transparent text-sm font-bold outline-none resize-none leading-relaxed"
+                                  style={{ color: line.color !== "inherit" ? line.color : undefined }}
+                                  placeholder="内容を入力..."
+                               />
+                               <button onClick={() => setNotes(prev => prev.filter((_, i) => i !== idx))} className="shrink-0 p-1 text-red-300">
+                                  <Trash2 className="w-4 h-4" />
+                               </button>
+                            </div>
+                         ))}
+                      </div>
+                   </div>
+
                    <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()} className="w-full py-6 rounded-[2rem] font-black text-xl text-white shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"
                    style={{ backgroundColor: saveStatus === "saved" ? "#10b981" : COLORS.deepPurple }}>
                    {saveStatus === "saving" ? <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" /> : <Save className="w-6 h-6" />}

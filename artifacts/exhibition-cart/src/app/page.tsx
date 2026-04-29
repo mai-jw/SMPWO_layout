@@ -95,18 +95,22 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
         <div className="absolute inset-0 flex items-center">
           {shelf.tag_1.value && (
             <div 
-              className="absolute -translate-x-1/2 flex justify-center"
+              className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
               style={{ left: positions[0] }}
             >
-              <span className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">{shelf.tag_1.value}</span>
+              <span className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
+                {shelf.tag_1.value}
+              </span>
             </div>
           )}
           {shelf.tag_2.value && (
             <div 
-              className="absolute -translate-x-1/2 flex justify-center"
+              className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center"
               style={{ left: positions[1] }}
             >
-              <span className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">{shelf.tag_2.value}</span>
+              <span className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
+                {shelf.tag_2.value}
+              </span>
             </div>
           )}
         </div>
@@ -285,7 +289,10 @@ const CartPanel = memo(({
 
   return (
     <div className="flex flex-col items-center gap-0.5">
-      <h3 className="text-xs font-black text-muted-foreground tracking-widest">カート{cartId}</h3>
+      <h3 className="text-xs font-black text-muted-foreground tracking-widest flex items-center justify-center">
+        <span>カート</span>
+        <span className="ml-1">{cartId}</span>
+      </h3>
       <div className="w-[500px]">
         <div className="relative w-full aspect-1080/1350">
           <img 
@@ -1093,6 +1100,8 @@ function GuidePanel() {
   );
 }
 
+type NoteLine = { text: string; color: string };
+
 /* ═══════════════════════════════════════════════════════
      CartEditor — Main Page
    ═══════════════════════════════════════════════════════ */
@@ -1113,7 +1122,10 @@ export default function CartEditor() {
   const [newMonth, setNewMonth] = useState(() => new Date().getMonth() + 1);
   const [newHalf, setNewHalf] = useState<"前半" | "後半">(() => new Date().getDate() <= 15 ? "前半" : "後半");
   const [newLocations, setNewLocations] = useState<string[]>(["すべて"]);
-  const [notes, setNotes] = useState("外国語の出版物は、奉仕者が好きな位置に変更できます。\n自分の得意な言語や地点の特色を考えて、自由に動かしてください。");
+  const [notes, setNotes] = useState<NoteLine[]>([
+    { text: "外国語の出版物は、奉仕者が好きな位置に変更できます。", color: "inherit" },
+    { text: "自分の得意な言語や地点の特色を考えて、自由に動かしてください。", color: "inherit" }
+  ]);
   const [concept, setConcept] = useState("");
   const [comment, setComment] = useState("");
   const [creator, setCreator] = useState("");
@@ -1135,8 +1147,14 @@ export default function CartEditor() {
   const [activeWizardCart, setActiveWizardCart] = useState<CartId>("A");
   const [activeWizardShelf, setActiveWizardShelf] = useState<number>(0); 
   const [showCreationSuccess, setShowCreationSuccess] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [welcomeStep, setWelcomeStep] = useState<"choice" | "new" | "edit">("choice");
 
-
+  useEffect(() => {
+    if (hasMounted && !isMobileView) {
+      setShowWelcomeModal(true);
+    }
+  }, [hasMounted, isMobileView]);
 
   const { data: locationsConfig = DEFAULT_LOCATIONS } = useLocationsConfig();
   const saveLocationsConfig = useSaveLocationsConfig();
@@ -1190,7 +1208,18 @@ export default function CartEditor() {
         setCartB(existing.cart_b);
         
         // Extract multi-notes from JSON-based cart objects
-        setNotes(existing.cart_a.supplementary || "外国語の出版物は、奉仕者が好きな位置に変更できます。\n自分の得意な言語や地点の特色を考えて、自由に動かしてください。");
+        try {
+          const parsed = JSON.parse(existing.cart_a.supplementary || "[]");
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setNotes(parsed);
+          } else {
+            const raw = existing.cart_a.supplementary || "";
+            setNotes(raw.trim() ? raw.split("\n").map(l => ({ text: l, color: "inherit" })) : []);
+          }
+        } catch (e) {
+          const raw = existing.cart_a.supplementary || "";
+          setNotes(raw.trim() ? raw.split("\n").map(l => ({ text: l, color: "inherit" })) : []);
+        }
         setConcept(existing.cart_a.concept || "");
         setComment(existing.cart_a.comment || "");
         setCreator(existing.cart_a.creator || "");
@@ -1345,7 +1374,7 @@ export default function CartEditor() {
     setSaveStatus("saving");
     
     // Merge metadata into JSON-based objects to avoid missing DB columns
-    const finalCartA = { ...cartA, concept, creator, comment, supplementary: notes };
+    const finalCartA = { ...cartA, concept, creator, comment, supplementary: JSON.stringify(notes) };
     const finalCartB = { ...cartB, comment: "" };
 
 
@@ -1598,6 +1627,12 @@ export default function CartEditor() {
                   <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">コメント</p>
                   <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${comment || "—"}</p>
                 </div>
+                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">補足事項</p>
+                  <div style="display: flex; flex-direction: column; gap: 4px;">
+                    ${notes.length === 0 ? '<p style="font-size: 13px; color: #94a3b8;">—</p>' : notes.map(line => `<p style="font-size: 13px; font-weight: 600; color: ${line.color !== 'inherit' ? line.color : '#334155'}; white-space: pre-wrap; line-height: 1.5; margin: 0;">${line.text}</p>`).join('')}
+                  </div>
+                </div>
               </div>
             `;
             wrapper.appendChild(infoPanel);
@@ -1628,7 +1663,7 @@ export default function CartEditor() {
       const dataUrl = canvas.toDataURL("image/png");
       const blob = dataURLtoBlob(dataUrl);
       
-      await saveFileWrapper(blob, "cart-layout.png", "image/png", ".png");
+      await saveFileWrapper(blob, `${formatPeriodDisplay(period)}.png`, "image/png", ".png");
       alert("PNG画像を保存しました。");
     } catch (err: any) {
       console.error("[PNG Export Error]", err);
@@ -1758,6 +1793,12 @@ export default function CartEditor() {
                   <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">コメント</p>
                   <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${comment || "—"}</p>
                 </div>
+                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">補足事項</p>
+                  <div style="display: flex; flex-direction: column; gap: 4px;">
+                    ${notes.length === 0 ? '<p style="font-size: 13px; color: #94a3b8;">—</p>' : notes.map(line => `<p style="font-size: 13px; font-weight: 600; color: ${line.color !== 'inherit' ? line.color : '#334155'}; white-space: pre-wrap; line-height: 1.5; margin: 0;">${line.text}</p>`).join('')}
+                  </div>
+                </div>
               </div>
             `;
             wrapper.appendChild(infoPanel);
@@ -1793,7 +1834,7 @@ export default function CartEditor() {
       const yOffset = (pH - imgH) / 2;
       pdf.addImage(imgData, "PNG", xOffset, yOffset, imgW, imgH);
       const blob = pdf.output("blob");
-      await saveFileWrapper(blob, "cart-layout.pdf", "application/pdf", ".pdf");
+      await saveFileWrapper(blob, `${formatPeriodDisplay(period)}.pdf`, "application/pdf", ".pdf");
       alert("PDFドキュメントを保存しました。");
     } catch (err: any) {
       console.error("[PDF Export Error]", err);
@@ -1908,6 +1949,12 @@ export default function CartEditor() {
                   <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">コメント</p>
                   <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${comment || "—"}</p>
                 </div>
+                <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
+                  <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">補足事項</p>
+                  <div style="display: flex; flex-direction: column; gap: 4px;">
+                    ${notes.length === 0 ? '<p style="font-size: 13px; color: #94a3b8;">—</p>' : notes.map(line => `<p style="font-size: 13px; font-weight: 600; color: ${line.color !== 'inherit' ? line.color : '#334155'}; white-space: pre-wrap; line-height: 1.5; margin: 0;">${line.text}</p>`).join('')}
+                  </div>
+                </div>
               </div>
             `;
             wrapper.appendChild(infoPanel);
@@ -1938,7 +1985,7 @@ export default function CartEditor() {
       });
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-      await saveFileWrapper(blob, "cart-layout.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx");
+      await saveFileWrapper(blob, `${formatPeriodDisplay(period)}.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".xlsx");
       alert("Excelファイルを保存しました。");
     } catch (err: any) {
       console.error("[Excel Export Error]", err);
@@ -2088,6 +2135,8 @@ export default function CartEditor() {
           layouts={layouts}
           executeDeleteLayoutForPeriod={executeDeleteLayoutForPeriod}
           loadLayoutForEdit={loadLayoutForEdit}
+          notes={notes}
+          setNotes={setNotes}
         />
       )}
 
@@ -2577,32 +2626,74 @@ export default function CartEditor() {
                 {/* Supplementary Notes */}
                 <div className="w-full mt-4 max-w-[820px] mx-auto">
                   {isEditingNotes ? (
-                    <div className="relative">
-                      <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        rows={3}
-                        autoFocus
-                        className="w-full text-xs text-foreground bg-white border border-slate-200 rounded-lg outline-none resize-none leading-relaxed font-medium p-3 focus:ring-2 focus:ring-primary/20"
-                        placeholder="補足事項を入力..."
-                      />
-                      <button
-                        onClick={() => setIsEditingNotes(false)}
-                        className="absolute top-2 right-2 text-[10px] font-bold bg-primary text-white px-2 py-0.5 rounded hover:bg-primary/90 transition-colors"
-                      >
-                        完了
-                      </button>
+                    <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xl space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">補足事項を編集</p>
+                        <button
+                          onClick={() => setIsEditingNotes(false)}
+                          className="text-[10px] font-bold bg-primary text-white px-3 py-1 rounded-full hover:bg-primary/90 transition-colors shadow-sm"
+                        >
+                          完了
+                        </button>
+                      </div>
+                      <div className="space-y-3">
+                        {notes.map((line, idx) => (
+                          <div key={idx} className="flex gap-3 items-start group">
+                            <div className="flex flex-col gap-1.5 pt-1">
+                              {[
+                                { val: "inherit", color: "bg-slate-800" },
+                                { val: "#dc2626", color: "bg-red-600" },
+                                { val: "#2563eb", color: "bg-blue-600" },
+                                { val: "#059669", color: "bg-emerald-600" }
+                              ].map(c => (
+                                <button
+                                  key={c.val}
+                                  onClick={() => setNotes(prev => prev.map((l, i) => i === idx ? { ...l, color: c.val } : l))}
+                                  className={`w-3.5 h-3.5 rounded-full transition-all hover:scale-125 ${c.color} ${line.color === c.val ? "ring-2 ring-offset-1 ring-slate-400 scale-110" : "opacity-40"}`}
+                                />
+                              ))}
+                            </div>
+                            <div className="flex-1 relative">
+                              <textarea
+                                value={line.text}
+                                onChange={(e) => setNotes(prev => prev.map((l, i) => i === idx ? { ...l, text: e.target.value } : l))}
+                                rows={1}
+                                className="w-full text-xs text-foreground bg-slate-50/50 border border-slate-100 rounded-xl outline-none resize-none leading-relaxed font-medium p-3 focus:ring-2 focus:ring-primary/10 transition-all"
+                                style={{ color: line.color !== "inherit" ? line.color : undefined }}
+                              />
+                            </div>
+                            <button
+                              onClick={() => setNotes(prev => prev.filter((_, i) => i !== idx))}
+                              className="p-2 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => setNotes(prev => [...prev, { text: "", color: "inherit" }])}
+                          className="w-full py-2 border-2 border-dashed border-slate-100 rounded-xl text-[10px] font-black text-slate-400 hover:bg-slate-50 hover:border-slate-200 transition-all flex items-center justify-center gap-2"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> 行を追加
+                        </button>
+                      </div>
                     </div>
                   ) : (
-                    <div className="relative group">
-                      <p className="text-xs text-foreground leading-relaxed font-medium whitespace-pre-wrap">{notes}</p>
-                      <button
-                        onClick={() => setIsEditingNotes(true)}
-                        className="absolute -top-1 -right-1 p-1 rounded-md bg-white border border-slate-200 text-slate-400 hover:text-primary hover:border-primary/40 opacity-0 group-hover:opacity-100 transition-all shadow-sm"
-                        title="補足事項を編集"
-                      >
-                        <Pencil className="w-3 h-3" />
-                      </button>
+                    <div className="relative group cursor-pointer hover:bg-slate-50/30 p-2 rounded-xl transition-all" onClick={() => setIsEditingNotes(true)}>
+                      <div className="space-y-1">
+                        {notes.length === 0 ? (
+                          <p className="text-xs text-slate-300 italic">補足事項なし（クリックして追加）</p>
+                        ) : notes.map((line, idx) => (
+                          <p key={idx} className="text-xs leading-relaxed font-medium whitespace-pre-wrap" style={{ color: line.color !== "inherit" ? line.color : undefined }}>
+                            {line.text}
+                          </p>
+                        ))}
+                      </div>
+                      <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="bg-white shadow-sm border border-slate-200 p-1.5 rounded-lg text-slate-400">
+                          <Pencil className="w-3 h-3" />
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -2902,6 +2993,48 @@ export default function CartEditor() {
                           className="w-full text-xs font-bold border border-slate-100 rounded-xl px-3 py-2 bg-slate-50 text-slate-800 outline-none focus:border-primary/30 h-24 resize-none transition-all"
                         />
                     </div>
+
+                    <div className="space-y-3 pt-3 border-t border-slate-100">
+                        <div className="flex items-center justify-between px-1">
+                          <label className="text-[10px] font-bold text-slate-500">補足事項</label>
+                          <button onClick={() => setNotes(prev => [...prev, { text: "", color: "inherit" }])} className="text-[10px] font-bold text-primary flex items-center gap-1">
+                            <Plus className="w-3 h-3" /> 追加
+                          </button>
+                        </div>
+                        <div className="space-y-3">
+                          {notes.map((line, idx) => (
+                            <div key={idx} className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2">
+                               <div className="flex items-center justify-between">
+                                 <div className="flex gap-2">
+                                    {[
+                                      { val: "inherit", color: "bg-slate-800" },
+                                      { val: "#dc2626", color: "bg-red-600" },
+                                      { val: "#2563eb", color: "bg-blue-600" },
+                                      { val: "#059669", color: "bg-emerald-600" }
+                                    ].map(c => (
+                                      <button
+                                        key={c.val}
+                                        onClick={() => setNotes(prev => prev.map((l, i) => i === idx ? { ...l, color: c.val } : l))}
+                                        className={`w-4 h-4 rounded-full ${c.color} ${line.color === c.val ? "ring-2 ring-offset-1 ring-slate-300" : "opacity-30"}`}
+                                      />
+                                    ))}
+                                 </div>
+                                 <button onClick={() => setNotes(prev => prev.filter((_, i) => i !== idx))} className="text-red-300 hover:text-red-500">
+                                   <Trash2 className="w-3.5 h-3.5" />
+                                 </button>
+                               </div>
+                               <textarea
+                                 value={line.text}
+                                 onChange={(e) => setNotes(prev => prev.map((l, i) => i === idx ? { ...l, text: e.target.value } : l))}
+                                 rows={1}
+                                 className="w-full bg-transparent text-xs font-bold outline-none resize-none leading-relaxed"
+                                 style={{ color: line.color !== "inherit" ? line.color : undefined }}
+                                 placeholder="内容を入力..."
+                               />
+                            </div>
+                          ))}
+                        </div>
+                    </div>
                   </div>
 
                   {/* New Creation Section */}
@@ -3000,6 +3133,197 @@ export default function CartEditor() {
         </AnimatePresence>
 
       {/* Export Style Selection Modal */}
+      {/* Welcome Modal (PC Only) */}
+      <AnimatePresence>
+        {showWelcomeModal && !isMobileView && (
+          <div className="fixed inset-0 z-[500] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl" 
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              className="relative bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden border border-white/20"
+            >
+              <div className="flex h-[500px]">
+                {/* Left Side: Branding/Visual */}
+                <div className="w-1/3 bg-[#1e293b] p-8 flex flex-col justify-between text-white relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-full opacity-10">
+                    <div className="absolute -top-10 -left-10 w-40 h-40 bg-sky-500 rounded-full blur-3xl" />
+                    <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-indigo-500 rounded-full blur-3xl" />
+                  </div>
+                  <div className="relative z-10">
+                    <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-6">
+                      <LayoutDashboard className="w-6 h-6" />
+                    </div>
+                    <h2 className="text-2xl font-black leading-tight tracking-tight">CART<br/>LAYOUT<br/>SYSTEM</h2>
+                  </div>
+                  <div className="relative z-10">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Version 2.5</p>
+                  </div>
+                </div>
+
+                {/* Right Side: Content */}
+                <div className="flex-1 p-10 flex flex-col">
+                  {welcomeStep === "choice" && (
+                    <div className="flex-1 flex flex-col justify-center gap-8">
+                      <div className="space-y-2">
+                        <h3 className="text-2xl font-black text-slate-800 tracking-tight">作業を開始しましょう</h3>
+                        <p className="text-sm font-bold text-slate-400">どちらの作業をおこないますか？</p>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-4">
+                        <button 
+                          onClick={() => setWelcomeStep("new")}
+                          className="group flex items-center gap-4 p-5 rounded-[2rem] bg-slate-50 border-2 border-transparent hover:border-sky-200 hover:bg-sky-50 transition-all text-left"
+                        >
+                          <div className="w-14 h-14 bg-sky-500 text-white rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                            <PlusCircle className="w-7 h-7" />
+                          </div>
+                          <div>
+                            <p className="text-lg font-black text-slate-800">新規作成</p>
+                            <p className="text-xs font-bold text-slate-400">新しい期間のレイアウトを作成します</p>
+                          </div>
+                          <ChevronRight className="w-5 h-5 ml-auto text-slate-300" />
+                        </button>
+
+                        <button 
+                          onClick={() => setWelcomeStep("edit")}
+                          className="group flex items-center gap-4 p-5 rounded-[2rem] bg-slate-50 border-2 border-transparent hover:border-emerald-200 hover:bg-emerald-50 transition-all text-left"
+                        >
+                          <div className="w-14 h-14 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                            <FolderOpen className="w-7 h-7" />
+                          </div>
+                          <div>
+                            <p className="text-lg font-black text-slate-800">既存データの編集</p>
+                            <p className="text-xs font-bold text-slate-400">保存済みのレイアウトを編集します</p>
+                          </div>
+                          <ChevronRight className="w-5 h-5 ml-auto text-slate-300" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {welcomeStep === "new" && (
+                    <div className="flex-1 flex flex-col">
+                      <div className="flex items-center gap-2 mb-6">
+                        <button onClick={() => setWelcomeStep("choice")} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                          <ChevronLeft className="w-5 h-5 text-slate-400" />
+                        </button>
+                        <h3 className="text-xl font-black text-slate-800">新規レイアウト作成</h3>
+                      </div>
+
+                      <div className="space-y-6 flex-1 overflow-y-auto pr-2 scrollbar-hide">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase text-slate-400 px-1">対象月</label>
+                            <select 
+                              value={newMonth} 
+                              onChange={(e) => setNewMonth(Number(e.target.value))}
+                              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-700 outline-none focus:border-sky-200 focus:bg-white transition-all"
+                            >
+                              {Array.from({length: 12}, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}月</option>)}
+                            </select>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase text-slate-400 px-1">対象期間</label>
+                            <select 
+                              value={newHalf} 
+                              onChange={(e) => setNewHalf(e.target.value as "前半" | "後半")}
+                              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-700 outline-none focus:border-sky-200 focus:bg-white transition-all"
+                            >
+                              <option value="前半">前半</option>
+                              <option value="後半">後半</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase text-slate-400 px-1">地点を選択</label>
+                          <div className="grid grid-cols-2 gap-2 bg-slate-50 p-4 rounded-[2rem] border-2 border-slate-100 max-h-[160px] overflow-y-auto">
+                            <label className="flex items-center gap-3 p-2 rounded-xl hover:bg-white cursor-pointer transition-colors text-xs font-bold">
+                              <input type="checkbox" checked={newLocations.includes("すべて")} onChange={() => setNewLocations(["すべて"])} className="rounded text-sky-500" />
+                              すべて
+                            </label>
+                            {locationsConfig.map(loc => (
+                              <label key={loc} className="flex items-center gap-3 p-2 rounded-xl hover:bg-white cursor-pointer transition-colors text-xs font-bold">
+                                <input 
+                                  type="checkbox" 
+                                  checked={!newLocations.includes("すべて") && newLocations.includes(loc)} 
+                                  onChange={() => setNewLocations(prev => {
+                                    const filtered = prev.filter(l => l !== "すべて");
+                                    return filtered.includes(loc) ? (filtered.length === 1 ? ["すべて"] : filtered.filter(l => l !== loc)) : [...filtered, loc];
+                                  })} 
+                                  className="rounded text-sky-500" 
+                                />
+                                <span className="truncate">{loc}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-6 border-t border-slate-100">
+                        <button 
+                          onClick={async () => {
+                            await handleCreateNew();
+                            setShowWelcomeModal(false);
+                          }}
+                          className="w-full bg-sky-500 text-white py-5 rounded-[2rem] font-black text-lg shadow-xl shadow-sky-100 active:scale-[0.98] transition-all"
+                        >
+                          この設定で作成する
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {welcomeStep === "edit" && (
+                    <div className="flex-1 flex flex-col">
+                      <div className="flex items-center gap-2 mb-6">
+                        <button onClick={() => setWelcomeStep("choice")} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                          <ChevronLeft className="w-5 h-5 text-slate-400" />
+                        </button>
+                        <h3 className="text-xl font-black text-slate-800">既存データの編集</h3>
+                      </div>
+
+                      <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide space-y-3">
+                        {layouts.length === 0 ? (
+                          <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4">
+                            <FolderOpen className="w-12 h-12 opacity-20" />
+                            <p className="text-sm font-bold">保存されたデータがありません</p>
+                          </div>
+                        ) : layouts.map(l => (
+                          <button 
+                            key={l.period}
+                            onClick={() => {
+                              setPeriod(l.period);
+                              setShowWelcomeModal(false);
+                            }}
+                            className="w-full flex items-center justify-between p-5 rounded-[1.5rem] bg-slate-50 border-2 border-transparent hover:border-emerald-200 hover:bg-emerald-50 transition-all group"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-emerald-500 group-hover:scale-110 transition-transform">
+                                <CalendarDays className="w-5 h-5" />
+                              </div>
+                              <span className="font-bold text-slate-700">{formatPeriodDisplay(l.period)}</span>
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-emerald-400" />
+                          </button>
+                        ))}
+                      </div>
+                      
+                      <div className="pt-6 border-t border-slate-100 text-center">
+                        <p className="text-[10px] font-bold text-slate-400">リストから編集したいデータを選択してください</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {exportTarget && (
           <div className="fixed inset-0 z-[300] flex items-center justify-center p-6">
