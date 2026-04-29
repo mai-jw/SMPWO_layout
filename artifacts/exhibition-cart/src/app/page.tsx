@@ -1532,14 +1532,12 @@ export default function CartEditor() {
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
           const exportStyle = clonedDoc.createElement("style");
-          exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -8px !important; }";
+          exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -3px !important; }";
           clonedDoc.head.appendChild(exportStyle);
+
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
-          clonedDoc.head.innerHTML = "";
-          clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
-          
           const resetStyle = clonedDoc.createElement("style");
           resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
           clonedDoc.head.appendChild(resetStyle);
@@ -1698,13 +1696,12 @@ export default function CartEditor() {
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
           const exportStyle = clonedDoc.createElement("style");
-          exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -8px !important; }";
+          exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -3px !important; }";
           clonedDoc.head.appendChild(exportStyle);
+
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
-          clonedDoc.head.innerHTML = "";
-          clonedDoc.querySelectorAll("style, link").forEach(el => el.remove());
           const resetStyle = clonedDoc.createElement("style");
           resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
           clonedDoc.head.appendChild(resetStyle);
@@ -1858,7 +1855,7 @@ export default function CartEditor() {
         backgroundColor: "#ffffff",
         onclone: (clonedDoc) => {
           const exportStyle = clonedDoc.createElement("style");
-          exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -8px !important; }";
+          exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -3px !important; }";
           clonedDoc.head.appendChild(exportStyle);
           const originalContainer = container;
           const clonedContainer = clonedDoc.getElementById("export-container");
