@@ -1739,6 +1739,10 @@ export default function CartEditor() {
                 syncStyles(orig.children[i] as HTMLElement, cloned.children[i] as HTMLElement);
               }
             }
+            if (cloned.classList.contains("tag-label-span")) {
+              cloned.style.setProperty("position", "relative", "important");
+              cloned.style.setProperty("top", "-6px", "important");
+            }
           };
           syncStyles(container, clonedContainer);
 
