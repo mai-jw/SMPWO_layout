@@ -2818,6 +2818,7 @@ export default function CartEditor() {
                     onSelectItem={handleSelectItem}
                     onLayoutChange={handleLayoutChange}
                     onTagChange={handleTagChange}
+                    onLangOverride={handleLangOverride}
                     onShelfClick={handleTagClick}
                     onClose={() => setIsMobileSidebarOpen(false)}
                   />
