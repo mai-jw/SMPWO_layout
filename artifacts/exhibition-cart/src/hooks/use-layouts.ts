@@ -26,6 +26,7 @@ function hydrateShelf(raw: unknown): ShelfData {
     tag_1: (r.tag_1 as ShelfData["tag_1"]) ?? def.tag_1,
     tag_2: (r.tag_2 as ShelfData["tag_2"]) ?? def.tag_2,
     items: Array.isArray(r.items) ? (r.items as (string | null)[]) : def.items,
+    item_langs: Array.isArray(r.item_langs) ? (r.item_langs as (string | null)[]) : def.item_langs,
   };
 }
 
@@ -46,6 +47,7 @@ function hydrateLayout(raw: unknown): CartLayoutV2 {
   return {
     poster: typeof r.poster === "string" ? r.poster : null,
     posterType: typeof r.posterType === "string" ? r.posterType : "",
+    posterLang: typeof r.posterLang === "string" ? r.posterLang : "",
     shelves: shelves as ShelfData[],
     comment: typeof r.comment === "string" ? r.comment : "",
     concept: typeof r.concept === "string" ? r.concept : "",
