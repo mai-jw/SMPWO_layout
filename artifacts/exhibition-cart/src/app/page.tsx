@@ -1562,6 +1562,23 @@ export default function CartEditor() {
           exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -3px !important; }";
           clonedDoc.head.appendChild(exportStyle);
 
+          // Fix for select elements not rendering selected value in html2canvas
+          clonedDoc.querySelectorAll('select').forEach(select => {
+            const selectedText = select.options[select.selectedIndex]?.text || "";
+            const span = clonedDoc.createElement('span');
+            span.textContent = selectedText;
+            
+            // Basic styles to match the table's red bold text
+            span.style.color = "#dc2626";
+            span.style.fontWeight = "bold";
+            const fontSize = window.getComputedStyle(select).fontSize;
+            span.style.fontSize = fontSize;
+            
+            if (select.parentNode) {
+              select.parentNode.replaceChild(span, select);
+            }
+          });
+
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
@@ -1730,6 +1747,22 @@ export default function CartEditor() {
           exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -3px !important; }";
           clonedDoc.head.appendChild(exportStyle);
 
+          // Fix for select elements not rendering selected value in html2canvas
+          clonedDoc.querySelectorAll('select').forEach(select => {
+            const selectedText = select.options[select.selectedIndex]?.text || "";
+            const span = clonedDoc.createElement('span');
+            span.textContent = selectedText;
+            
+            span.style.color = "#dc2626";
+            span.style.fontWeight = "bold";
+            const fontSize = window.getComputedStyle(select).fontSize;
+            span.style.fontSize = fontSize;
+            
+            if (select.parentNode) {
+              select.parentNode.replaceChild(span, select);
+            }
+          });
+
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
@@ -1892,6 +1925,22 @@ export default function CartEditor() {
           const exportStyle = clonedDoc.createElement("style");
           exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -3px !important; }";
           clonedDoc.head.appendChild(exportStyle);
+
+          // Fix for select elements not rendering selected value in html2canvas
+          clonedDoc.querySelectorAll('select').forEach(select => {
+            const selectedText = select.options[select.selectedIndex]?.text || "";
+            const span = clonedDoc.createElement('span');
+            span.textContent = selectedText;
+            
+            span.style.color = "#dc2626";
+            span.style.fontWeight = "bold";
+            const fontSize = window.getComputedStyle(select).fontSize;
+            span.style.fontSize = fontSize;
+            
+            if (select.parentNode) {
+              select.parentNode.replaceChild(span, select);
+            }
+          });
           const originalContainer = container;
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!originalContainer || !clonedContainer) return;
