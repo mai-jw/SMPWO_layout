@@ -2591,7 +2591,7 @@ export default function CartEditor() {
                                           className="appearance-none bg-transparent text-red-600 font-bold border-none p-0 m-0 outline-none cursor-pointer hover:bg-red-50 rounded px-1 -mx-1 transition-colors"
                                           title="表示言語を変更"
                                         >
-                                          <option value="">{LANG_FILTER_OPTIONS.find(o => o.key === posterItem.language)?.label || posterItem.language} (デフォルト)</option>
+                                          <option value="">{LANG_FILTER_OPTIONS.find(o => o.key === posterItem.language)?.label || posterItem.language}</option>
                                           {LANG_FILTER_OPTIONS.filter(o => o.key !== "all" && o.key !== posterItem.language).map(opt => (
                                             <option key={opt.key} value={opt.key}>{opt.label}</option>
                                           ))}
@@ -2638,7 +2638,7 @@ export default function CartEditor() {
                                                       className="appearance-none bg-transparent text-red-600 font-bold text-[9px] border-none p-0 m-0 outline-none cursor-pointer hover:bg-red-50 rounded px-0.5 -mx-0.5 transition-colors leading-tight"
                                                       title="表示言語を変更"
                                                     >
-                                                      <option value="">{LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language} (デフォルト)</option>
+                                                      <option value="">{LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}</option>
                                                       {LANG_FILTER_OPTIONS.filter(o => o.key !== "all" && o.key !== item.language).map(opt => (
                                                         <option key={opt.key} value={opt.key}>{opt.label}</option>
                                                       ))}
