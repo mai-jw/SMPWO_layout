@@ -62,11 +62,13 @@ export interface ShelfData {
   tag_1: TagData;
   tag_2: TagData;
   items: (string | null)[]; // item IDs, length matches layout_type
+  item_langs?: (string | null)[]; // NEW: overridden languages for each item slot
 }
 
 export interface CartLayoutV2 {
   poster: string | null; // item ID
   posterType: string; // "マグポス" | "コルトン" | "その他" | ""
+  posterLang?: string; // NEW: overridden language for poster
   shelves: ShelfData[]; // Fixed to 3 shelves
   // Metadata for Concept/Comments (Stored in JSON to avoid missing DB columns)
   comment?: string;
@@ -85,6 +87,7 @@ export function makeDefaultShelf(type: ShelfLayoutType = "none"): ShelfData {
     tag_1: { type: "none", value: "" },
     tag_2: { type: "none", value: "" },
     items: Array(count).fill(null),
+    item_langs: Array(count).fill(null),
   };
 }
 
@@ -92,6 +95,7 @@ export function makeInitialCartLayoutV2(): CartLayoutV2 {
   return {
     poster: null,
     posterType: "",
+    posterLang: "",
     comment: "",
     concept: "",
     creator: "",

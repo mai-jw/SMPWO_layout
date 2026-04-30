@@ -89,6 +89,7 @@ interface MobileWizardProps {
   setExportTarget: (t: "png" | "pdf" | "xlsx" | null) => void;
   notes: NoteLine[];
   setNotes: React.Dispatch<React.SetStateAction<NoteLine[]>>;
+  onLangOverride: (cart: CartId, section: "poster" | "shelf", shelfIdx?: number, slotIdx?: number, lang?: string) => void;
 }
 
 
@@ -108,7 +109,8 @@ export function MobileWizard({
   newMonth, setNewMonth, newHalf, setNewHalf, newLocations, setNewLocations, locationsConfig, handleCreateNew, formatPeriodDisplay,
   executeDeleteLayoutForPeriod, loadLayoutForEdit,
   exportTarget, setExportTarget,
-  notes, setNotes
+  notes, setNotes,
+  onLangOverride
 }: MobileWizardProps) {
 
 
@@ -373,13 +375,33 @@ export function MobileWizard({
                       <div className="grid grid-cols-2 gap-4">
                         {currentShelf?.items.map((itId, sIdx) => {
                           const item = itId ? itemMap[itId] : null;
+                          const currentLang = currentShelf?.item_langs?.[sIdx];
                           return (
-                            <button key={sIdx} onClick={() => { setActiveSlotIdx(sIdx); setSelectionMode("items"); }}
-                              className={`aspect-[1/1.4] rounded-[2.5rem] bg-white border-4 p-4 flex flex-col items-center justify-center transition-all ${activeSlotIdx === sIdx && selectionMode === "items" ? "shadow-2xl scale-105" : "border-slate-50 opacity-80"}`}
-                              style={{ borderColor: activeSlotIdx === sIdx && selectionMode === "items" ? COLORS.coral : COLORS.white }}
-                            >
-                              {item ? <img src={item.url} className="w-full h-full object-contain drop-shadow-lg" /> : <div className="text-center"><Plus className="w-10 h-10 opacity-10 mx-auto mb-2" /><p className="text-[10px] font-black opacity-30 uppercase tracking-widest">S-{sIdx+1}</p></div>}
-                            </button>
+                            <div key={sIdx} className="space-y-3">
+                              <button onClick={() => { setActiveSlotIdx(sIdx); setSelectionMode("items"); }}
+                                className={`aspect-[1/1.4] w-full rounded-[2.5rem] bg-white border-4 p-4 flex flex-col items-center justify-center transition-all ${activeSlotIdx === sIdx && selectionMode === "items" ? "shadow-2xl scale-105" : "border-slate-50 opacity-80"}`}
+                                style={{ borderColor: activeSlotIdx === sIdx && selectionMode === "items" ? COLORS.coral : COLORS.white }}
+                              >
+                                {item ? <img src={item.url} className="w-full h-full object-contain drop-shadow-lg" /> : <div className="text-center"><Plus className="w-10 h-10 opacity-10 mx-auto mb-2" /><p className="text-[10px] font-black opacity-30 uppercase tracking-widest">S-{sIdx+1}</p></div>}
+                              </button>
+                              
+                              {item && (
+                                <div className="relative">
+                                  <select
+                                    value={currentLang || ""}
+                                    onChange={(e) => onLangOverride(activeCart, "shelf", activeShelfIdx, sIdx, e.target.value || undefined)}
+                                    className="w-full h-10 bg-white/60 rounded-xl px-3 text-[9px] font-black outline-none appearance-none border border-slate-100 shadow-sm"
+                                    style={{ color: COLORS.deepPurple }}
+                                  >
+                                    <option value="">（言語：デフォルト）</option>
+                                    {LANG_FILTER_OPTIONS.filter(o => o.key !== "all").map(opt => (
+                                      <option key={opt.key} value={opt.key}>{opt.label}</option>
+                                    ))}
+                                  </select>
+                                  <ChevronDown className="absolute right-2 top-3 w-3 h-3 opacity-20 pointer-events-none" />
+                                </div>
+                              )}
+                            </div>
                           );
                         })}
                       </div>
@@ -392,6 +414,25 @@ export function MobileWizard({
                   <button onClick={() => setSelectionMode("items")} className="w-full aspect-[1/1.4] rounded-[3rem] bg-white shadow-xl flex flex-col items-center justify-center overflow-hidden border-4 border-white transition-all active:scale-95">
                     {currentCart.poster ? <img src={itemMap[currentCart.poster]?.url} className="w-full h-full object-contain p-8" /> : <><Plus className="w-16 h-16 opacity-10 mb-4" /><p className="text-sm font-black opacity-30 uppercase tracking-widest">Select Poster</p></>}
                   </button>
+                  {currentCart.poster && (
+                    <div className="bg-white rounded-[2rem] p-6 shadow-xl space-y-4 mt-4">
+                      <SectionLabel label="ポスターの表示言語" />
+                      <div className="relative">
+                        <select
+                          value={currentCart.posterLang || ""}
+                          onChange={(e) => onLangOverride(activeCart, "poster", undefined, undefined, e.target.value || undefined)}
+                          className="w-full h-14 bg-cream/40 rounded-[1.25rem] px-6 text-sm font-black outline-none appearance-none"
+                          style={{ color: COLORS.deepPurple }}
+                        >
+                          <option value="">デフォルト ({LANG_FILTER_OPTIONS.find(o => o.key === itemMap[currentCart.poster!]?.language)?.label || ""})</option>
+                          {LANG_FILTER_OPTIONS.filter(o => o.key !== "all").map(opt => (
+                            <option key={opt.key} value={opt.key}>{opt.label}</option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-6 top-5 w-4 h-4 opacity-20 pointer-events-none" />
+                      </div>
+                    </div>
+                  )}
                 </section>
               )}
             </div>

@@ -732,13 +732,14 @@ interface SelectionSidebarProps {
   onSelectItem: (item: Item) => void;
   onLayoutChange: (cart: CartId, shelfIdx: number, type: ShelfLayoutType) => void;
   onTagChange: (cart: CartId, shelfIdx: number, which: "tag_1" | "tag_2", tag: TagData) => void;
+  onLangOverride: (cart: CartId, section: "poster" | "shelf", shelfIdx?: number, slotIdx?: number, lang?: string) => void;
   onShelfClick: (cartId: CartId, shelfIdx: number) => void;
   onClose: () => void;
 }
 
 function SelectionSidebar({
   activeTarget, items, itemMap, cartA, cartB,
-  onSelectItem, onLayoutChange, onTagChange, onShelfClick, onClose,
+  onSelectItem, onLayoutChange, onTagChange, onLangOverride, onShelfClick, onClose,
 }: SelectionSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<SidebarFilter>("all");
@@ -1000,6 +1001,55 @@ function SelectionSidebar({
           </div>
         ) : (
           <div className="flex flex-col h-full">
+            {/* Display language override if item is selected */}
+            {(() => {
+              const currentItem = activeTarget.section === "poster" 
+                ? (cart?.poster ? itemMap[cart.poster] : null)
+                : (shelf?.items[(activeTarget as any).slotIndex] ? itemMap[shelf.items[(activeTarget as any).slotIndex]!] : null);
+              
+              if (!currentItem) return null;
+
+              const currentLang = activeTarget.section === "poster"
+                ? cart?.posterLang
+                : shelf?.item_langs?.[(activeTarget as any).slotIndex];
+
+              return (
+                <div className="p-4 bg-slate-50 border-b border-border">
+                  <div className="flex items-center gap-3 mb-3">
+                    <img src={currentItem.url} alt={currentItem.name} className="w-10 h-10 object-cover rounded-lg shadow-sm bg-white" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-black text-slate-800 truncate">{currentItem.name}</p>
+                      <p className="text-[10px] font-bold text-slate-400">現在の配置アイテム</p>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-500 flex items-center gap-1">
+                      <Languages className="w-3 h-3" /> 詳細情報の表示言語
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={currentLang || ""}
+                        onChange={(e) => onLangOverride(
+                          activeTarget.cart, 
+                          activeTarget.section as "poster" | "shelf", 
+                          (activeTarget as any).shelfIndex, 
+                          (activeTarget as any).slotIndex, 
+                          e.target.value || undefined
+                        )}
+                        className="w-full text-xs font-black bg-white border border-slate-200 rounded-xl pl-3 pr-8 py-2.5 outline-none focus:ring-4 focus:ring-primary/10 shadow-sm appearance-none cursor-pointer"
+                      >
+                        <option value="">デフォルト ({LANG_FILTER_OPTIONS.find(o => o.key === currentItem.language)?.label || currentItem.language})</option>
+                        {LANG_FILTER_OPTIONS.filter(o => o.key !== "all").map((opt) => (
+                          <option key={opt.key} value={opt.key}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                    </div>
+                    <p className="text-[9px] font-medium text-slate-400 mt-1 pl-1">※下の表（詳細情報）に反映されます</p>
+                  </div>
+                </div>
+              );
+            })()}
             <div className="p-4 pb-0">
               <div className="space-y-2 mb-3">
                 <div className="relative">
@@ -1300,13 +1350,18 @@ export default function CartEditor() {
       setter((prev) => ({ 
         ...prev, 
         poster: item.id!,
-        posterType: item.poster_type || "" // ポスタータイプを同期
+        posterType: item.poster_type || "", // ポスタータイプを同期
+        posterLang: "" // Reset override
       }));
     } else if (activeTarget.section === "shelf") {
       const { shelfIndex, slotIndex } = activeTarget as { shelfIndex: number; slotIndex: number };
       setter((prev) => ({
         ...prev,
-        shelves: prev.shelves.map((s, i) => i === shelfIndex ? { ...s, items: s.items.map((id, j) => j === slotIndex ? item.id! : id) } : s),
+        shelves: prev.shelves.map((s, i) => i === shelfIndex ? { 
+          ...s, 
+          items: s.items.map((id, j) => j === slotIndex ? item.id! : id),
+          item_langs: (s.item_langs || Array(s.items.length).fill(null)).map((l, j) => j === slotIndex ? null : l)
+        } : s),
       }));
     }
     setActiveTarget(null);
@@ -1315,11 +1370,15 @@ export default function CartEditor() {
   const handleClear = useCallback((cart: CartId, section: "poster" | "shelf", shelfIdx?: number, slotIdx?: number) => {
     const setter = getSetCart(cart);
     if (section === "poster") {
-      setter((prev) => ({ ...prev, poster: null, posterType: "" }));
+      setter((prev) => ({ ...prev, poster: null, posterType: "", posterLang: "" }));
     } else {
       setter((prev) => ({
         ...prev,
-        shelves: prev.shelves.map((s, i) => i === shelfIdx ? { ...s, items: s.items.map((id, j) => j === slotIdx ? null : id) } : s),
+        shelves: prev.shelves.map((s, i) => i === shelfIdx ? { 
+          ...s, 
+          items: s.items.map((id, j) => j === slotIdx ? null : id),
+          item_langs: (s.item_langs || Array(s.items.length).fill(null)).map((l, j) => j === slotIdx ? null : l)
+        } : s),
       }));
     }
   }, [getSetCart]);
@@ -1330,6 +1389,7 @@ export default function CartEditor() {
       const shelf = prev.shelves[shelfIdx];
       const count = t === "pamphlet" ? 4 : (t === "document" || t === "bible") ? 3 : 2;
       const newItems = Array(count).fill(null).map((_, i) => shelf.items[i] ?? null);
+      const newLangs = Array(count).fill(null).map((_, i) => shelf.item_langs?.[i] ?? null);
       
       let tag_1 = shelf.tag_1;
       let tag_2 = shelf.tag_2;
@@ -1345,7 +1405,7 @@ export default function CartEditor() {
         tag_1 = { type: "none", value: "" };
       }
 
-      const newShelves = prev.shelves.map((s, i) => i === shelfIdx ? { ...shelf, layout_type: t, items: newItems, tag_1, tag_2 } : s);
+      const newShelves = prev.shelves.map((s, i) => i === shelfIdx ? { ...shelf, layout_type: t, items: newItems, item_langs: newLangs, tag_1, tag_2 } : s);
       return { ...prev, shelves: newShelves };
     });
   }, [getSetCart]);
@@ -1356,6 +1416,23 @@ export default function CartEditor() {
       ...prev,
       shelves: prev.shelves.map((s, i) => i === shelfIdx ? { ...s, [which]: tag } : s),
     }));
+  }, [getSetCart]);
+
+  const handleLangOverride = useCallback((cart: CartId, section: "poster" | "shelf", shelfIdx?: number, slotIdx?: number, lang?: string) => {
+    const setter = getSetCart(cart);
+    setter((prev) => {
+      if (section === "poster") {
+        return { ...prev, posterLang: lang };
+      } else {
+        const shelf = prev.shelves[shelfIdx!];
+        const newLangs = [...(shelf.item_langs || Array(shelf.items.length).fill(null))];
+        newLangs[slotIdx!] = lang || null;
+        return {
+          ...prev,
+          shelves: prev.shelves.map((s, i) => i === shelfIdx ? { ...s, item_langs: newLangs } : s),
+        };
+      }
+    });
   }, [getSetCart]);
 
   const handleReset = () => {
@@ -2126,7 +2203,8 @@ export default function CartEditor() {
           exporting={exporting}
           step={wizardStep}
           setStep={setWizardStep}
-          onToggleStandard={() => setMobileViewType("standard")}
+          onToggleStandard={toggleViewMode}
+          onLangOverride={handleLangOverride}
           newMonth={newMonth}
           setNewMonth={setNewMonth}
           newHalf={newHalf}
@@ -2450,6 +2528,7 @@ export default function CartEditor() {
                 onSelectItem={handleSelectItem}
                 onLayoutChange={handleLayoutChange}
                 onTagChange={handleTagChange}
+                onLangOverride={handleLangOverride}
                 onShelfClick={handleTagClick}
                 onClose={() => setActiveTarget(null)}
               />
@@ -2557,7 +2636,7 @@ export default function CartEditor() {
                                   {posterItem && (
                                     <>
                                       <span className="text-red-600 font-bold">
-                                        {LANG_FILTER_OPTIONS.find(o => o.key === posterItem.language)?.label || posterItem.language}
+                                        {LANG_FILTER_OPTIONS.find(o => o.key === (layout.posterLang || posterItem.language))?.label || (layout.posterLang || posterItem.language)}
                                       </span>
                                       <span className="text-slate-500">({layout.posterType || posterItem.poster_type || "未設定"})</span>
                                     </>
@@ -2603,15 +2682,16 @@ export default function CartEditor() {
                                         <div className={`grid ${shelf.layout_type === "document" || shelf.layout_type === "bible" ? "grid-cols-3" : shelf.layout_type === "pamphlet" ? "grid-cols-4" : "grid-cols-2"} gap-x-3`}>
                                           {mappedItems.map((item, i) => {
                                             if (!item) return <div key={i} className="text-slate-300">—</div>;
-                                            const langLabel = LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language;
-                                            return (
-                                              <div key={i} className="flex flex-col">
-                                                <div className="font-bold text-foreground leading-tight text-[10px]">{item.name}</div>
-                                                <div className="text-red-600 font-bold text-[9px] leading-tight">
-                                                  {langLabel}
+                                              const displayLang = shelf.item_langs?.[i] || item.language;
+                                              const langLabel = LANG_FILTER_OPTIONS.find(o => o.key === displayLang)?.label || displayLang;
+                                              return (
+                                                <div key={i} className="flex flex-col">
+                                                  <div className="font-bold text-foreground leading-tight text-[10px]">{item.name}</div>
+                                                  <div className="text-red-600 font-bold text-[9px] leading-tight">
+                                                    {langLabel}
+                                                  </div>
                                                 </div>
-                                              </div>
-                                            );
+                                              );
                                           })}
                                         </div>
                                       );
