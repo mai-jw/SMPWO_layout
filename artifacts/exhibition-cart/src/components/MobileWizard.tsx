@@ -180,15 +180,13 @@ export function MobileWizard({
                   icon={<Plus className="w-8 h-8" />} 
                   title="新規作成" 
                   color={COLORS.peach}
-                  onClick={() => { if (!isLayoutLocked) setStep("new"); }}
-                  disabled={isLayoutLocked}
+                  onClick={() => setStep("new")}
                 />
                 <MenuCard 
                   icon={<Pencil className="w-8 h-8" />} 
                   title="配置編集" 
                   color={COLORS.white}
-                  onClick={() => { if (!isLayoutLocked) setStep("select-edit"); }}
-                  disabled={isLayoutLocked}
+                  onClick={() => setStep("select-edit")}
                 />
               </div>
               <MenuCard 
@@ -205,8 +203,7 @@ export function MobileWizard({
                 title="過去データの削除" 
                 desc="保存済みのレイアウトを整理"
                 color={COLORS.white}
-                onClick={() => { if (!isLayoutLocked) setStep("select-delete"); }}
-                disabled={isLayoutLocked}
+                onClick={() => setStep("select-delete")}
               />
             </div>
           </motion.div>

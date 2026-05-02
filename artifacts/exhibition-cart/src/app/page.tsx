@@ -1485,11 +1485,11 @@ export default function CartEditor() {
     setPeriod(existing.period);
     setCartA(existing.cart_a);
     setCartB(existing.cart_b);
+    setIsLayoutLocked(existing.cart_a.isLocked || false);
     setWizardStep("edit");
   };
 
   const handleCreateNew = () => {
-    if (isLayoutLocked) return;
     const y = new Date().getFullYear();
     const locStr = newLocations.length === 0 || newLocations.includes("すべて") ? "" : `::${newLocations.join(",")}`;
     const targetPeriod = `${y}-${String(newMonth).padStart(2, "0")}-${newHalf}${locStr}`;
