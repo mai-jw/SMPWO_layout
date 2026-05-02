@@ -2719,23 +2719,19 @@ export default function CartEditor() {
                                       const mappedItems = shelf.items.map((id, slotIdx) => ({
                                         item: id ? itemMap[id] : null,
                                         slotIdx,
-                                        lang: shelf.item_langs?.[slotIdx] || "",
+                                        lang: (shelf.item_langs?.[slotIdx] || "") as string,
                                       }));
 
-                                      // Deduplicate: group entries with the same item ID + effective language into one
-                                      type DedupeEntry = { item: Item; slotIdx: number; lang: string; count: number };
-                                      const seen = new Map<string, DedupeEntry>();
-                                      const deduped: Array<DedupeEntry | null> = [];
+                                      // Deduplicate: same item ID + same effective language → one entry
+                                      const seen = new Map();
+                                      const deduped: Array<{ item: Item; slotIdx: number; lang: string } | null> = [];
                                       mappedItems.forEach(({ item, slotIdx, lang }) => {
                                         if (!item) { deduped.push(null); return; }
                                         const effectiveLang = lang || item.language;
-                                        const key = `${item.id}__${effectiveLang}`;
-                                        if (seen.has(key)) {
-                                          seen.get(key)!.count += 1;
-                                        } else {
-                                          const entry: DedupeEntry = { item, slotIdx, lang, count: 1 };
-                                          seen.set(key, entry);
-                                          deduped.push(entry);
+                                        const key = item.id + "__" + effectiveLang;
+                                        if (!seen.has(key)) {
+                                          seen.set(key, true);
+                                          deduped.push({ item, slotIdx, lang });
                                         }
                                       });
 
@@ -2743,7 +2739,7 @@ export default function CartEditor() {
                                         <div className="flex flex-wrap gap-x-3 gap-y-0.5">
                                           {deduped.map((entry, i) => {
                                             if (!entry) return <div key={i} className="text-slate-300">—</div>;
-                                            const { item, slotIdx, lang, count } = entry;
+                                            const { item, slotIdx, lang } = entry;
                                             return (
                                               <div key={i} className="flex flex-col">
                                                 <div className="font-bold text-foreground leading-tight text-[10px]">
