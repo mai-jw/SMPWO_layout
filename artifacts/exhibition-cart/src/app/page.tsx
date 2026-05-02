@@ -9,7 +9,7 @@ import {
   Check, Trash2, Library, Settings, Star, Book, BookOpen, FileText,
   Mail, Bookmark, Notebook, Scroll, Contact, Newspaper, BookCopy, Files,
   Map, BookText, Languages, Cloud, Monitor, Smartphone, Home, LayoutGrid, Menu, LayoutDashboard, SortAsc,
-  Plus, PlusCircle, ChevronLeft, FolderOpen,
+  Plus, PlusCircle, ChevronLeft, FolderOpen, Lock, LockOpen,
 } from "lucide-react";
 import Link from "next/link";
 import { useItems, useUpdateItem, useDeleteItem, useCopyItem } from "@/hooks/use-items";
@@ -1112,7 +1112,7 @@ export default function CartEditor() {
   const [cartA, setCartA] = useState<CartLayoutV2>(makeInitialCartLayoutV2);
   const [cartB, setCartB] = useState<CartLayoutV2>(makeInitialCartLayoutV2);
   const [activeTarget, setActiveTarget] = useState<ActiveTarget>(null);
-  const { openUploadPanel } = useUI();
+  const { openUploadPanel, isLayoutLocked, toggleLayoutLock } = useUI();
   const [exporting, setExporting] = useState<"png" | "pdf" | "xlsx" | null>(null);
   const [exportVersion, setExportVersion] = useState<"standard" | "with-info">("standard");
   const [exportTarget, setExportTarget] = useState<"png" | "pdf" | "xlsx" | null>(null);
@@ -1256,6 +1256,7 @@ export default function CartEditor() {
 
   // Click on a slot in the cart → open side panel
   const handleSlotClick = useCallback((cart: CartId, section: "poster" | "shelf", shelfIdx?: number, slotIdx?: number) => {
+    if (isLayoutLocked) return;
     setActiveTarget((prev) => {
       if (section === "poster") {
         const same = prev?.cart === cart && prev.section === "poster";
@@ -1268,6 +1269,7 @@ export default function CartEditor() {
 
   // Click on a tag bar → open tag config panel
   const handleTagClick = useCallback((cart: CartId, shelfIdx: number) => {
+    if (isLayoutLocked) return;
     setActiveTarget((prev) => {
       const same = prev?.cart === cart && prev.section === "tag" && (prev as any).shelfIndex === shelfIdx;
       if (!same && isMobileView) setIsMobileSidebarOpen(true);
@@ -1294,7 +1296,7 @@ export default function CartEditor() {
 
   // Select item from sidebar → assign to active slot & close
   const handleSelectItem = useCallback((item: Item) => {
-    if (!activeTarget) return;
+    if (!activeTarget || isLayoutLocked) return;
     const setter = getSetCart(activeTarget.cart);
     if (activeTarget.section === "poster") {
       setter((prev) => ({ 
@@ -1318,6 +1320,7 @@ export default function CartEditor() {
   }, [activeTarget, getSetCart]);
 
   const handleClear = useCallback((cart: CartId, section: "poster" | "shelf", shelfIdx?: number, slotIdx?: number) => {
+    if (isLayoutLocked) return;
     const setter = getSetCart(cart);
     if (section === "poster") {
       setter((prev) => ({ ...prev, poster: null, posterType: "", posterLang: "" }));
@@ -1334,6 +1337,7 @@ export default function CartEditor() {
   }, [getSetCart]);
 
   const handleLayoutChange = useCallback((cart: CartId, shelfIdx: number, t: ShelfLayoutType) => {
+    if (isLayoutLocked) return;
     const setter = getSetCart(cart);
     setter((prev) => {
       const shelf = prev.shelves[shelfIdx];
@@ -1361,6 +1365,7 @@ export default function CartEditor() {
   }, [getSetCart]);
 
   const handleTagChange = useCallback((cart: CartId, shelfIdx: number, which: "tag_1" | "tag_2", tag: TagData) => {
+    if (isLayoutLocked) return;
     const setter = getSetCart(cart);
     setter((prev) => ({
       ...prev,
@@ -1369,6 +1374,7 @@ export default function CartEditor() {
   }, [getSetCart]);
 
   const handleLangOverride = useCallback((cart: CartId, section: "poster" | "shelf", shelfIdx?: number, slotIdx?: number, lang?: string) => {
+    if (isLayoutLocked) return;
     const setter = getSetCart(cart);
     setter((prev) => {
       if (section === "poster") {
@@ -1426,7 +1432,7 @@ export default function CartEditor() {
   };
   
   const executeDeleteLayout = async () => {
-    if (!period.trim() || !isExistingPeriod) return;
+    if (!period.trim() || !isExistingPeriod || isLayoutLocked) return;
     
     try {
       await deleteLayout.mutateAsync(period);
@@ -1443,6 +1449,7 @@ export default function CartEditor() {
 
   // Mobile-specific: delete a specific period by key
   const executeDeleteLayoutForPeriod = async (targetPeriod: string) => {
+    if (isLayoutLocked) return;
     try {
       await deleteLayout.mutateAsync(targetPeriod);
       if (period === targetPeriod) {
@@ -1468,6 +1475,7 @@ export default function CartEditor() {
   };
 
   const handleCreateNew = () => {
+    if (isLayoutLocked) return;
     const y = new Date().getFullYear();
     const locStr = newLocations.length === 0 || newLocations.includes("すべて") ? "" : `::${newLocations.join(",")}`;
     const targetPeriod = `${y}-${String(newMonth).padStart(2, "0")}-${newHalf}${locStr}`;
@@ -2388,6 +2396,29 @@ export default function CartEditor() {
         <div className="flex-1" />
         {!isMobileView && (
           <>
+            {/* Lock Button */}
+            <button
+              onClick={toggleLayoutLock}
+              className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-bold transition-all select-none border ${
+                isLayoutLocked 
+                  ? "bg-amber-50 text-amber-600 border-amber-200 shadow-inner" 
+                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 shadow-sm"
+              }`}
+              title={isLayoutLocked ? "ロックを解除" : "レイアウトをロック"}
+            >
+              {isLayoutLocked ? (
+                <>
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>提出済ロック</span>
+                </>
+              ) : (
+                <>
+                  <LockOpen className="w-3.5 h-3.5 opacity-60" />
+                  <span>提出済ロック</span>
+                </>
+              )}
+            </button>
+
             {/* Save Button (Removed Library/Upload from here) */}
             <button onClick={() => handleSave()} disabled={saveStatus === "saving" || !period.trim()}
               className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-medium transition-all select-none disabled:opacity-60 ${
@@ -2988,6 +3019,22 @@ export default function CartEditor() {
                         ))}
                       </select>
                     </div>
+                  </div>
+
+                  {/* Lock Section */}
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">提出済ロック</p>
+                    <button 
+                      onClick={toggleLayoutLock}
+                      className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold transition-all shadow-md active:scale-[0.98] border ${
+                        isLayoutLocked 
+                          ? "bg-amber-50 text-amber-600 border-amber-200" 
+                          : "bg-white text-slate-600 border-slate-200"
+                      }`}
+                    >
+                      {isLayoutLocked ? <Lock className="w-6 h-6" /> : <LockOpen className="w-6 h-6 opacity-40" />}
+                      <span className="text-base">{isLayoutLocked ? "提出済ロックを解除" : "提出済ロック"}</span>
+                    </button>
                   </div>
 
                   {/* Save Section */}

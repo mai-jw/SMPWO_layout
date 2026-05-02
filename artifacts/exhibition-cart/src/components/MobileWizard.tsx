@@ -23,8 +23,11 @@ import {
   ChevronDown,
   Check,
   FileText,
-  SortAsc
+  SortAsc,
+  Lock,
+  LockOpen
 } from "lucide-react";
+import { useUI } from "@/context/ui-context";
 import { 
   CartId, 
   ActiveTarget,
@@ -112,6 +115,7 @@ export function MobileWizard({
   notes, setNotes,
   onLangOverride
 }: MobileWizardProps) {
+  const { isLayoutLocked, toggleLayoutLock } = useUI();
 
 
   
@@ -174,13 +178,15 @@ export function MobileWizard({
                   icon={<Plus className="w-8 h-8" />} 
                   title="新規作成" 
                   color={COLORS.peach}
-                  onClick={() => setStep("new")}
+                  onClick={() => { if (!isLayoutLocked) setStep("new"); }}
+                  disabled={isLayoutLocked}
                 />
                 <MenuCard 
                   icon={<Pencil className="w-8 h-8" />} 
                   title="配置編集" 
                   color={COLORS.white}
-                  onClick={() => setStep("select-edit")}
+                  onClick={() => { if (!isLayoutLocked) setStep("select-edit"); }}
+                  disabled={isLayoutLocked}
                 />
               </div>
               <MenuCard 
@@ -197,7 +203,8 @@ export function MobileWizard({
                 title="過去データの削除" 
                 desc="保存済みのレイアウトを整理"
                 color={COLORS.white}
-                onClick={() => setStep("select-delete")}
+                onClick={() => { if (!isLayoutLocked) setStep("select-delete"); }}
+                disabled={isLayoutLocked}
               />
             </div>
           </motion.div>
@@ -316,8 +323,8 @@ export function MobileWizard({
                     <SectionLabel label="レイアウトを選択" />
                     <div className="grid grid-cols-2 gap-3">
                        {(["booklet", "booklet_doc", "document", "bible", "pamphlet"] as ShelfLayoutType[]).map(t => (
-                         <button key={t} onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, layout_type: t, items: t === "document" || t === "bible" ? [null, null, null] : t === "pamphlet" ? [null, null, null, null] : [null, null] } : s) }))}
-                           className={`p-4 h-24 rounded-[2rem] border-2 font-black text-[11px] flex items-center justify-center transition-all ${currentShelf?.layout_type === t ? "shadow-lg scale-105" : "bg-white border-transparent opacity-60"}`}
+                         <button key={t} onClick={() => { if (isLayoutLocked) return; (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, layout_type: t, items: t === "document" || t === "bible" ? [null, null, null] : t === "pamphlet" ? [null, null, null, null] : [null, null] } : s) })); }}
+                           className={`p-4 h-24 rounded-[2rem] border-2 font-black text-[11px] flex items-center justify-center transition-all ${currentShelf?.layout_type === t ? "shadow-lg scale-105" : "bg-white border-transparent opacity-60"} ${isLayoutLocked ? "cursor-not-allowed opacity-40" : ""}`}
                            style={{ backgroundColor: currentShelf?.layout_type === t ? COLORS.peach : COLORS.white, borderColor: currentShelf?.layout_type === t ? COLORS.coral : "transparent", color: COLORS.deepPurple }}
                          >
                            <span className="whitespace-pre-line text-center">
@@ -344,23 +351,23 @@ export function MobileWizard({
                              <>
                                <div className="flex gap-2">
                                   <TagOptionBtn label="なし" active={currentShelf?.tag_1.type === "none"} 
-                                    onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "none", value: "" }, tag_2: { type: "none", value: "" } } : s) }))} 
+                                    onClick={() => { if (isLayoutLocked) return; (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "none", value: "" }, tag_2: { type: "none", value: "" } } : s) })); }} 
                                   />
                                   {canLangTag && (
                                     <TagOptionBtn label="言語" color={COLORS.coral} active={currentShelf?.tag_1.type === "lang"} 
-                                      onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang", value: "" }, tag_2: { type: "none", value: "" } } : s) }))}
+                                      onClick={() => { if (isLayoutLocked) return; (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang", value: "" }, tag_2: { type: "none", value: "" } } : s) })); }}
                                     />
                                   )}
                                   {canFreeDist && (
                                     <TagOptionBtn label="無料配布" color={COLORS.deepPurple} active={currentShelf?.tag_1.type === "free_dist"} 
-                                      onClick={() => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "free_dist", value: "無料で差し上げています" }, tag_2: { type: "none", value: "" } } : s) }))}
+                                      onClick={() => { if (isLayoutLocked) return; (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "free_dist", value: "無料で差し上げています" }, tag_2: { type: "none", value: "" } } : s) })); }}
                                     />
                                   )}
                                </div>
                                {currentShelf?.tag_1.type === "lang" && (
                                  <div className="grid grid-cols-2 gap-3 pt-2">
-                                    <TagSelect value={currentShelf.tag_1.value} placeholder="左タグ" onChange={v => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang", value: v } } : s) }))} />
-                                    <TagSelect value={currentShelf.tag_2.value} placeholder="右タグ" onChange={v => (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_2: { type: v ? "lang" : "none", value: v } } : s) }))} />
+                                    <TagSelect value={currentShelf.tag_1.value} placeholder="左タグ" onChange={v => { if (isLayoutLocked) return; (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_1: { type: "lang", value: v } } : s) })); }} />
+                                    <TagSelect value={currentShelf.tag_2.value} placeholder="右タグ" onChange={v => { if (isLayoutLocked) return; (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => ({ ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, tag_2: { type: v ? "lang" : "none", value: v } } : s) })); }} />
                                  </div>
                                )}
                              </>
@@ -377,8 +384,8 @@ export function MobileWizard({
                           const item = itId ? itemMap[itId] : null;
                           return (
                             <div key={sIdx} className="space-y-3">
-                              <button onClick={() => { setActiveSlotIdx(sIdx); setSelectionMode("items"); }}
-                                className={`aspect-[1/1.4] w-full rounded-[2.5rem] bg-white border-4 p-4 flex flex-col items-center justify-center transition-all ${activeSlotIdx === sIdx && selectionMode === "items" ? "shadow-2xl scale-105" : "border-slate-50 opacity-80"}`}
+                              <button onClick={() => { if (!isLayoutLocked) { setActiveSlotIdx(sIdx); setSelectionMode("items"); } }}
+                                className={`aspect-[1/1.4] w-full rounded-[2.5rem] bg-white border-4 p-4 flex flex-col items-center justify-center transition-all ${activeSlotIdx === sIdx && selectionMode === "items" ? "shadow-2xl scale-105" : "border-slate-50 opacity-80"} ${isLayoutLocked ? "opacity-40 grayscale-[0.5] cursor-not-allowed" : ""}`}
                                 style={{ borderColor: activeSlotIdx === sIdx && selectionMode === "items" ? COLORS.coral : COLORS.white }}
                               >
                                 {item ? <img src={item.url} className="w-full h-full object-contain drop-shadow-lg" /> : <div className="text-center"><Plus className="w-10 h-10 opacity-10 mx-auto mb-2" /><p className="text-[10px] font-black opacity-30 uppercase tracking-widest">S-{sIdx+1}</p></div>}
@@ -393,7 +400,7 @@ export function MobileWizard({
               ) : (
                 <section className="space-y-8">
                   <SectionLabel label="ポスターを選択" />
-                  <button onClick={() => setSelectionMode("items")} className="w-full aspect-[1/1.4] rounded-[3rem] bg-white shadow-xl flex flex-col items-center justify-center overflow-hidden border-4 border-white transition-all active:scale-95">
+                  <button onClick={() => { if (!isLayoutLocked) setSelectionMode("items"); }} className={`w-full aspect-[1/1.4] rounded-[3rem] bg-white shadow-xl flex flex-col items-center justify-center overflow-hidden border-4 border-white transition-all active:scale-95 ${isLayoutLocked ? "opacity-40 grayscale-[0.5] cursor-not-allowed" : ""}`}>
                     {currentCart.poster ? <img src={itemMap[currentCart.poster]?.url} className="w-full h-full object-contain p-8" /> : <><Plus className="w-16 h-16 opacity-10 mb-4" /><p className="text-sm font-black opacity-30 uppercase tracking-widest">Select Poster</p></>}
                   </button>
                 </section>
@@ -463,7 +470,7 @@ export function MobileWizard({
                    <div className="bg-white rounded-[3rem] p-8 shadow-xl space-y-6">
                       <div className="flex items-center justify-between">
                          <SectionLabel label="補足事項" />
-                         <Plus className="w-5 h-5 text-coral" onClick={() => setNotes(prev => [...prev, { text: "", color: "inherit" }])} />
+                         {!isLayoutLocked && <Plus className="w-5 h-5 text-coral" onClick={() => setNotes(prev => [...prev, { text: "", color: "inherit" }])} />}
                       </div>
                       <div className="space-y-4">
                          {notes.length === 0 ? (
@@ -479,32 +486,50 @@ export function MobileWizard({
                                   ].map(c => (
                                      <button
                                         key={c.val}
-                                        onClick={() => setNotes(prev => prev.map((l, i) => i === idx ? { ...l, color: c.val } : l))}
-                                        className={`w-4 h-4 rounded-full ${c.color} ${line.color === c.val ? "ring-4 ring-offset-2 ring-slate-200" : "opacity-30"}`}
+                                        disabled={isLayoutLocked}
+                                        onClick={() => { if (!isLayoutLocked) setNotes(prev => prev.map((l, i) => i === idx ? { ...l, color: c.val } : l)); }}
+                                        className={`w-4 h-4 rounded-full ${c.color} ${line.color === c.val ? "ring-4 ring-offset-2 ring-slate-200" : "opacity-30"} ${isLayoutLocked ? "cursor-not-allowed" : ""}`}
                                      />
                                   ))}
                                </div>
                                <textarea
                                   value={line.text}
-                                  onChange={(e) => setNotes(prev => prev.map((l, i) => i === idx ? { ...l, text: e.target.value } : l))}
+                                  onChange={(e) => { if (!isLayoutLocked) setNotes(prev => prev.map((l, i) => i === idx ? { ...l, text: e.target.value } : l)); }}
+                                  readOnly={isLayoutLocked}
                                   rows={1}
-                                  className="flex-1 bg-transparent text-sm font-bold outline-none resize-none leading-relaxed"
+                                  className={`flex-1 bg-transparent text-sm font-bold outline-none resize-none leading-relaxed ${isLayoutLocked ? "opacity-70" : ""}`}
                                   style={{ color: line.color !== "inherit" ? line.color : undefined }}
                                   placeholder="内容を入力..."
                                />
-                               <button onClick={() => setNotes(prev => prev.filter((_, i) => i !== idx))} className="shrink-0 p-1 text-red-300">
-                                  <Trash2 className="w-4 h-4" />
-                               </button>
+                               {!isLayoutLocked && (
+                                 <button onClick={() => setNotes(prev => prev.filter((_, i) => i !== idx))} className="shrink-0 p-1 text-red-300">
+                                    <Trash2 className="w-4 h-4" />
+                                 </button>
+                               )}
                             </div>
                          ))}
                       </div>
                    </div>
 
-                   <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()} className="w-full py-6 rounded-[2rem] font-black text-xl text-white shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"
-                   style={{ backgroundColor: saveStatus === "saved" ? "#10b981" : COLORS.deepPurple }}>
-                   {saveStatus === "saving" ? <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" /> : <Save className="w-6 h-6" />}
-                   <span>{saveStatus === "saved" ? "保存済み" : "配置を保存する"}</span>
-                 </button>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={toggleLayoutLock}
+                      className={`flex-1 py-6 rounded-[2rem] font-black text-xl transition-all active:scale-95 flex items-center justify-center gap-3 border-4 ${
+                        isLayoutLocked 
+                          ? "bg-white text-amber-500 border-amber-400" 
+                          : "bg-white text-slate-400 border-slate-100"
+                      }`}
+                    >
+                      {isLayoutLocked ? <Lock className="w-6 h-6" /> : <LockOpen className="w-6 h-6 opacity-40" />}
+                      <span>{isLayoutLocked ? "ロック解除" : "ロックする"}</span>
+                    </button>
+
+                    <button onClick={handleSave} disabled={saveStatus === "saving" || !period.trim()} className="flex-[1.5] py-6 rounded-[2rem] font-black text-xl text-white shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3"
+                      style={{ backgroundColor: saveStatus === "saved" ? "#10b981" : COLORS.deepPurple }}>
+                      {saveStatus === "saving" ? <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" /> : <Save className="w-6 h-6" />}
+                      <span>{saveStatus === "saved" ? "保存済み" : "配置を保存"}</span>
+                    </button>
+                  </div>
                  <div className="grid grid-cols-3 gap-3">
                     <ExportCircle icon={<FileImage />} onClick={handleExportPng} active={exporting === "png"} />
                     <ExportCircle icon={<FileText />} onClick={handleExportPdf} active={exporting === "pdf"} />
@@ -596,9 +621,9 @@ export function MobileWizard({
   );
 }
 
-function MenuCard({ icon, title, desc, color, onClick, wide }: any) {
+function MenuCard({ icon, title, desc, color, onClick, wide, disabled }: any) {
   return (
-    <button onClick={onClick} className={`flex flex-col items-center justify-center p-6 rounded-[2.5rem] transition-all active:scale-95 shadow-xl shadow-black/5 ${wide ? "w-full text-center flex-row gap-6 p-5" : "aspect-square"}`} style={{ backgroundColor: color }}>
+    <button onClick={onClick} disabled={disabled} className={`flex flex-col items-center justify-center p-6 rounded-[2.5rem] transition-all active:scale-95 shadow-xl shadow-black/5 ${wide ? "w-full text-center flex-row gap-6 p-5" : "aspect-square"} ${disabled ? "opacity-40 grayscale cursor-not-allowed" : ""}`} style={{ backgroundColor: color }}>
        <div className={`${wide ? "w-14 h-14" : "w-16 h-16"} rounded-[1.5rem] bg-cream flex items-center justify-center ${wide ? "" : "mb-4"} shadow-inner shrink-0`}><div style={{ color: COLORS.coral }}>{React.cloneElement(icon as React.ReactElement, { className: wide ? "w-6 h-6" : "w-8 h-8" } as any)}</div></div>
        <div className={wide ? "text-left" : ""}><p className={`${wide ? "text-base" : "text-lg"} font-black tracking-tight`} style={{ color: COLORS.deepPurple }}>{title}</p>{desc && <p className="text-[9px] font-bold opacity-30 tracking-widest uppercase mt-1 line-clamp-1">{desc}</p>}</div>
     </button>
@@ -611,12 +636,33 @@ function TagSelect({ value, onChange, placeholder }: any) { return <div classNam
 function ExportCircle({ icon, active, onClick }: any) { return <button onClick={onClick} disabled={active} className={`flex-1 aspect-square rounded-full flex items-center justify-center transition-all shadow-lg active:scale-90 ${active ? "bg-slate-100 opacity-50" : "bg-white"}`}>{active ? <div className="w-6 h-6 border-4 border-slate-200 border-t-coral rounded-full animate-spin" /> : <div style={{ color: COLORS.coral }}>{React.cloneElement(icon, { className: "w-8 h-8" })}</div>}</button>; }
 function WizardHeader({ title, onBack }: any) { return <div className="shrink-0 pt-16 pb-8 px-8 flex items-center gap-6 bg-white z-[150] rounded-b-[3rem] shadow-sm"><button onClick={onBack} className="w-14 h-14 flex items-center justify-center bg-cream rounded-[1.5rem] active:scale-90 transition-all shadow-inner"><ChevronLeft className="w-7 h-7" style={{ color: COLORS.deepPurple }} /></button><h2 className="text-xl font-black tracking-tight" style={{ color: COLORS.deepPurple }}>{title}</h2></div>; }
 function EmptyState({ icon, text, sub }: any) { return <div className="flex flex-col items-center justify-center py-20 opacity-30">{React.cloneElement(icon, { className: "w-16 h-16 mb-4" })}<p className="font-black text-sm">{text}</p>{sub && <p className="text-[10px] font-bold mt-1">{sub}</p>}</div>; }
+
 function DeleteLayoutRow({ period, displayName, onConfirm }: { period: string; displayName: string; onConfirm: () => void }) {
   const [confirming, setConfirming] = useState(false);
+  const { isLayoutLocked } = useUI();
   return (
     <div className="w-full rounded-[2rem] overflow-hidden shadow-lg shadow-black/5">
-      {confirming ? ( <div className="bg-red-50 p-6 space-y-4"><p className="font-black text-sm text-red-700">「{displayName}」を削除しますか？</p><div className="flex gap-3"><button onClick={onConfirm} className="flex-1 py-4 bg-red-600 text-white font-black text-sm rounded-2xl active:scale-95">削除</button><button onClick={() => setConfirming(false)} className="flex-1 py-4 bg-white border border-red-100 text-red-400 font-black text-sm rounded-2xl">キャンセル</button></div></div>
-      ) : ( <button onClick={() => setConfirming(true)} className="w-full flex items-center justify-between p-6 bg-white text-left active:scale-[0.98] transition-all"><div><p className="font-black text-base" style={{ color: COLORS.deepPurple }}>{displayName}</p><p className="text-[10px] text-red-400 font-black uppercase mt-1 tracking-widest">Tap to delete</p></div><Trash2 className="w-6 h-6 text-red-200" /></button> )}
+      {confirming ? ( 
+        <div className="bg-red-50 p-6 space-y-4">
+          <p className="font-black text-sm text-red-700">「{displayName}」を削除しますか？</p>
+          <div className="flex gap-3">
+            <button onClick={onConfirm} className="flex-1 py-4 bg-red-600 text-white font-black text-sm rounded-2xl active:scale-95">削除</button>
+            <button onClick={() => setConfirming(false)} className="flex-1 py-4 bg-white border border-red-100 text-red-400 font-black text-sm rounded-2xl">キャンセル</button>
+          </div>
+        </div>
+      ) : ( 
+        <button 
+          onClick={() => { if (!isLayoutLocked) setConfirming(true); }} 
+          disabled={isLayoutLocked}
+          className={`w-full flex items-center justify-between p-6 bg-white text-left active:scale-[0.98] transition-all ${isLayoutLocked ? "opacity-40 grayscale cursor-not-allowed" : ""}`}
+        >
+          <div>
+            <p className="font-black text-base" style={{ color: COLORS.deepPurple }}>{displayName}</p>
+            <p className="text-[10px] text-red-400 font-black uppercase mt-1 tracking-widest">Tap to delete</p>
+          </div>
+          <Trash2 className="w-6 h-6 text-red-200" />
+        </button> 
+      )}
     </div>
   );
 }
