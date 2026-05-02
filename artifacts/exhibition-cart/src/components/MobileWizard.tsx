@@ -42,6 +42,8 @@ import {
 } from "@/lib/supabase";
 import { 
   SHELF_COORDINATES, 
+  CART_IMAGE_URL,
+  POSTER_PLACEMENT,
   GALLERY_FILTER_LABELS,
   LANG_FILTER_OPTIONS
 } from "@/lib/config";
@@ -75,9 +77,8 @@ interface MobileWizardProps {
   loadLayoutForEdit: (targetPeriod: string) => void;
   saveStatus: "idle" | "saving" | "saved" | "error";
   exporting: "png" | "pdf" | "xlsx" | null;
-  step: "menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete";
-  setStep: (s: "menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete") => void;
-  onToggleStandard: () => void;
+  step: "menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete" | "cart-preview";
+  setStep: (s: "menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete" | "cart-preview") => void;
   newMonth: number;
   setNewMonth: (m: number) => void;
   newHalf: "前半" | "後半";
@@ -109,7 +110,7 @@ const LANGUAGES = [
 export function MobileWizard({
   period, cartA, setCartA, cartB, setCartB, items, itemMap, layouts,
   handleSave, handleExportPng, handleExportPdf, handleExportXlsx, handleDelete,
-  onOpenUpload, saveStatus, exporting, step, setStep, onToggleStandard,
+  onOpenUpload, saveStatus, exporting, step, setStep,
   newMonth, setNewMonth, newHalf, setNewHalf, newLocations, setNewLocations, locationsConfig, handleCreateNew, formatPeriodDisplay,
   executeDeleteLayoutForPeriod, loadLayoutForEdit,
   exportTarget, setExportTarget,
@@ -163,15 +164,6 @@ export function MobileWizard({
                   </div>
                 </div>
               </div>
-
-              {/* Top-Right Toggle to PC View */}
-              <button 
-                onClick={onToggleStandard}
-                className="absolute top-10 right-8 z-[100] w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white active:scale-90 transition-all shadow-lg"
-                title="PC表示に切り替え"
-              >
-                <Monitor className="w-6 h-6" />
-              </button>
             </div>
 
             <div className="flex-1 px-8 -mt-6 relative z-20 space-y-4 pb-8 overflow-hidden">
@@ -191,6 +183,14 @@ export function MobileWizard({
               </div>
               <MenuCard 
                 wide
+                icon={<LayoutDashboard className="w-8 h-8" />} 
+                title="カートプレビュー" 
+                desc="現在のレイアウトを確認"
+                color={COLORS.peach}
+                onClick={() => setStep("cart-preview")}
+              />
+              <MenuCard 
+                wide
                 icon={<Upload className="w-8 h-8" />} 
                 title="ライブラリに画像を追加" 
                 desc="新しい出版物やポスターを登録"
@@ -208,6 +208,126 @@ export function MobileWizard({
             </div>
           </motion.div>
         )}
+
+        {step === "cart-preview" && (() => {
+          const SHELF_LABELS = ["\u4e0a\u6bb5", "\u4e2d\u6bb5", "\u4e0b\u6bb5"];
+          const carts = [
+            { id: "A" as CartId, layout: cartA },
+            { id: "B" as CartId, layout: cartB },
+          ];
+          return (
+            <motion.div key="cart-preview" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="flex flex-col h-full bg-cream">
+              <WizardHeader title="\u30ab\u30fc\u30c8\u30d7\u30ec\u30d3\u30e5\u30fc" onBack={() => setStep("menu")} />
+              <div className="flex-1 overflow-y-auto pb-24">
+
+                {/* ── Cart images side-by-side ── */}
+                <div className="flex gap-4 items-start justify-center px-4 pt-4 w-full">
+                  {carts.map(({ id, layout }) => (
+                    <div key={id} className="flex flex-col items-center w-1/2 max-w-[200px]">
+                      <p className="text-[10px] font-black text-slate-400 tracking-widest mb-1">カート {id}</p>
+                      <div className="relative w-full" style={{ aspectRatio: "1080/1350" }}>
+                        <img src={CART_IMAGE_URL} alt="cart" crossOrigin="anonymous" className="absolute inset-0 w-full h-full object-contain drop-shadow-md" />
+                        {/* Poster */}
+                        {layout.poster && itemMap[layout.poster] && (
+                          <div className="absolute overflow-hidden" style={{ top: POSTER_PLACEMENT.top, left: POSTER_PLACEMENT.left, width: POSTER_PLACEMENT.width, aspectRatio: "1/1.48" }}>
+                            <img src={itemMap[layout.poster].url} className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        {/* Shelves */}
+                        {layout.shelves.map((shelf, sIdx) => {
+                          if (shelf.layout_type === "none") return null;
+                          const coords = SHELF_COORDINATES[sIdx];
+                          const cols = shelf.layout_type === "document" || shelf.layout_type === "bible" ? 3 : shelf.layout_type === "pamphlet" ? 4 : 2;
+                          return (
+                            <div key={sIdx} className="absolute flex" style={{ top: coords.items, left: "5%", width: "90%", height: coords.itemsH }}>
+                              {shelf.items.map((itemId, i) => {
+                                const item = itemId ? itemMap[itemId] : null;
+                                return (
+                                  <div key={i} className="flex-1 flex items-center justify-center overflow-hidden px-[2%]">
+                                    {item && <img src={item.url} className="h-full w-full object-contain drop-shadow-sm" />}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* ── Detail info table (mirrors PC version) ── */}
+                <div className="mx-4 mt-8 flex gap-4">
+                  {carts.map(({ id, layout }) => {
+                    const posterItem = layout.poster ? itemMap[layout.poster] : null;
+                    return (
+                      <div key={id} className="flex-1">
+                        <p className="text-center font-black text-xs mb-1.5" style={{ color: COLORS.deepPurple }}>\u30ab\u30fc\u30c8 {id}</p>
+                        <table className="w-full border-collapse text-[9px]">
+                          <tbody>
+                            {/* Poster row */}
+                            <tr className="border-t border-slate-300">
+                              <td className="py-1 pr-1.5 font-bold text-slate-500 align-top whitespace-nowrap">\u30dd\u30b9\u30bf\u30fc</td>
+                              <td className="py-1">
+                                <div className="font-bold text-foreground leading-tight">{posterItem?.name || "\u2014"}</div>
+                                {posterItem && (
+                                  <div className="text-red-600 font-bold text-[8px] leading-tight">
+                                    {LANG_FILTER_OPTIONS.find(o => o.key === (layout.posterLang || posterItem.language))?.label || posterItem.language}
+                                    <span className="text-slate-400 ml-1">({layout.posterType || posterItem.poster_type || "\u672a\u8a2d\u5b9a"})</span>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                            {/* Shelf rows */}
+                            {layout.shelves.map((shelf, sIdx) => {
+                              const mappedItems = shelf.items.map((id, i) => ({
+                                item: id ? itemMap[id] : null,
+                                slotIndex: i,
+                                effectiveLang: shelf.item_langs?.[i] || (id ? (itemMap[id]?.language ?? "") : ""),
+                              }));
+                              const seen = new Set<string>();
+                              const uniqueSlots = mappedItems.filter(({ item, effectiveLang }) => {
+                                if (!item) return false;
+                                const key = `${item.id}::${effectiveLang}`;
+                                if (seen.has(key)) return false;
+                                seen.add(key);
+                                return true;
+                              });
+                              return (
+                                <tr key={sIdx} className="border-t border-slate-300">
+                                  <td className="py-1 pr-1.5 font-bold text-slate-500 align-top whitespace-nowrap">{SHELF_LABELS[sIdx]}</td>
+                                  <td className="py-1">
+                                    {shelf.layout_type === "none" ? (
+                                      <span className="text-slate-300">\u2014</span>
+                                    ) : uniqueSlots.length === 0 ? (
+                                      <span className="text-slate-300">\u7a7a</span>
+                                    ) : (
+                                      <div className="flex flex-wrap gap-x-2">
+                                        {uniqueSlots.map(({ item, slotIndex }) => item && (
+                                          <div key={slotIndex} className="flex flex-col">
+                                            <span className="font-bold text-foreground leading-tight text-[9px]">{item.name}</span>
+                                            <span className="text-red-600 font-bold text-[8px] leading-tight">
+                                              {LANG_FILTER_OPTIONS.find(o => o.key === (shelf.item_langs?.[slotIndex] || item.language))?.label || item.language}
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })}
+                </div>
+
+              </div>
+            </motion.div>
+          );
+        })()}
 
         {step === "select-edit" && (
           <motion.div key="select-edit" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="flex flex-col h-full bg-cream">

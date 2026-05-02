@@ -1149,8 +1149,7 @@ export default function CartEditor() {
   const [isMobileActionMenuOpen, setIsMobileActionMenuOpen] = useState(false);
   
   // Mobile Wizard States
-  const [mobileViewType, setMobileViewType] = useState<"standard" | "wizard">("wizard");
-  const [wizardStep, setWizardStep] = useState<"menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete">("menu");
+  const [wizardStep, setWizardStep] = useState<"menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete" | "cart-preview">("menu");
   const [activeWizardCart, setActiveWizardCart] = useState<CartId>("A");
   const [activeWizardShelf, setActiveWizardShelf] = useState<number>(0); 
   const [showCreationSuccess, setShowCreationSuccess] = useState(false);
@@ -1251,13 +1250,12 @@ export default function CartEditor() {
     }
   }, [hasMounted]);
 
-  // 選択中の期間と表示形式をLocalStorageに保存
+  // 選択中の期間をLocalStorageに保存
   useEffect(() => {
     if (hasMounted) {
       if (period) localStorage.setItem("smpwo-last-period", period);
-      localStorage.setItem("smpwo-mobile-view-type", mobileViewType);
     }
-  }, [hasMounted, period, mobileViewType]);
+  }, [hasMounted, period]);
 
   const getSetCart = useCallback((cart: CartId) => cart === "A" ? setCartA : setCartB, []);
 
@@ -2200,7 +2198,7 @@ export default function CartEditor() {
       </AnimatePresence>
 
       {/* NEW: Mobile Wizard Main Entry */}
-      {isMobileView && mobileViewType === "wizard" && (
+      {isMobileView && (
         <MobileWizard 
           period={period}
           setPeriod={setPeriod}
@@ -2224,7 +2222,6 @@ export default function CartEditor() {
           exporting={exporting}
           step={wizardStep}
           setStep={setWizardStep}
-          onToggleStandard={toggleViewMode}
           onLangOverride={handleLangOverride}
           newMonth={newMonth}
           setNewMonth={setNewMonth}
@@ -2246,7 +2243,7 @@ export default function CartEditor() {
       )}
 
       {/* Wrap existing content in conditional to hide when showing wizard */}
-      <div className={`flex flex-col h-[calc(100vh-56px)] bg-background ${isMobileView && mobileViewType === "wizard" ? "pointer-events-none fixed inset-0 -z-10" : "flex"}`}>
+      <div className={`flex flex-col h-[calc(100vh-56px)] bg-background ${isMobileView ? "pointer-events-none fixed inset-0 -z-10" : "flex"}`}>
       {/* Top Toolbar */}
       <div className="shrink-0 bg-white px-4 py-1.5 flex items-center gap-3 relative z-30">
         {/* Absolute border to stay on top of scaled logo */}
