@@ -2417,7 +2417,7 @@ export default function CartEditor() {
               onClick={toggleLayoutLock}
               className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-bold transition-all select-none border ${
                 isLayoutLocked 
-                  ? "bg-amber-50 text-amber-600 border-amber-200 shadow-inner" 
+                  ? "bg-rose-50 text-rose-600 border-rose-200 shadow-inner" 
                   : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 shadow-sm"
               }`}
               title={isLayoutLocked ? "ロックを解除" : "レイアウトをロック"}
@@ -3044,7 +3044,7 @@ export default function CartEditor() {
                       onClick={toggleLayoutLock}
                       className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold transition-all shadow-md active:scale-[0.98] border ${
                         isLayoutLocked 
-                          ? "bg-amber-50 text-amber-600 border-amber-200" 
+                          ? "bg-rose-50 text-rose-600 border-rose-200" 
                           : "bg-white text-slate-600 border-slate-200"
                       }`}
                     >

@@ -224,11 +224,16 @@ export function MobileWizard({
                   <button
                     key={l.period}
                     onClick={() => loadLayoutForEdit(l.period)}
-                    className="w-full flex items-center justify-between p-6 rounded-[2.5rem] bg-white shadow-lg shadow-black/5 text-left active:scale-[0.98] transition-all"
+                    className="w-full flex items-center justify-between p-6 bg-white rounded-[2rem] text-left active:scale-[0.98] transition-all shadow-sm"
                   >
                     <div>
-                      <p className="font-black text-base" style={{ color: COLORS.deepPurple }}>{formatPeriodDisplay(l.period)}</p>
-                      <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest mt-1">Tap to start editing</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-black text-base" style={{ color: COLORS.deepPurple }}>{formatPeriodDisplay(l.period)}</p>
+                        {l.cart_a.isLocked && <Lock className="w-3.5 h-3.5 text-amber-500" />}
+                      </div>
+                      <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest mt-1">
+                        {l.cart_a.isLocked ? "提出済ロック (閲覧のみ)" : "Tap to start editing"}
+                      </p>
                     </div>
                     <ChevronRight className="w-6 h-6 opacity-20" />
                   </button>
@@ -250,6 +255,7 @@ export function MobileWizard({
                     key={l.period}
                     period={l.period}
                     displayName={formatPeriodDisplay(l.period)}
+                    isLocked={l.cart_a.isLocked || false}
                     onConfirm={() => executeDeleteLayoutForPeriod(l.period)}
                   />
                 ))
@@ -519,7 +525,7 @@ export function MobileWizard({
                       onClick={toggleLayoutLock}
                       className={`flex-1 py-6 rounded-[2rem] font-black text-xl transition-all active:scale-95 flex items-center justify-center gap-3 border-4 ${
                         isLayoutLocked 
-                          ? "bg-white text-amber-500 border-amber-400" 
+                          ? "bg-white text-rose-500 border-rose-400" 
                           : "bg-white text-slate-400 border-slate-100"
                       }`}
                     >
@@ -640,9 +646,8 @@ function ExportCircle({ icon, active, onClick }: any) { return <button onClick={
 function WizardHeader({ title, onBack }: any) { return <div className="shrink-0 pt-16 pb-8 px-8 flex items-center gap-6 bg-white z-[150] rounded-b-[3rem] shadow-sm"><button onClick={onBack} className="w-14 h-14 flex items-center justify-center bg-cream rounded-[1.5rem] active:scale-90 transition-all shadow-inner"><ChevronLeft className="w-7 h-7" style={{ color: COLORS.deepPurple }} /></button><h2 className="text-xl font-black tracking-tight" style={{ color: COLORS.deepPurple }}>{title}</h2></div>; }
 function EmptyState({ icon, text, sub }: any) { return <div className="flex flex-col items-center justify-center py-20 opacity-30">{React.cloneElement(icon, { className: "w-16 h-16 mb-4" })}<p className="font-black text-sm">{text}</p>{sub && <p className="text-[10px] font-bold mt-1">{sub}</p>}</div>; }
 
-function DeleteLayoutRow({ period, displayName, onConfirm }: { period: string; displayName: string; onConfirm: () => void }) {
+function DeleteLayoutRow({ period, displayName, onConfirm, isLocked }: { period: string; displayName: string; onConfirm: () => void; isLocked: boolean }) {
   const [confirming, setConfirming] = useState(false);
-  const { isLayoutLocked } = useUI();
   return (
     <div className="w-full rounded-[2rem] overflow-hidden shadow-lg shadow-black/5">
       {confirming ? ( 
@@ -655,13 +660,16 @@ function DeleteLayoutRow({ period, displayName, onConfirm }: { period: string; d
         </div>
       ) : ( 
         <button 
-          onClick={() => { if (!isLayoutLocked) setConfirming(true); }} 
-          disabled={isLayoutLocked}
-          className={`w-full flex items-center justify-between p-6 bg-white text-left active:scale-[0.98] transition-all ${isLayoutLocked ? "opacity-40 grayscale cursor-not-allowed" : ""}`}
+          onClick={() => { if (!isLocked) setConfirming(true); }} 
+          disabled={isLocked}
+          className={`w-full flex items-center justify-between p-6 bg-white text-left active:scale-[0.98] transition-all ${isLocked ? "opacity-40 grayscale cursor-not-allowed" : ""}`}
         >
           <div>
-            <p className="font-black text-base" style={{ color: COLORS.deepPurple }}>{displayName}</p>
-            <p className="text-[10px] text-red-400 font-black uppercase mt-1 tracking-widest">Tap to delete</p>
+            <div className="flex items-center gap-2">
+              <p className="font-black text-base" style={{ color: COLORS.deepPurple }}>{displayName}</p>
+              {isLocked && <Lock className="w-3.5 h-3.5 text-amber-500" />}
+            </div>
+            <p className="text-[10px] text-red-400 font-black uppercase mt-1 tracking-widest">{isLocked ? "ロック中のため削除不可" : "Tap to delete"}</p>
           </div>
           <Trash2 className="w-6 h-6 text-red-200" />
         </button> 
