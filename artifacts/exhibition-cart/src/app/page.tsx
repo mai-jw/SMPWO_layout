@@ -2685,7 +2685,7 @@ export default function CartEditor() {
                                           value={layout.posterLang || ""}
                                           onChange={(e) => handleLangOverride(id, "poster", undefined, undefined, e.target.value || undefined)}
                                           disabled={isLayoutLocked}
-                                          className={`appearance-none bg-transparent text-red-600 font-bold border-none p-0 m-0 outline-none cursor-pointer hover:bg-red-50 rounded px-1 -mx-1 transition-colors ${isLayoutLocked ? "cursor-not-allowed opacity-50" : ""}`}
+                                          className={`appearance-none bg-transparent text-red-600 font-bold border-none p-0 m-0 outline-none cursor-pointer hover:bg-red-50 rounded px-1 -mx-1 transition-colors ${isLayoutLocked ? "cursor-not-allowed" : ""}`}
                                           title="表示言語を変更"
                                         >
                                           <option value="">{LANG_FILTER_OPTIONS.find(o => o.key === posterItem.language)?.label || posterItem.language}</option>
@@ -2748,7 +2748,7 @@ export default function CartEditor() {
                                                     value={shelf.item_langs?.[slotIndex] || ""}
                                                     onChange={(e) => handleLangOverride(id, "shelf", sIdx, slotIndex, e.target.value || undefined)}
                                                     disabled={isLayoutLocked}
-                                                    className={`appearance-none bg-transparent text-red-600 font-bold text-[9px] border-none p-0 m-0 outline-none cursor-pointer hover:bg-red-50 rounded px-0.5 -mx-0.5 transition-colors leading-tight ${isLayoutLocked ? "cursor-not-allowed opacity-50" : ""}`}
+                                                    className={`appearance-none bg-transparent text-red-600 font-bold text-[9px] border-none p-0 m-0 outline-none cursor-pointer hover:bg-red-50 rounded px-0.5 -mx-0.5 transition-colors leading-tight ${isLayoutLocked ? "cursor-not-allowed" : ""}`}
                                                     title="表示言語を変更"
                                                   >
                                                     <option value="">{LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}</option>
