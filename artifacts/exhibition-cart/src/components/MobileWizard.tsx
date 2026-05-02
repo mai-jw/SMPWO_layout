@@ -128,6 +128,7 @@ export function MobileWizard({
   const [activeSlotIdx, setActiveSlotIdx] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"newest" | "name_asc" | "name_desc">("newest");
+  const [previewPeriod, setPreviewPeriod] = useState<string>("");
 
   const currentCart = activeCart === "A" ? cartA : cartB;
   const currentShelf = activeShelfIdx < 3 ? currentCart.shelves[activeShelfIdx] : null;
@@ -210,18 +211,43 @@ export function MobileWizard({
         )}
 
         {step === "cart-preview" && (() => {
-          const SHELF_LABELS = ["\u4e0a\u6bb5", "\u4e2d\u6bb5", "\u4e0b\u6bb5"];
+          const SHELF_LABELS = ["上段", "中段", "下段"];
+          
+          // Determine which layout to preview
+          const activePreviewPeriod = previewPeriod || period || (layouts.length > 0 ? layouts[0].period : "");
+          const previewData = layouts.find(l => l.period === activePreviewPeriod);
+          const pCartA = previewData ? previewData.cart_a : cartA;
+          const pCartB = previewData ? previewData.cart_b : cartB;
+
           const carts = [
-            { id: "A" as CartId, layout: cartA },
-            { id: "B" as CartId, layout: cartB },
+            { id: "A" as CartId, layout: pCartA },
+            { id: "B" as CartId, layout: pCartB },
           ];
+          
           return (
             <motion.div key="cart-preview" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="flex flex-col h-full bg-cream">
-              <WizardHeader title="\u30ab\u30fc\u30c8\u30d7\u30ec\u30d3\u30e5\u30fc" onBack={() => setStep("menu")} />
+              <WizardHeader title="カートプレビュー" onBack={() => setStep("menu")} />
               <div className="flex-1 overflow-y-auto pb-24">
 
+                {/* Period Selector */}
+                <div className="px-6 pt-6">
+                  <div className="relative">
+                    <select 
+                      value={activePreviewPeriod}
+                      onChange={(e) => setPreviewPeriod(e.target.value)}
+                      className="w-full bg-white border border-slate-200 text-slate-800 font-black text-sm rounded-2xl px-5 py-4 appearance-none shadow-sm outline-none"
+                    >
+                      {layouts.length === 0 && <option value={period}>{formatPeriodDisplay(period)}</option>}
+                      {layouts.map(l => (
+                        <option key={l.period} value={l.period}>{formatPeriodDisplay(l.period)}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-5 top-4 w-5 h-5 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+
                 {/* ── Cart images side-by-side ── */}
-                <div className="flex gap-4 items-start justify-center px-4 pt-4 w-full">
+                <div className="flex gap-4 items-start justify-center px-4 pt-6 w-full">
                   {carts.map(({ id, layout }) => (
                     <div key={id} className="flex flex-col items-center w-1/2 max-w-[200px]">
                       <p className="text-[10px] font-black text-slate-400 tracking-widest mb-1">カート {id}</p>
@@ -237,14 +263,17 @@ export function MobileWizard({
                         {layout.shelves.map((shelf, sIdx) => {
                           if (shelf.layout_type === "none") return null;
                           const coords = SHELF_COORDINATES[sIdx];
-                          const cols = shelf.layout_type === "document" || shelf.layout_type === "bible" ? 3 : shelf.layout_type === "pamphlet" ? 4 : 2;
+                          const gridClass = shelf.layout_type === "pamphlet" ? "grid-cols-4 gap-0.5 px-0.5" : 
+                                          (shelf.layout_type === "document" || shelf.layout_type === "bible") ? "grid-cols-3 gap-0.5 px-0.5" : 
+                                          "grid-cols-2 gap-1 px-1";
+                          
                           return (
-                            <div key={sIdx} className="absolute flex" style={{ top: coords.items, left: "5%", width: "90%", height: coords.itemsH }}>
+                            <div key={sIdx} className={`absolute z-20 grid items-end ${gridClass}`} style={{ top: coords.items, left: "35.0%", width: "30%", height: coords.itemsH }}>
                               {shelf.items.map((itemId, i) => {
                                 const item = itemId ? itemMap[itemId] : null;
                                 return (
-                                  <div key={i} className="flex-1 flex items-center justify-center overflow-hidden px-[2%]">
-                                    {item && <img src={item.url} className="h-full w-full object-contain drop-shadow-sm" />}
+                                  <div key={i} className="flex-1 flex flex-col justify-end h-full w-full overflow-hidden">
+                                    {item && <img src={item.url} className="w-full h-full object-contain object-bottom drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]" />}
                                   </div>
                                 );
                               })}
@@ -262,18 +291,18 @@ export function MobileWizard({
                     const posterItem = layout.poster ? itemMap[layout.poster] : null;
                     return (
                       <div key={id} className="flex-1">
-                        <p className="text-center font-black text-xs mb-1.5" style={{ color: COLORS.deepPurple }}>\u30ab\u30fc\u30c8 {id}</p>
+                        <p className="text-center font-black text-xs mb-1.5" style={{ color: COLORS.deepPurple }}>カート {id}</p>
                         <table className="w-full border-collapse text-[9px]">
                           <tbody>
                             {/* Poster row */}
                             <tr className="border-t border-slate-300">
-                              <td className="py-1 pr-1.5 font-bold text-slate-500 align-top whitespace-nowrap">\u30dd\u30b9\u30bf\u30fc</td>
+                              <td className="py-1 pr-1.5 font-bold text-slate-500 align-top whitespace-nowrap">ポスター</td>
                               <td className="py-1">
-                                <div className="font-bold text-foreground leading-tight">{posterItem?.name || "\u2014"}</div>
+                                <div className="font-bold text-foreground leading-tight">{posterItem?.name || "—"}</div>
                                 {posterItem && (
                                   <div className="text-red-600 font-bold text-[8px] leading-tight">
                                     {LANG_FILTER_OPTIONS.find(o => o.key === (layout.posterLang || posterItem.language))?.label || posterItem.language}
-                                    <span className="text-slate-400 ml-1">({layout.posterType || posterItem.poster_type || "\u672a\u8a2d\u5b9a"})</span>
+                                    <span className="text-slate-400 ml-1">({layout.posterType || posterItem.poster_type || "未設定"})</span>
                                   </div>
                                 )}
                               </td>
@@ -298,9 +327,9 @@ export function MobileWizard({
                                   <td className="py-1 pr-1.5 font-bold text-slate-500 align-top whitespace-nowrap">{SHELF_LABELS[sIdx]}</td>
                                   <td className="py-1">
                                     {shelf.layout_type === "none" ? (
-                                      <span className="text-slate-300">\u2014</span>
+                                      <span className="text-slate-300">—</span>
                                     ) : uniqueSlots.length === 0 ? (
-                                      <span className="text-slate-300">\u7a7a</span>
+                                      <span className="text-slate-300">空</span>
                                     ) : (
                                       <div className="flex flex-wrap gap-x-2">
                                         {uniqueSlots.map(({ item, slotIndex }) => item && (
