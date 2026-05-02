@@ -2821,18 +2821,20 @@ export default function CartEditor() {
                                 style={{ color: line.color !== "inherit" ? line.color : undefined }}
                               />
                             </div>
+                            <button
                               disabled={isLayoutLocked}
                               onClick={() => { if (!isLayoutLocked) setNotes(prev => prev.filter((_, i) => i !== idx)); }}
                               className={`p-2 text-slate-300 hover:text-red-500 transition-colors ${isLayoutLocked ? "opacity-0 cursor-not-allowed" : "opacity-0 group-hover:opacity-100"}`}
+                            >
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         ))}
-                          <button
-                            onClick={() => { if (!isLayoutLocked) setNotes(prev => [...prev, { text: "", color: "inherit" }]); }}
-                            disabled={isLayoutLocked}
-                            className={`w-full py-2 border-2 border-dashed border-slate-100 rounded-xl text-[10px] font-black text-slate-400 hover:bg-slate-50 hover:border-slate-200 transition-all flex items-center justify-center gap-2 ${isLayoutLocked ? "opacity-50 cursor-not-allowed" : ""}`}
-                          >
+                        <button
+                          onClick={() => { if (!isLayoutLocked) setNotes(prev => [...prev, { text: "", color: "inherit" }]); }}
+                          disabled={isLayoutLocked}
+                          className={`w-full py-2 border-2 border-dashed border-slate-100 rounded-xl text-[10px] font-black text-slate-400 hover:bg-slate-50 hover:border-slate-200 transition-all flex items-center justify-center gap-2 ${isLayoutLocked ? "opacity-50 cursor-not-allowed" : ""}`}
+                        >
                           <Plus className="w-3.5 h-3.5" /> 行を追加
                         </button>
                       </div>
