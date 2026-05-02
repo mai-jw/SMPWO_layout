@@ -2116,8 +2116,6 @@ export default function CartEditor() {
               <div className="flex flex-col w-full gap-3">
                 <button 
                   onClick={() => {
-                    setShowCreationSuccess(false);
-                    setMobileViewType("wizard");
                     setWizardStep("edit");
                     setIsMobileActionMenuOpen(false);
                   }}
@@ -2497,19 +2495,9 @@ export default function CartEditor() {
             </div>
           </>
         )}
-        {/* View Mode Toggle (PC) or Widget Toggle (Mobile) */}
-        <div className="flex items-center gap-1 border-l border-border ml-1 pl-1">
-          {isMobileView ? (
-            /* Mobile Standard View -> Switch back to Widget (Wizard) */
-            <button
-              onClick={() => setMobileViewType("wizard")}
-              className="flex items-center justify-center w-10 h-8 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 shadow-sm active:scale-90 transition-all"
-              title="アシスタントモードに切り替え"
-            >
-              <Smartphone className="w-5 h-5" />
-            </button>
-          ) : (
-            /* Desktop View -> Switch to Mobile Preview */
+        {/* View Mode Toggle (PC) */}
+        {!isMobileView && (
+          <div className="flex items-center gap-1 border-l border-border ml-1 pl-1">
             <button
               onClick={toggleViewMode}
               className="flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-md border font-bold bg-white text-slate-700 border-slate-300 transition-all active:scale-95 shadow-xs select-none"
@@ -2518,8 +2506,8 @@ export default function CartEditor() {
               <Smartphone className="w-3.5 h-3.5" />
               <span>Mobile版</span>
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Main Content: Left Gallery + Carts + Side Panel */}
