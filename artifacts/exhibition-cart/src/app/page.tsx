@@ -1243,11 +1243,6 @@ export default function CartEditor() {
     if (savedPeriod) {
       setPeriod(savedPeriod);
     }
-
-    const savedMobileType = localStorage.getItem("smpwo-mobile-view-type") as "standard" | "wizard" | null;
-    if (savedMobileType && (savedMobileType === "standard" || savedMobileType === "wizard")) {
-      setMobileViewType(savedMobileType);
-    }
   }, [hasMounted]);
 
   // 選択中の期間をLocalStorageに保存
