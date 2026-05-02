@@ -75,6 +75,7 @@ export interface CartLayoutV2 {
   concept?: string;
   creator?: string;
   supplementary?: string;
+  isLocked?: boolean; // NEW: layout lock state
 }
 
 
@@ -100,6 +101,7 @@ export function makeInitialCartLayoutV2(): CartLayoutV2 {
     concept: "",
     creator: "",
     supplementary: "",
+    isLocked: false,
     shelves: [
       makeDefaultShelf("none"),
       makeDefaultShelf("none"),

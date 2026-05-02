@@ -93,6 +93,8 @@ interface MobileWizardProps {
   notes: NoteLine[];
   setNotes: React.Dispatch<React.SetStateAction<NoteLine[]>>;
   onLangOverride: (cart: CartId, section: "poster" | "shelf", shelfIdx?: number, slotIdx?: number, lang?: string) => void;
+  isLayoutLocked: boolean;
+  toggleLayoutLock: () => void;
 }
 
 
@@ -113,9 +115,10 @@ export function MobileWizard({
   executeDeleteLayoutForPeriod, loadLayoutForEdit,
   exportTarget, setExportTarget,
   notes, setNotes,
-  onLangOverride
+  onLangOverride,
+  isLayoutLocked,
+  toggleLayoutLock
 }: MobileWizardProps) {
-  const { isLayoutLocked, toggleLayoutLock } = useUI();
 
 
   

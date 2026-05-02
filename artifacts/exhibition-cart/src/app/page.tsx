@@ -1112,7 +1112,13 @@ export default function CartEditor() {
   const [cartA, setCartA] = useState<CartLayoutV2>(makeInitialCartLayoutV2);
   const [cartB, setCartB] = useState<CartLayoutV2>(makeInitialCartLayoutV2);
   const [activeTarget, setActiveTarget] = useState<ActiveTarget>(null);
-  const { openUploadPanel, isLayoutLocked, toggleLayoutLock } = useUI();
+  const { openUploadPanel } = useUI();
+  const [isLayoutLocked, setIsLayoutLocked] = useState(false);
+  const toggleLayoutLock = () => {
+    const newVal = !isLayoutLocked;
+    setIsLayoutLocked(newVal);
+    handleSave(true, undefined, newVal);
+  };
   const [exporting, setExporting] = useState<"png" | "pdf" | "xlsx" | null>(null);
   const [exportVersion, setExportVersion] = useState<"standard" | "with-info">("standard");
   const [exportTarget, setExportTarget] = useState<"png" | "pdf" | "xlsx" | null>(null);
@@ -1224,6 +1230,7 @@ export default function CartEditor() {
         setConcept(existing.cart_a.concept || "");
         setComment(existing.cart_a.comment || "");
         setCreator(existing.cart_a.creator || "");
+        setIsLayoutLocked(existing.cart_a.isLocked || false);
       }
 
     }
@@ -1401,14 +1408,21 @@ export default function CartEditor() {
 
   const isExistingPeriod = useMemo(() => layouts.some(l => l.period === period), [layouts, period]);
 
-  const handleSave = async (isSilent: boolean = false, overridePeriod?: string) => {
+  const handleSave = async (isSilent: boolean = false, overridePeriod?: string, isLockedOverride?: boolean) => {
     const targetPeriod = overridePeriod || period;
     if (!targetPeriod.trim() || saveStatus === "saving") return;
 
     setSaveStatus("saving");
     
     // Merge metadata into JSON-based objects to avoid missing DB columns
-    const finalCartA = { ...cartA, concept, creator, comment, supplementary: JSON.stringify(notes) };
+    const finalCartA = { 
+      ...cartA, 
+      concept, 
+      creator, 
+      comment, 
+      supplementary: JSON.stringify(notes), 
+      isLocked: isLockedOverride !== undefined ? isLockedOverride : isLayoutLocked 
+    };
     const finalCartB = { ...cartB, comment: "" };
 
 
@@ -2226,6 +2240,8 @@ export default function CartEditor() {
           loadLayoutForEdit={loadLayoutForEdit}
           notes={notes}
           setNotes={setNotes}
+          isLayoutLocked={isLayoutLocked}
+          toggleLayoutLock={toggleLayoutLock}
         />
       )}
 
