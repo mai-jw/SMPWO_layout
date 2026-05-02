@@ -219,16 +219,21 @@ export function MobileWizard({
                 layouts.map(l => (
                   <button
                     key={l.period}
-                    onClick={() => loadLayoutForEdit(l.period)}
+                    onClick={() => {
+                      loadLayoutForEdit(l.period);
+                      if (l.cart_a.isLocked) {
+                        setStep("preview");
+                      }
+                    }}
                     className="w-full flex items-center justify-between p-6 bg-white rounded-[2rem] text-left active:scale-[0.98] transition-all shadow-sm"
                   >
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-black text-base" style={{ color: COLORS.deepPurple }}>{formatPeriodDisplay(l.period)}</p>
-                        {l.cart_a.isLocked && <Lock className="w-3.5 h-3.5 text-amber-500" />}
+                        {l.cart_a.isLocked && <Lock className="w-3.5 h-3.5 text-rose-500" />}
                       </div>
                       <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest mt-1">
-                        {l.cart_a.isLocked ? "提出済ロック (閲覧のみ)" : "Tap to start editing"}
+                        {l.cart_a.isLocked ? "提出済ロック — プレビューを表示" : "Tap to start editing"}
                       </p>
                     </div>
                     <ChevronRight className="w-6 h-6 opacity-20" />
@@ -437,42 +442,77 @@ export function MobileWizard({
 
         {step === "preview" && (
           <motion.div key="preview" initial={{ scale: 1.1, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex flex-col h-full overflow-y-auto bg-cream">
-            <WizardHeader title="最終確認" onBack={() => setStep("edit")} />
-            <div className="p-8 space-y-8 pb-32">
-               <div className="bg-white rounded-[3rem] p-10 shadow-xl space-y-10">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-2xl font-black" style={{ color: COLORS.deepPurple }}>{formatPeriodDisplay(period)}</h3>
-                      <p className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em] mt-1">Ready to Save</p>
+            <WizardHeader title="カートプレビュー" onBack={() => isLayoutLocked ? setStep("select-edit") : setStep("edit")} />
+            <div className="p-6 space-y-6 pb-32">
+              {/* Period & lock badge */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-black" style={{ color: COLORS.deepPurple }}>{formatPeriodDisplay(period)}</h3>
+                  {isLayoutLocked && (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <Lock className="w-3.5 h-3.5 text-rose-500" />
+                      <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest">提出済ロック</span>
                     </div>
-                    <div className="w-14 h-14 rounded-3xl flex items-center justify-center bg-emerald-50 text-emerald-500"><Check className="w-8 h-8" /></div>
+                  )}
+                </div>
+                {!isLayoutLocked && (
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-emerald-50 text-emerald-500">
+                    <Check className="w-7 h-7" />
                   </div>
-                  <div className="grid grid-cols-2 gap-6">
-                    {(["A", "B"] as CartId[]).map((cid, i) => (
-                      <div key={cid} className="space-y-4 flex flex-col items-center">
-                         <p className="font-black text-sm opacity-40 uppercase tracking-widest text-center">カート {cid}</p>
-                         <div className="aspect-[2/3] w-full bg-cream rounded-[2rem] p-4 flex flex-col gap-2 shadow-inner">
-                            <div className="flex-1 bg-white rounded-xl shadow-sm overflow-hidden p-2">
-                               {(() => {
-                                 const pId = (i === 0 ? cartA : cartB).poster;
-                                 return pId ? <img src={itemMap[pId]?.url} className="w-full h-full object-contain opacity-20" /> : null;
-                               })()}
-                            </div>
-                            <div className="flex gap-1 h-10"><div className="flex-1 bg-white/50 rounded-lg" /><div className="flex-1 bg-white/50 rounded-lg" /></div>
-                         </div>
-                         <button 
-                           onClick={() => { setActiveCart(cid); setActiveShelfIdx(0); setStep("edit"); }}
-                           className="text-[10px] font-black uppercase tracking-widest text-coral/60 border-b border-coral/20 pb-0.5"
-                         >
-                           ↑ 編集に戻る
-                         </button>
+                )}
+              </div>
+
+              {/* Cart A and B side-by-side actual image previews */}
+              <div className="grid grid-cols-2 gap-4">
+                {([{ cid: "A" as CartId, cart: cartA }, { cid: "B" as CartId, cart: cartB }]).map(({ cid, cart }) => {
+                  const posterItem = cart.poster ? itemMap[cart.poster] : null;
+                  return (
+                    <div key={cid} className="flex flex-col gap-3">
+                      <p className="font-black text-sm text-center opacity-50 uppercase tracking-widest">カート {cid}</p>
+                      {/* Poster */}
+                      <div className="aspect-[3/4] w-full bg-white rounded-3xl shadow-md overflow-hidden flex items-center justify-center border-2 border-slate-50">
+                        {posterItem
+                          ? <img src={posterItem.url} className="w-full h-full object-contain p-2" />
+                          : <p className="text-[9px] font-black text-slate-200 uppercase tracking-widest">No Poster</p>
+                        }
                       </div>
-                    ))}
-                  </div>
-               </div>
-                <div className="space-y-4">
-                   {/* Supplementary Notes (Wizard Preview) */}
-                   <div className="bg-white rounded-[3rem] p-8 shadow-xl space-y-6">
+                      {/* Shelves */}
+                      {cart.shelves.map((shelf, sIdx) => {
+                        const shelfItems = shelf.items.map(id => id ? itemMap[id] : null).filter(Boolean);
+                        return (
+                          <div key={sIdx} className="bg-white rounded-2xl p-3 shadow-sm">
+                            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-2">{["上段","中段","下段"][sIdx]}</p>
+                            {shelf.layout_type === "none" ? (
+                              <p className="text-[10px] text-slate-200 font-bold">—</p>
+                            ) : (
+                              <div className="flex gap-1.5 flex-wrap">
+                                {shelfItems.length === 0
+                                  ? <p className="text-[10px] text-slate-200 font-bold">空</p>
+                                  : shelfItems.map((item, i) => (
+                                      <img key={i} src={(item as Item).url} className="w-8 h-10 object-contain rounded-md shadow-sm" />
+                                    ))
+                                }
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {/* Edit shortcut — only when not locked */}
+                      {!isLayoutLocked && (
+                        <button
+                          onClick={() => { setActiveCart(cid); setActiveShelfIdx(0); setStep("edit"); }}
+                          className="text-[10px] font-black uppercase tracking-widest text-center py-1" style={{ color: COLORS.coral }}
+                        >
+                          ↑ 編集に戻る
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="space-y-4">
+                    {/* Supplementary Notes (Wizard Preview) */}
+                    <div className="bg-white rounded-[3rem] p-8 shadow-xl space-y-6">
                       <div className="flex items-center justify-between">
                          <SectionLabel label="補足事項" />
                          {!isLayoutLocked && <Plus className="w-5 h-5 text-coral" onClick={() => setNotes(prev => [...prev, { text: "", color: "inherit" }])} />}
