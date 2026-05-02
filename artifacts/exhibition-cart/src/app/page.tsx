@@ -2709,62 +2709,56 @@ export default function CartEditor() {
                               // Get unique languages of items on this shelf
                               const languages = Array.from(new Set(shelfItems.map(it => it.language).filter(Boolean)));
 
+                              // Deduplicate items with same ID + effective language — computed before JSX return
+                              const seen = new Map<string, boolean>();
+                              const deduped: Array<{ item: Item; slotIdx: number; lang: string } | null> = [];
+                              shelf.items.forEach((itemId, slotIdx) => {
+                                const item = itemId ? itemMap[itemId] : null;
+                                const lang = shelf.item_langs?.[slotIdx] || "";
+                                if (!item) { deduped.push(null); return; }
+                                const effectiveLang = lang || item.language;
+                                const key = (item.id || "") + "__" + effectiveLang;
+                                if (!seen.has(key)) {
+                                  seen.set(key, true);
+                                  deduped.push({ item, slotIdx, lang });
+                                }
+                              });
+
                               return (
                                 <tr key={sIdx} className="border-t border-slate-300">
                                   <td className="py-1.5 pr-2 font-bold text-slate-500 align-top whitespace-nowrap">{SHELF_LABELS[sIdx]}</td>
                                   <td className="py-1.5">
                                     {shelf.layout_type === "none" ? (
                                       <span className="text-slate-300">—</span>
-                                    ) : (() => {
-                                      const mappedItems = shelf.items.map((id, slotIdx) => ({
-                                        item: id ? itemMap[id] : null,
-                                        slotIdx,
-                                        lang: (shelf.item_langs?.[slotIdx] || "") as string,
-                                      }));
-
-                                      // Deduplicate: same item ID + same effective language → one entry
-                                      const seen = new Map();
-                                      const deduped: Array<{ item: Item; slotIdx: number; lang: string } | null> = [];
-                                      mappedItems.forEach(({ item, slotIdx, lang }) => {
-                                        if (!item) { deduped.push(null); return; }
-                                        const effectiveLang = lang || item.language;
-                                        const key = item.id + "__" + effectiveLang;
-                                        if (!seen.has(key)) {
-                                          seen.set(key, true);
-                                          deduped.push({ item, slotIdx, lang });
-                                        }
-                                      });
-
-                                      return (
-                                        <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                                          {deduped.map((entry, i) => {
-                                            if (!entry) return <div key={i} className="text-slate-300">—</div>;
-                                            const { item, slotIdx, lang } = entry;
-                                            return (
-                                              <div key={i} className="flex flex-col">
-                                                <div className="font-bold text-foreground leading-tight text-[10px]">
-                                                  {item.name}
-                                                </div>
-                                                <div className="relative group/lang inline-block">
-                                                  <select
-                                                    value={lang}
-                                                    onChange={(e) => handleLangOverride(id, "shelf", sIdx, slotIdx, e.target.value || undefined)}
-                                                    disabled={isLayoutLocked}
-                                                    className={`appearance-none bg-transparent text-red-600 font-bold text-[9px] border-none p-0 m-0 outline-none cursor-pointer hover:bg-red-50 rounded px-0.5 -mx-0.5 transition-colors leading-tight ${isLayoutLocked ? "cursor-not-allowed opacity-50" : ""}`}
-                                                    title="表示言語を変更"
-                                                  >
-                                                    <option value="">{LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}</option>
-                                                    {LANG_FILTER_OPTIONS.filter(o => o.key !== "all" && o.key !== item.language).map(opt => (
-                                                      <option key={opt.key} value={opt.key}>{opt.label}</option>
-                                                    ))}
-                                                  </select>
-                                                </div>
+                                    ) : (
+                                      <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                                        {deduped.map((entry, i) => {
+                                          if (!entry) return <div key={i} className="text-slate-300">—</div>;
+                                          const { item, slotIdx, lang } = entry;
+                                          return (
+                                            <div key={i} className="flex flex-col">
+                                              <div className="font-bold text-foreground leading-tight text-[10px]">
+                                                {item.name}
                                               </div>
-                                            );
-                                          })}
-                                        </div>
-                                      );
-                                    })()}
+                                              <div className="relative group/lang inline-block">
+                                                <select
+                                                  value={lang}
+                                                  onChange={(e) => handleLangOverride(id, "shelf", sIdx, slotIdx, e.target.value || undefined)}
+                                                  disabled={isLayoutLocked}
+                                                  className={`appearance-none bg-transparent text-red-600 font-bold text-[9px] border-none p-0 m-0 outline-none cursor-pointer hover:bg-red-50 rounded px-0.5 -mx-0.5 transition-colors leading-tight ${isLayoutLocked ? "cursor-not-allowed opacity-50" : ""}`}
+                                                  title="表示言語を変更"
+                                                >
+                                                  <option value="">{LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}</option>
+                                                  {LANG_FILTER_OPTIONS.filter(o => o.key !== "all" && o.key !== item.language).map(opt => (
+                                                    <option key={opt.key} value={opt.key}>{opt.label}</option>
+                                                  ))}
+                                                </select>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
                                   </td>
                                 </tr>
                               );
