@@ -53,6 +53,7 @@ function hydrateLayout(raw: unknown): CartLayoutV2 {
     concept: typeof r.concept === "string" ? r.concept : "",
     creator: typeof r.creator === "string" ? r.creator : "",
     supplementary: typeof r.supplementary === "string" ? r.supplementary : "",
+    isLocked: !!r.isLocked,
   };
 }
 
