@@ -2716,34 +2716,49 @@ export default function CartEditor() {
                                     {shelf.layout_type === "none" ? (
                                       <span className="text-slate-300">—</span>
                                     ) : (() => {
-                                      const mappedItems = shelf.items.map(id => id ? itemMap[id] : null);
-                                      const filledItems = mappedItems.filter((it): it is Item => Boolean(it));
-                                      
+                                      const mappedItems = shelf.items.map((id, i) => ({
+                                        item: id ? itemMap[id] : null,
+                                        slotIndex: i,
+                                        effectiveLang: shelf.item_langs?.[i] || (id ? (itemMap[id]?.language ?? "") : ""),
+                                      }));
 
+                                      // Deduplicate: same item ID + same effective language => show only the first occurrence
+                                      const seen = new Set<string>();
+                                      const uniqueSlots = mappedItems.filter(({ item, effectiveLang }) => {
+                                        if (!item) return false;
+                                        const key = `${item.id}::${effectiveLang}`;
+                                        if (seen.has(key)) return false;
+                                        seen.add(key);
+                                        return true;
+                                      });
+
+                                      if (uniqueSlots.length === 0) {
+                                        return <span className="text-slate-300">—</span>;
+                                      }
 
                                       return (
-                                        <div className={`grid ${shelf.layout_type === "document" || shelf.layout_type === "bible" ? "grid-cols-3" : shelf.layout_type === "pamphlet" ? "grid-cols-4" : "grid-cols-2"} gap-x-3`}>
-                                          {mappedItems.map((item, i) => {
-                                            if (!item) return <div key={i} className="text-slate-300">—</div>;
-                                              return (
-                                                <div key={i} className="flex flex-col">
-                                                  <div className="font-bold text-foreground leading-tight text-[10px]">{item.name}</div>
-                                                  <div className="relative group/lang inline-block">
-                                                    <select
-                                                      value={shelf.item_langs?.[i] || ""}
-                                                      onChange={(e) => handleLangOverride(id, "shelf", sIdx, i, e.target.value || undefined)}
-                                                      disabled={isLayoutLocked}
-                                                      className={`appearance-none bg-transparent text-red-600 font-bold text-[9px] border-none p-0 m-0 outline-none cursor-pointer hover:bg-red-50 rounded px-0.5 -mx-0.5 transition-colors leading-tight ${isLayoutLocked ? "cursor-not-allowed opacity-50" : ""}`}
-                                                      title="表示言語を変更"
-                                                    >
-                                                      <option value="">{LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}</option>
-                                                      {LANG_FILTER_OPTIONS.filter(o => o.key !== "all" && o.key !== item.language).map(opt => (
-                                                        <option key={opt.key} value={opt.key}>{opt.label}</option>
-                                                      ))}
-                                                    </select>
-                                                  </div>
+                                        <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                                          {uniqueSlots.map(({ item, slotIndex }) => {
+                                            if (!item) return null;
+                                            return (
+                                              <div key={slotIndex} className="flex flex-col">
+                                                <div className="font-bold text-foreground leading-tight text-[10px]">{item.name}</div>
+                                                <div className="relative group/lang inline-block">
+                                                  <select
+                                                    value={shelf.item_langs?.[slotIndex] || ""}
+                                                    onChange={(e) => handleLangOverride(id, "shelf", sIdx, slotIndex, e.target.value || undefined)}
+                                                    disabled={isLayoutLocked}
+                                                    className={`appearance-none bg-transparent text-red-600 font-bold text-[9px] border-none p-0 m-0 outline-none cursor-pointer hover:bg-red-50 rounded px-0.5 -mx-0.5 transition-colors leading-tight ${isLayoutLocked ? "cursor-not-allowed opacity-50" : ""}`}
+                                                    title="表示言語を変更"
+                                                  >
+                                                    <option value="">{LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}</option>
+                                                    {LANG_FILTER_OPTIONS.filter(o => o.key !== "all" && o.key !== item.language).map(opt => (
+                                                      <option key={opt.key} value={opt.key}>{opt.label}</option>
+                                                    ))}
+                                                  </select>
                                                 </div>
-                                              );
+                                              </div>
+                                            );
                                           })}
                                         </div>
                                       );
@@ -2800,9 +2815,11 @@ export default function CartEditor() {
                                 style={{ color: line.color !== "inherit" ? line.color : undefined }}
                               />
                             </div>
+                            <button
                               disabled={isLayoutLocked}
                               onClick={() => { if (!isLayoutLocked) setNotes(prev => prev.filter((_, i) => i !== idx)); }}
                               className={`p-2 text-slate-300 hover:text-red-500 transition-colors ${isLayoutLocked ? "opacity-0 cursor-not-allowed" : "opacity-0 group-hover:opacity-100"}`}
+                            >
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
