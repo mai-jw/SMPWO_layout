@@ -27,7 +27,6 @@ import {
   Lock,
   LockOpen
 } from "lucide-react";
-import { useUI } from "@/context/ui-context";
 import { 
   CartId, 
   ActiveTarget,
