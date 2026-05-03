@@ -1672,8 +1672,8 @@ export default function CartEditor() {
             infoPanel.style.marginTop = "20px";
 
             const periodName = formatPeriodDisplay(period).split(' (')[0] || "コンセプト";
-            const safeConcept = (concept || "—").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
-            const safeComment = (comment || "—").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
+            const safeConcept = (concept || "—").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>").replace(/([「」『』（）【】])/g, '<span style="display: inline-block;">$1</span>');
+            const safeComment = (comment || "—").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>").replace(/([「」『』（）【】])/g, '<span style="display: inline-block;">$1</span>');
 
             infoPanel.innerHTML = `
               <div style="display: flex; flex-direction: column; gap: 10px; font-family: 'Inter', 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;">
@@ -1857,8 +1857,8 @@ export default function CartEditor() {
             infoPanel.style.marginTop = "20px";
 
             const periodName = formatPeriodDisplay(period).split(' (')[0] || "コンセプト";
-            const safeConcept = (concept || "—").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
-            const safeComment = (comment || "—").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
+            const safeConcept = (concept || "—").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>").replace(/([「」『』（）【】])/g, '<span style="display: inline-block;">$1</span>');
+            const safeComment = (comment || "—").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>").replace(/([「」『』（）【】])/g, '<span style="display: inline-block;">$1</span>');
 
             infoPanel.innerHTML = `
               <div style="display: flex; flex-direction: column; gap: 10px; font-family: 'Inter', 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;">
