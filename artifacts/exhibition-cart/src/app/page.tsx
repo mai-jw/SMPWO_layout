@@ -1674,7 +1674,7 @@ export default function CartEditor() {
             const periodName = formatPeriodDisplay(period).split(' (')[0] || "コンセプト";
 
             infoPanel.innerHTML = `
-              <div style="display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; flex-direction: column; gap: 10px; font-family: 'Inter', 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;">
                 <div style="display: flex; align-items: center; justify-content: space-between;">
                   <div style="display: flex; align-items: center; gap: 8px; color: #1e293b;">
                     <div style="width: 4px; height: 16px; background-color: #3b82f6; border-radius: 999px;"></div>
@@ -1687,7 +1687,7 @@ export default function CartEditor() {
                   <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.6;">${concept || "—"}</p>
                 </div>
               </div>
-              <div style="display: flex; flex-direction: column; gap: 20px;">
+              <div style="display: flex; flex-direction: column; gap: 20px; font-family: 'Inter', 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;">
                 <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
                   <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">コメント</p>
                   <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${comment || "—"}</p>
@@ -1857,7 +1857,7 @@ export default function CartEditor() {
             const periodName = formatPeriodDisplay(period).split(' (')[0] || "コンセプト";
 
             infoPanel.innerHTML = `
-              <div style="display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; flex-direction: column; gap: 10px; font-family: 'Inter', 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;">
                 <div style="display: flex; align-items: center; justify-content: space-between;">
                   <div style="display: flex; align-items: center; gap: 8px; color: #1e293b;">
                     <div style="width: 4px; height: 16px; background-color: #3b82f6; border-radius: 999px;"></div>
@@ -1870,7 +1870,7 @@ export default function CartEditor() {
                   <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.6;">${concept || "—"}</p>
                 </div>
               </div>
-              <div style="display: flex; flex-direction: column; gap: 20px;">
+              <div style="display: flex; flex-direction: column; gap: 20px; font-family: 'Inter', 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;">
                 <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
                   <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">コメント</p>
                   <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${comment || "—"}</p>
