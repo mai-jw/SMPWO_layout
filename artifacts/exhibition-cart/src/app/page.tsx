@@ -1672,6 +1672,8 @@ export default function CartEditor() {
             infoPanel.style.marginTop = "20px";
 
             const periodName = formatPeriodDisplay(period).split(' (')[0] || "コンセプト";
+            const safeConcept = (concept || "—").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
+            const safeComment = (comment || "—").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
 
             infoPanel.innerHTML = `
               <div style="display: flex; flex-direction: column; gap: 10px; font-family: 'Inter', 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;">
@@ -1684,13 +1686,13 @@ export default function CartEditor() {
                 </div>
                 <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
                   <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 8px; text-transform: uppercase;">コンセプト</p>
-                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.6;">${concept || "—"}</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: normal; word-break: break-all; overflow-wrap: break-word; line-height: 1.6;">${safeConcept}</p>
                 </div>
               </div>
               <div style="display: flex; flex-direction: column; gap: 20px; font-family: 'Inter', 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;">
                 <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
                   <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">コメント</p>
-                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${comment || "—"}</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: normal; word-break: break-all; overflow-wrap: break-word; line-height: 1.5;">${safeComment}</p>
                 </div>
 
               </div>
@@ -1855,6 +1857,8 @@ export default function CartEditor() {
             infoPanel.style.marginTop = "20px";
 
             const periodName = formatPeriodDisplay(period).split(' (')[0] || "コンセプト";
+            const safeConcept = (concept || "—").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
+            const safeComment = (comment || "—").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
 
             infoPanel.innerHTML = `
               <div style="display: flex; flex-direction: column; gap: 10px; font-family: 'Inter', 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;">
@@ -1867,13 +1871,13 @@ export default function CartEditor() {
                 </div>
                 <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
                   <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 8px; text-transform: uppercase;">コンセプト</p>
-                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.6;">${concept || "—"}</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: normal; word-break: break-all; overflow-wrap: break-word; line-height: 1.6;">${safeConcept}</p>
                 </div>
               </div>
               <div style="display: flex; flex-direction: column; gap: 20px; font-family: 'Inter', 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;">
                 <div style="padding: 20px; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
                   <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">コメント</p>
-                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: pre-wrap; line-height: 1.5;">${comment || "—"}</p>
+                  <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: normal; word-break: break-all; overflow-wrap: break-word; line-height: 1.5;">${safeComment}</p>
                 </div>
 
               </div>
