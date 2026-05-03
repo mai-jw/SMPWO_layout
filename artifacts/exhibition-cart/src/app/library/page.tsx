@@ -30,7 +30,6 @@ export default function LibraryPage() {
   const [editValue, setEditValue] = useState("");
   const [editCategory, setEditCategory] = useState("");
   const [editLanguage, setEditLanguage] = useState("");
-  const [editPosterType, setEditPosterType] = useState("");
 
   const filteredItems = useMemo(() => {
     let result = items.filter((item) => {
@@ -59,14 +58,12 @@ export default function LibraryPage() {
     setEditValue(item.name);
     setEditCategory(item.category);
     setEditLanguage(item.language);
-    setEditPosterType(item.poster_type || "");
   };
 
   const handleSaveEdit = async (id: string) => {
     if (!editValue.trim()) { setEditingId(null); return; }
     try {
-      const typeToSave = editCategory === "poster" ? editPosterType : "";
-      await updateMutation.mutateAsync({ id, name: editValue, category: editCategory, language: editLanguage, poster_type: typeToSave });
+      await updateMutation.mutateAsync({ id, name: editValue, category: editCategory, language: editLanguage });
     } catch (err) {
       console.error("Failed to update item:", err);
     }
@@ -328,18 +325,7 @@ export default function LibraryPage() {
                               ))}
                               <option value="other">その他外国語</option>
                             </select>
-                            {editCategory === "poster" && (
-                              <select
-                                value={editPosterType}
-                                onChange={(e) => setEditPosterType(e.target.value)}
-                                className="col-span-2 text-[10px] font-bold border border-amber-200 rounded px-1 py-1 bg-amber-50 text-amber-800 outline-none focus:border-amber-400"
-                              >
-                                <option value="">ポスタータイプ未設定</option>
-                                <option value="マグポス">マグポス</option>
-                                <option value="コルトン">コルトン</option>
-                                <option value="その他">その他</option>
-                              </select>
-                            )}
+
                           </div>
                           <div className="flex items-center gap-2 pt-1">
                             {deleteConfirmId === item.id ? (
@@ -375,15 +361,7 @@ export default function LibraryPage() {
                             }`}>
                               {LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}
                             </span>
-                            {item.category === "poster" && item.poster_type && (
-                              <span className={`text-[10px] font-bold rounded px-1.5 py-0.5 tracking-tighter border ${
-                                item.poster_type === "マグポス" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
-                                item.poster_type === "コルトン" ? "bg-rose-50 text-rose-700 border-rose-100" :
-                                "bg-slate-50 text-slate-600 border-slate-100"
-                              }`}>
-                                {item.poster_type}
-                              </span>
-                            )}
+
                           </div>
                         </div>
                       )}

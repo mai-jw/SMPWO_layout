@@ -302,7 +302,6 @@ export function MobileWizard({
                                 {posterItem && (
                                   <div className="text-red-600 font-bold text-[8px] leading-tight">
                                     {LANG_FILTER_OPTIONS.find(o => o.key === (layout.posterLang || posterItem.language))?.label || posterItem.language}
-                                    <span className="text-slate-400 ml-1">({layout.posterType || posterItem.poster_type || "未設定"})</span>
                                   </div>
                                 )}
                               </td>
@@ -778,7 +777,7 @@ export function MobileWizard({
                  }
 
                  return result.map(it => (
-                    <button key={it.id} onClick={() => { (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => { if (activeShelfIdx === 3) return { ...prev, poster: it.id!, posterType: it.poster_type || prev.posterType }; return { ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, items: s.items.map((id, j) => j === activeSlotIdx ? it.id! : id) } : s) }; }); setSelectionMode("shelf-type"); }}
+                    <button key={it.id} onClick={() => { (activeCart === "A" ? setCartA : setCartB)((prev: CartLayoutV2): CartLayoutV2 => { if (activeShelfIdx === 3) return { ...prev, poster: it.id! }; return { ...prev, shelves: prev.shelves.map((s, i) => i === activeShelfIdx ? { ...s, items: s.items.map((id, j) => j === activeSlotIdx ? it.id! : id) } : s) }; }); setSelectionMode("shelf-type"); }}
                       className="w-full flex items-center gap-5 p-4 rounded-[2rem] bg-white hover:shadow-lg transition-all active:scale-[0.98] text-left">
                       <img src={it.url} className="w-16 h-16 object-contain rounded-xl shrink-0" />
                       <div className="flex-1 min-w-0">
@@ -792,15 +791,7 @@ export function MobileWizard({
                           }`}>
                             {LANG_FILTER_OPTIONS.find(o => o.key === it.language)?.label || it.language}
                           </span>
-                          {it.category === "poster" && it.poster_type && (
-                            <span className={`text-[9px] font-black rounded px-1 py-0.5 tracking-tighter border ${
-                              it.poster_type === "マグポス" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
-                              it.poster_type === "コルトン" ? "bg-rose-50 text-rose-700 border-rose-100" :
-                              "bg-slate-100 text-slate-600 border-slate-200"
-                            }`}>
-                              {it.poster_type}
-                            </span>
-                          )}
+
                         </div>
                       </div>
 

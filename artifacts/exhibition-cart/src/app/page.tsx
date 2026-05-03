@@ -384,7 +384,6 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
   const [editValue, setEditValue] = useState("");
   const [editCategory, setEditCategory] = useState("");
   const [editLanguage, setEditLanguage] = useState("");
-  const [editPosterType, setEditPosterType] = useState("");
   
   const updateMutation = useUpdateItem();
   const deleteMutation = useDeleteItem();
@@ -428,7 +427,6 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
     setEditValue(item.name);
     setEditCategory(item.category);
     setEditLanguage(item.language);
-    setEditPosterType(item.poster_type || "");
   };
 
   const handleSaveEdit = async (id: string) => {
@@ -437,24 +435,14 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
       return;
     }
     try {
-      const typeToSave = editCategory === "poster" ? editPosterType : "";
       await updateMutation.mutateAsync({ 
         id, 
         name: editValue,
         category: editCategory,
         language: editLanguage,
-        poster_type: typeToSave,
       });
 
-      // 現在表示・編集中のカートに使用されている場合は同期する
-      if (editCategory === "poster") {
-        if (setCartA && cartA?.poster === id) {
-          setCartA(prev => ({ ...prev, posterType: typeToSave }));
-        }
-        if (setCartB && cartB?.poster === id) {
-          setCartB(prev => ({ ...prev, posterType: typeToSave }));
-        }
-      }
+
     } catch (err) {
       console.error("Failed to update item:", err);
     }
@@ -613,19 +601,7 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
                         ))}
                         <option value="other">その他外国語</option>
                       </select>
-                      {editCategory === "poster" && (
-                        <select 
-                          value={editPosterType} 
-                          onChange={(e) => setEditPosterType(e.target.value)}
-                          className="col-span-2 text-[10px] font-black border border-amber-200 rounded px-1 py-1 bg-amber-50 text-amber-800 outline-none focus:border-amber-400"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <option value="">ポスタータイプ未設定</option>
-                          <option value="マグポス">マグポス</option>
-                          <option value="コルトン">コルトン</option>
-                          <option value="その他">その他</option>
-                        </select>
-                      )}
+
                     </div>
                     <div className="flex items-center justify-end pt-1 gap-2">
                       {deleteConfirmId === item.id ? (
@@ -702,15 +678,7 @@ function LeftGallery({ items, onOpenUpload, width, cartA, setCartA, cartB, setCa
                     }`}>
                       {LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}
                     </span>
-                    {item.category === "poster" && item.poster_type && (
-                      <span className={`text-[10px] font-black rounded px-1.5 py-0.5 tracking-tighter border ${
-                        item.poster_type === "マグポス" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
-                        item.poster_type === "コルトン" ? "bg-rose-50 text-rose-700 border-rose-100" :
-                        "bg-slate-50 text-slate-600 border-slate-100"
-                      }`}>
-                        {item.poster_type}
-                      </span>
-                    )}
+
                   </div>
 
                 )}
@@ -1059,15 +1027,7 @@ function SelectionSidebar({
                         }`}>
                           {LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}
                         </span>
-                        {item.category === "poster" && item.poster_type && (
-                          <span className={`text-[10px] font-black rounded px-1.5 py-0.5 tracking-tighter border ${
-                            item.poster_type === "マグポス" ? "bg-indigo-50 text-indigo-700 border-indigo-100" :
-                            item.poster_type === "コルトン" ? "bg-rose-50 text-rose-700 border-rose-100" :
-                            "bg-slate-50 text-slate-600 border-slate-100"
-                          }`}>
-                            {item.poster_type}
-                          </span>
-                        )}
+
                       </div>
 
                     </div>
@@ -1302,7 +1262,6 @@ export default function CartEditor() {
       setter((prev) => ({ 
         ...prev, 
         poster: item.id!,
-        posterType: item.poster_type || "", // ポスタータイプを同期
         posterLang: "" // Reset override
       }));
     } else if (activeTarget.section === "shelf") {
@@ -1323,7 +1282,7 @@ export default function CartEditor() {
     if (isLayoutLocked) return;
     const setter = getSetCart(cart);
     if (section === "poster") {
-      setter((prev) => ({ ...prev, poster: null, posterType: "", posterLang: "" }));
+      setter((prev) => ({ ...prev, poster: null, posterLang: "" }));
     } else {
       setter((prev) => ({
         ...prev,
@@ -2678,7 +2637,7 @@ export default function CartEditor() {
                                           ))}
                                         </select>
                                       </div>
-                                      <span className="text-slate-500">({layout.posterType || posterItem.poster_type || "未設定"})</span>
+
                                     </>
                                   )}
                                   {!posterItem && <span className="text-slate-300">—</span>}
