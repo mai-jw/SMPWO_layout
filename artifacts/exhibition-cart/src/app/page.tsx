@@ -1874,13 +1874,92 @@ export default function CartEditor() {
             clonedContainer.style.setProperty("width", "1180px", "important");
             clonedContainer.style.display = "block";
           } else {
-            clonedContainer.style.setProperty("width", "820px", "important");
-            clonedContainer.style.setProperty("height", "auto", "important");
+            // 9:16 Aspect Ratio Layout (2x4 Grid System) - Golden Balance
+            const canvasWidth = 1000; 
+            const canvasHeight = 1777.7; // 1000 * 16/9
+            
+            clonedContainer.style.setProperty("width", `${canvasWidth}px`, "important"); 
+            clonedContainer.style.setProperty("height", `${canvasHeight}px`, "important");
             clonedContainer.style.setProperty("background-color", "#ffffff", "important");
-            clonedContainer.style.setProperty("padding", "20px 20px", "important");
+            clonedContainer.style.setProperty("padding", "0", "important");
             clonedContainer.style.setProperty("display", "flex", "important");
             clonedContainer.style.setProperty("flex-direction", "column", "important");
-            clonedContainer.style.setProperty("align-items", "center", "important");
+            clonedContainer.style.setProperty("overflow", "hidden", "important");
+
+            // 1. Carts Section (Top 75% / 3 sections)
+            const cartsWrapper = clonedContainer.querySelector("div.flex.-space-x-\\[180px\\]") as HTMLElement;
+            if (cartsWrapper) {
+              cartsWrapper.style.setProperty("display", "grid", "important");
+              cartsWrapper.style.setProperty("grid-template-columns", "1fr 1fr", "important");
+              cartsWrapper.style.setProperty("width", "100%", "important");
+              cartsWrapper.style.setProperty("height", "75%", "important");
+              cartsWrapper.style.setProperty("margin", "0", "important");
+              cartsWrapper.style.setProperty("padding", "0", "important");
+              cartsWrapper.style.setProperty("column-gap", "0px", "important");
+              cartsWrapper.style.setProperty("align-items", "start", "important"); 
+              cartsWrapper.style.setProperty("padding-top", "40px", "important"); // Vertical breathing room
+              
+              // Apply centering and scale to individual carts
+              const carts = Array.from(cartsWrapper.children);
+              carts.forEach((cart: any) => {
+                cart.style.setProperty("margin", "0 auto", "important");
+                cart.style.setProperty("transform", "scale(1.95)", "important"); // Balanced scale
+                cart.style.setProperty("transform-origin", "top center", "important");
+              });
+            }
+
+            // 2. Info Section (Bottom 25% / 4th section)
+            const infoArea = document.createElement("div");
+            infoArea.style.cssText = "height: 25%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; box-sizing: border-box;";
+            
+            const tableSection = clonedContainer.querySelector(".mt-6") as HTMLElement;
+            if (tableSection) {
+              tableSection.style.setProperty("margin-top", "0px", "important");
+              tableSection.style.setProperty("width", "100%", "important");
+              tableSection.style.setProperty("max-width", "980px", "important"); // Increased to allow single-line text
+              tableSection.style.setProperty("height", "auto", "important");
+              
+              // 1. Force every row container to be a flexible, auto-height block
+              const rows = tableSection.querySelectorAll("div.flex.border-b, div.flex.items-center, div.flex.justify-between");
+              rows.forEach((row: any) => {
+                row.style.setProperty("display", "flex", "important");
+                row.style.setProperty("flex-direction", "row", "important");
+                row.style.setProperty("height", "auto", "important");
+                row.style.setProperty("min-height", "30px", "important");
+                row.style.setProperty("margin-bottom", "8px", "important"); // Reduced from 15px to save space
+                row.style.setProperty("border-bottom", "1px solid #e5e7eb", "important");
+                row.style.setProperty("align-items", "flex-start", "important");
+                row.style.setProperty("padding", "4px 0", "important");
+              });
+
+              // 2. Global style override for all text elements to prevent rigid containers and wrapping
+              tableSection.querySelectorAll("div, span, p, td").forEach((el: any) => {
+                el.style.setProperty("font-size", "16px", "important");
+                el.style.setProperty("height", "auto", "important");
+                el.style.setProperty("min-height", "0", "important");
+                el.style.setProperty("line-height", "1.6", "important");
+                el.style.setProperty("position", "static", "important");
+                el.style.setProperty("white-space", "nowrap", "important"); // Prevent line breaks
+              });
+
+              infoArea.appendChild(tableSection);
+            }
+
+            const notesSection = clonedContainer.querySelector(".mt-4") as HTMLElement;
+            if (notesSection) {
+              notesSection.style.setProperty("margin-top", "20px", "important"); // Reduced from 40px to save space
+              notesSection.style.setProperty("width", "100%", "important");
+              notesSection.style.setProperty("max-width", "900px", "important");
+              notesSection.style.setProperty("height", "auto", "important");
+              notesSection.querySelectorAll("p, div, span").forEach((el: any) => {
+                 el.style.setProperty("font-size", "23px", "important");
+                 el.style.setProperty("line-height", "1.3", "important"); // Tighter line-height to fit 3rd line
+                 el.style.setProperty("height", "auto", "important");
+              });
+              infoArea.appendChild(notesSection);
+            }
+            
+            clonedContainer.appendChild(infoArea);
           }
 
 
@@ -1891,12 +1970,14 @@ export default function CartEditor() {
       container.style.cssText = originalStyle;
       container.className = originalClassName;
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: [108, 192] });
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: [216, 384] });
       const pW = pdf.internal.pageSize.getWidth();
       const pH = pdf.internal.pageSize.getHeight();
+      
+      // Calculate ratio based on actual content bounds captured
       const ratio = canvas.width / canvas.height;
       
-      const margin = 3; // Approx 11px margin
+      const margin = 4; // Adjusted for larger page
       let imgW = pW - (margin * 2);
       let imgH = imgW / ratio;
       
@@ -1905,7 +1986,8 @@ export default function CartEditor() {
         imgW = imgH * ratio;
       }
       const xOffset = (pW - imgW) / 2;
-      const yOffset = (pH - imgH) / 2;
+      const yOffset = margin; // Top-aligned
+      
       pdf.addImage(imgData, "PNG", xOffset, yOffset, imgW, imgH);
       const blob = pdf.output("blob");
       await saveFileWrapper(blob, `${formatPeriodDisplay(period)}.pdf`, "application/pdf", ".pdf");
@@ -1915,6 +1997,7 @@ export default function CartEditor() {
       alert("PDF書き出し中にエラーが発生しました: " + (err.message || "Unknown error"));
     } finally { setExporting(null); }
   };
+
 
   const handleExportXlsx = async (v?: "standard" | "with-info") => {
     const version = v || exportVersion;
