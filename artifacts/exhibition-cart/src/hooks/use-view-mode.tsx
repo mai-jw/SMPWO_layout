@@ -9,21 +9,8 @@ export function useViewMode() {
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
-    // Initial detection on mount
-    const detectDevice = () => {
-      const ua = navigator.userAgent;
-      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-      
-      // Check saved preference first
-      const saved = localStorage.getItem("smpwo-view-mode") as ViewMode | null;
-      if (saved && (saved === "pc" || saved === "mobile")) {
-        return saved;
-      }
-      
-      return isMobileDevice ? "mobile" : "pc";
-    };
+    setViewMode("pc"); // Force PC view as requested
 
-    setViewMode(detectDevice());
     setHasMounted(true);
   }, []);
 

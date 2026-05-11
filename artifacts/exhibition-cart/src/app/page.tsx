@@ -1067,6 +1067,11 @@ function GuidePanel() {
      CartEditor — Main Page
    ═══════════════════════════════════════════════════════ */
 
+const DEFAULT_NOTES: NoteLine[] = [
+  { text: "外国語の出版物は、奉仕者が好きな位置に変更できます。", color: "inherit" },
+  { text: "自分の得意な言語や地点の特色を考えて、自由に動かしてください。", color: "inherit" }
+];
+
 export default function CartEditor() {
   const [period, setPeriod] = useState("");
   const [cartA, setCartA] = useState<CartLayoutV2>(makeInitialCartLayoutV2);
@@ -1089,10 +1094,7 @@ export default function CartEditor() {
   const [newMonth, setNewMonth] = useState(() => new Date().getMonth() + 1);
   const [newHalf, setNewHalf] = useState<"前半" | "後半">(() => new Date().getDate() <= 15 ? "前半" : "後半");
   const [newLocations, setNewLocations] = useState<string[]>(["すべて"]);
-  const [notes, setNotes] = useState<NoteLine[]>([
-    { text: "外国語の出版物は、奉仕者が好きな位置に変更できます。", color: "inherit" },
-    { text: "自分の得意な言語や地点の特色を考えて、自由に動かしてください。", color: "inherit" }
-  ]);
+  const [notes, setNotes] = useState<NoteLine[]>(DEFAULT_NOTES);
   const [concept, setConcept] = useState("");
   const [comment, setComment] = useState("");
   const [creator, setCreator] = useState("");
@@ -1441,7 +1443,7 @@ export default function CartEditor() {
     setWizardStep("edit");
   };
 
-  const handleCreateNew = () => {
+  const handleCreateNew = async () => {
     const y = new Date().getFullYear();
     const locStr = newLocations.length === 0 || newLocations.includes("すべて") ? "" : `::${newLocations.join(",")}`;
     const targetPeriod = `${y}-${String(newMonth).padStart(2, "0")}-${newHalf}${locStr}`;
@@ -1455,6 +1457,9 @@ export default function CartEditor() {
     setPeriod(targetPeriod);
     setConcept("");
     setComment("");
+    setCreator("");
+    setNotes(DEFAULT_NOTES);
+    setIsLayoutLocked(false);
     
     // カートA: 直近レイアウトを引き継ぐ / カートB: 常に白紙にリセット
     const newCartA = layouts.length > 0 ? layouts[0].cart_a : makeInitialCartLayoutV2();
@@ -1463,8 +1468,29 @@ export default function CartEditor() {
     setCartA(newCartA);
     setCartB(newCartB);
     
-    // Immediately trigger save for the new layout
-    handleSave(true, targetPeriod);
+    // Use the explicit new objects for the initial save to avoid race conditions with state updates
+    try {
+      setSaveStatus("saving");
+      await saveLayout.mutateAsync({
+        period: targetPeriod,
+        cart_a: { 
+          ...newCartA, 
+          concept: "", 
+          comment: "", 
+          creator: "", 
+          supplementary: JSON.stringify(DEFAULT_NOTES), 
+          isLocked: false 
+        },
+        cart_b: { 
+          ...newCartB, 
+          comment: "" 
+        }
+      });
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch (err) {
+      console.error("[Create New Save Error]", err);
+    }
     
     setShowNewPanel(false);
     
@@ -1848,11 +1874,13 @@ export default function CartEditor() {
             clonedContainer.style.setProperty("width", "1180px", "important");
             clonedContainer.style.display = "block";
           } else {
-            clonedContainer.style.width = "auto";
-            clonedContainer.style.height = "auto";
-            clonedContainer.style.backgroundColor = "#ffffff";
-            clonedContainer.style.padding = "100px 300px 40px 300px";
-            clonedContainer.style.display = "flex";
+            clonedContainer.style.setProperty("width", "820px", "important");
+            clonedContainer.style.setProperty("height", "auto", "important");
+            clonedContainer.style.setProperty("background-color", "#ffffff", "important");
+            clonedContainer.style.setProperty("padding", "20px 20px", "important");
+            clonedContainer.style.setProperty("display", "flex", "important");
+            clonedContainer.style.setProperty("flex-direction", "column", "important");
+            clonedContainer.style.setProperty("align-items", "center", "important");
           }
 
 
@@ -1863,13 +1891,19 @@ export default function CartEditor() {
       container.style.cssText = originalStyle;
       container.className = originalClassName;
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: [108, 192] });
       const pW = pdf.internal.pageSize.getWidth();
       const pH = pdf.internal.pageSize.getHeight();
       const ratio = canvas.width / canvas.height;
-      let imgW = pW - 20;
+      
+      const margin = 3; // Approx 11px margin
+      let imgW = pW - (margin * 2);
       let imgH = imgW / ratio;
-      if (imgH > pH - 20) { imgH = pH - 20; imgW = imgH * ratio; }
+      
+      if (imgH > pH - (margin * 2)) {
+        imgH = pH - (margin * 2);
+        imgW = imgH * ratio;
+      }
       const xOffset = (pW - imgW) / 2;
       const yOffset = (pH - imgH) / 2;
       pdf.addImage(imgData, "PNG", xOffset, yOffset, imgW, imgH);
