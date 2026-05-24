@@ -129,6 +129,80 @@ export function MobileWizard({
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<"newest" | "name_asc" | "name_desc">("newest");
   const [previewPeriod, setPreviewPeriod] = useState<string>("");
+  const [selectedPreviewPeriod, setSelectedPreviewPeriod] = useState<string | null>(null);
+
+  const isNavigatingFromPopState = React.useRef(false);
+
+  // Initialize and listen to popstate
+  React.useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      if (e.state && e.state.isMobileWizard) {
+        isNavigatingFromPopState.current = true;
+        setStep(e.state.wizardStep);
+        setSelectedPreviewPeriod(e.state.selectedPeriod);
+        setSelectionMode(e.state.selectionMode);
+      } else {
+        isNavigatingFromPopState.current = true;
+        setStep("menu");
+        setSelectedPreviewPeriod(null);
+        setSelectionMode("shelf-type");
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    
+    // Replace initial state so the entry point has a valid wizard state
+    const currentHistoryState = window.history.state;
+    if (!currentHistoryState || !currentHistoryState.isMobileWizard) {
+      window.history.replaceState(
+        { 
+          isMobileWizard: true, 
+          wizardStep: step, 
+          selectedPeriod: selectedPreviewPeriod, 
+          selectionMode: selectionMode 
+        },
+        ""
+      );
+    }
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [setStep, step, selectedPreviewPeriod, selectionMode]);
+
+  // Push state on user-initiated transitions
+  React.useEffect(() => {
+    if (isNavigatingFromPopState.current) {
+      isNavigatingFromPopState.current = false;
+      return;
+    }
+
+    // Only push if the state in history is different from the current React state
+    const currentHistoryState = window.history.state;
+    if (
+      !currentHistoryState ||
+      currentHistoryState.wizardStep !== step ||
+      currentHistoryState.selectedPeriod !== selectedPreviewPeriod ||
+      currentHistoryState.selectionMode !== selectionMode
+    ) {
+      window.history.pushState(
+        { 
+          isMobileWizard: true, 
+          wizardStep: step, 
+          selectedPeriod: selectedPreviewPeriod, 
+          selectionMode: selectionMode 
+        },
+        ""
+      );
+    }
+  }, [step, selectedPreviewPeriod, selectionMode]);
+
+  // Reset selected period when leaving the preview step
+  React.useEffect(() => {
+    if (step !== "cart-preview") {
+      setSelectedPreviewPeriod(null);
+    }
+  }, [step]);
 
   const currentCart = activeCart === "A" ? cartA : cartB;
   const currentShelf = activeShelfIdx < 3 ? currentCart.shelves[activeShelfIdx] : null;
@@ -210,11 +284,40 @@ export function MobileWizard({
           </motion.div>
         )}
 
-        {step === "cart-preview" && (() => {
+        {step === "cart-preview" && selectedPreviewPeriod === null && (() => {
+          return (
+            <motion.div key="select-preview" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="flex flex-col h-full bg-cream">
+              <WizardHeader title="プレビューする期間を選択" onBack={() => setStep("menu")} />
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {layouts.length === 0 ? (
+                  <EmptyState icon={<Search />} text="保存済みのデータはありません" sub="新規作成から始めてください" />
+                ) : (
+                  layouts.map(l => (
+                    <button
+                      key={l.period}
+                      onClick={() => setSelectedPreviewPeriod(l.period)}
+                      className="w-full flex items-center justify-between p-6 bg-white rounded-[2rem] text-left active:scale-[0.98] transition-all shadow-sm"
+                    >
+                      <div>
+                        <p className="font-black text-base" style={{ color: COLORS.deepPurple }}>{formatPeriodDisplay(l.period)}</p>
+                        <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest mt-1">
+                          タップしてプレビューを表示
+                        </p>
+                      </div>
+                      <ChevronRight className="w-6 h-6 opacity-20" />
+                    </button>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          );
+        })()}
+
+        {step === "cart-preview" && selectedPreviewPeriod !== null && (() => {
           const SHELF_LABELS = ["上段", "中段", "下段"];
           
           // Determine which layout to preview
-          const activePreviewPeriod = previewPeriod || period || (layouts.length > 0 ? layouts[0].period : "");
+          const activePreviewPeriod = selectedPreviewPeriod || period || (layouts.length > 0 ? layouts[0].period : "");
           const previewData = layouts.find(l => l.period === activePreviewPeriod);
           const pCartA = previewData ? previewData.cart_a : cartA;
           const pCartB = previewData ? previewData.cart_b : cartB;
@@ -225,8 +328,8 @@ export function MobileWizard({
           ];
           
           return (
-            <motion.div key="cart-preview" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="flex flex-col h-full bg-cream">
-              <WizardHeader title="カートプレビュー" onBack={() => setStep("menu")} />
+            <motion.div key="cart-preview-details" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="flex flex-col h-full bg-cream">
+              <WizardHeader title="カートプレビュー" onBack={() => setSelectedPreviewPeriod(null)} />
               <div className="flex-1 overflow-y-auto pb-24">
 
                 {/* Period Selector */}
@@ -234,7 +337,10 @@ export function MobileWizard({
                   <div className="relative">
                     <select 
                       value={activePreviewPeriod}
-                      onChange={(e) => setPreviewPeriod(e.target.value)}
+                      onChange={(e) => {
+                        setPreviewPeriod(e.target.value);
+                        setSelectedPreviewPeriod(e.target.value);
+                      }}
                       className="w-full bg-white border border-slate-200 text-slate-800 font-black text-sm rounded-2xl px-5 py-4 appearance-none shadow-sm outline-none"
                     >
                       {layouts.length === 0 && <option value={period}>{formatPeriodDisplay(period)}</option>}

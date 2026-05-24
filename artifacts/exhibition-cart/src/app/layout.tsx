@@ -27,6 +27,10 @@ const rounded = M_PLUS_Rounded_1c({
 export const metadata: Metadata = {
   title: "SMPWO LAYOUT",
   description: "カートのレイアウトを編集・管理するツール",
+  manifest: "/manifest.json",
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 import { UIProvider } from "@/context/ui-context";
