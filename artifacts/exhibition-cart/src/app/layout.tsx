@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   description: "カートのレイアウトを編集・管理するツール",
   manifest: "/manifest.json",
   icons: {
-    apple: "/apple-touch-icon.png",
+    apple: "/mobile-icon.png",
   },
 };
 
