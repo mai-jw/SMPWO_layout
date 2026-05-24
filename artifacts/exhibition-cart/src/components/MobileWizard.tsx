@@ -330,11 +330,13 @@ export function MobileWizard({
                                     ) : uniqueSlots.length === 0 ? (
                                       <span className="text-slate-300">空</span>
                                     ) : (
-                                      <div className="flex flex-wrap gap-x-2">
+                                      <div className="flex flex-row flex-nowrap gap-x-2 w-full">
                                         {uniqueSlots.map(({ item, slotIndex }) => item && (
-                                          <div key={slotIndex} className="flex flex-col">
-                                            <span className="font-bold text-foreground leading-tight text-[9px]">{item.name}</span>
-                                            <span className="text-red-600 font-bold text-[8px] leading-tight">
+                                          <div key={slotIndex} className="flex flex-col min-w-0 flex-1">
+                                            <span className="font-bold text-foreground leading-normal text-[9px] truncate pb-0.5" title={item.name}>
+                                              {item.name.length > 10 ? item.name.slice(0, 10) + "..." : item.name}
+                                            </span>
+                                            <span className="text-red-600 font-bold text-[8px] leading-normal">
                                               {LANG_FILTER_OPTIONS.find(o => o.key === (shelf.item_langs?.[slotIndex] || item.language))?.label || item.language}
                                             </span>
                                           </div>

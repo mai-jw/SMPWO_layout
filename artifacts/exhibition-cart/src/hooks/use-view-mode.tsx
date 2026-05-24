@@ -9,7 +9,17 @@ export function useViewMode() {
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
-    setViewMode("pc"); // Force PC view as requested
+    // Check if the user agent matches common mobile/tablet devices
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent.toLowerCase() : "";
+    const isMobileDevice = /iphone|ipad|ipod|android|blackberry|mini|windows\sphone|iemobile|mobile/i.test(ua);
+
+    if (isMobileDevice) {
+      setViewMode("mobile");
+      localStorage.setItem("smpwo-view-mode", "mobile");
+    } else {
+      setViewMode("pc");
+      localStorage.setItem("smpwo-view-mode", "pc");
+    }
 
     setHasMounted(true);
   }, []);

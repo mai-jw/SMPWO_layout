@@ -1501,11 +1501,25 @@ export default function CartEditor() {
   };
 
   const saveFileWrapper = async (blob: Blob, suggestedName: string, mimeType?: string, extension?: string) => {
-    // Classic approach: Use <a> tag download for maximum compatibility/reliability
+    // Sanitize filename: replace characters that cause issues on Windows/browsers
+    // Parentheses and some unicode chars can cause UUID fallback filenames
+    const ext = extension || "";
+    const baseName = suggestedName.endsWith(ext)
+      ? suggestedName.slice(0, suggestedName.length - ext.length)
+      : suggestedName;
+    const safeName = baseName
+      .replace(/[（）()]/g, "")           // remove full-width and half-width parentheses
+      .replace(/[\s\u3000]+/g, "_")      // spaces / ideographic spaces → underscore
+      .replace(/[<>:"/\\|?*]/g, "")      // strip other invalid filename chars
+      .replace(/_+/g, "_")               // collapse consecutive underscores
+      .replace(/^_|_$/g, "");            // trim leading/trailing underscores
+    const safeFilename = safeName + ext;
+
+    // Use <a> tag download for maximum compatibility/reliability
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.style.display = "none";
-    a.download = suggestedName;
+    a.download = safeFilename;
     a.href = url;
     document.body.appendChild(a);
     a.click();
@@ -1910,7 +1924,7 @@ export default function CartEditor() {
 
             // 2. Info Section (Bottom 25% / 4th section)
             const infoArea = document.createElement("div");
-            infoArea.style.cssText = "height: 25%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; box-sizing: border-box;";
+            infoArea.style.cssText = "height: 25%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px 30px; box-sizing: border-box;";
             
             const tableSection = clonedContainer.querySelector(".mt-6") as HTMLElement;
             if (tableSection) {
@@ -1926,10 +1940,10 @@ export default function CartEditor() {
                 row.style.setProperty("flex-direction", "row", "important");
                 row.style.setProperty("height", "auto", "important");
                 row.style.setProperty("min-height", "30px", "important");
-                row.style.setProperty("margin-bottom", "8px", "important"); // Reduced from 15px to save space
+                row.style.setProperty("margin-bottom", "6px", "important"); // Reduced from 8px to save space
                 row.style.setProperty("border-bottom", "1px solid #e5e7eb", "important");
                 row.style.setProperty("align-items", "flex-start", "important");
-                row.style.setProperty("padding", "4px 0", "important");
+                row.style.setProperty("padding", "2px 0", "important"); // Reduced from 4px to save space
               });
 
               // 2. Global style override for all text elements to prevent rigid containers and wrapping
@@ -1947,13 +1961,13 @@ export default function CartEditor() {
 
             const notesSection = clonedContainer.querySelector(".mt-4") as HTMLElement;
             if (notesSection) {
-              notesSection.style.setProperty("margin-top", "20px", "important"); // Reduced from 40px to save space
+              notesSection.style.setProperty("margin-top", "12px", "important"); // Reduced from 20px to save space
               notesSection.style.setProperty("width", "100%", "important");
               notesSection.style.setProperty("max-width", "900px", "important");
               notesSection.style.setProperty("height", "auto", "important");
               notesSection.querySelectorAll("p, div, span").forEach((el: any) => {
-                 el.style.setProperty("font-size", "23px", "important");
-                 el.style.setProperty("line-height", "1.3", "important"); // Tighter line-height to fit 3rd line
+                 el.style.setProperty("font-size", "21px", "important"); // Reduced from 23px to fit better
+                 el.style.setProperty("line-height", "1.25", "important"); // Balanced line-height to fit 3rd line
                  el.style.setProperty("height", "auto", "important");
               });
               infoArea.appendChild(notesSection);
@@ -2575,19 +2589,7 @@ export default function CartEditor() {
             </div>
           </>
         )}
-        {/* View Mode Toggle (PC) */}
-        {!isMobileView && (
-          <div className="flex items-center gap-1 border-l border-border ml-1 pl-1">
-            <button
-              onClick={toggleViewMode}
-              className="flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-md border font-bold bg-white text-slate-700 border-slate-300 transition-all active:scale-95 shadow-xs select-none"
-              title="Mobile版に切り替え"
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>Mobile版</span>
-            </button>
-          </div>
-        )}
+        {/* View Mode Toggle (PC) - removed as per user request */}
       </div>
 
       {/* Main Content: Left Gallery + Carts + Side Panel */}
@@ -2797,18 +2799,19 @@ export default function CartEditor() {
                                       }
 
                                       return (
-                                        <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                                        <div className="flex flex-row flex-nowrap gap-x-3 w-full">
                                           {uniqueSlots.map(({ item, slotIndex }) => {
                                             if (!item) return null;
+                                            const truncatedName = item.name.length > 10 ? item.name.slice(0, 10) + "..." : item.name;
                                             return (
-                                              <div key={slotIndex} className="flex flex-col">
-                                                <div className="font-bold text-foreground leading-tight text-[10px]">{item.name}</div>
+                                              <div key={slotIndex} className="flex flex-col min-w-0 flex-1">
+                                                <div className="font-bold text-foreground leading-normal text-[10px] truncate pb-0.5" title={item.name}>{truncatedName}</div>
                                                 <div className="relative group/lang inline-block">
                                                   <select
                                                     value={shelf.item_langs?.[slotIndex] || ""}
                                                     onChange={(e) => handleLangOverride(id, "shelf", sIdx, slotIndex, e.target.value || undefined)}
                                                     disabled={isLayoutLocked}
-                                                    className={`appearance-none bg-transparent text-red-600 font-bold text-[9px] border-none p-0 m-0 outline-none cursor-pointer hover:bg-red-50 rounded px-0.5 -mx-0.5 transition-colors leading-tight ${isLayoutLocked ? "cursor-not-allowed" : ""}`}
+                                                    className={`appearance-none bg-transparent text-red-600 font-bold text-[9px] border-none p-0 m-0 outline-none cursor-pointer hover:bg-red-50 rounded px-0.5 -mx-0.5 transition-colors leading-normal ${isLayoutLocked ? "cursor-not-allowed" : ""}`}
                                                     title="表示言語を変更"
                                                   >
                                                     <option value="">{LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}</option>
