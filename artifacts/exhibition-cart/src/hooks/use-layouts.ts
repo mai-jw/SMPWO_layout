@@ -44,6 +44,15 @@ function hydrateLayout(raw: unknown): CartLayoutV2 {
         hydrateShelf(r.shelf3),
       ];
 
+  let topNotice = def.topNotice;
+  if (r.topNotice && typeof r.topNotice === "object") {
+    const tn = r.topNotice as Record<string, unknown>;
+    topNotice = {
+      text: typeof tn.text === "string" ? tn.text : "",
+      color: typeof tn.color === "string" ? tn.color : "inherit",
+    };
+  }
+
   return {
     poster: typeof r.poster === "string" ? r.poster : null,
     posterType: typeof r.posterType === "string" ? r.posterType : "",
@@ -54,6 +63,7 @@ function hydrateLayout(raw: unknown): CartLayoutV2 {
     creator: typeof r.creator === "string" ? r.creator : "",
     supplementary: typeof r.supplementary === "string" ? r.supplementary : "",
     isLocked: !!r.isLocked,
+    topNotice,
   };
 }
 

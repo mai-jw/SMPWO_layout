@@ -69,10 +69,12 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
   
   // Visibility: Hide if "none"
   const isHidden = mode === "none";
+  const isLangMode = mode === "lang";
+
   const barBg = isHidden ? "bg-transparent border-transparent" : (
     mode === "free_dist" ? "bg-zinc-900 border-zinc-800"
-    : mode === "lang"      ? "bg-red-600 border-red-700"
-    :                        "bg-red-500 border-red-600"
+    : isLangMode         ? "bg-transparent border-transparent"
+    :                      "bg-red-500 border-red-600"
   );
 
   const getPositions = () => {
@@ -91,31 +93,46 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
         </div>
       );
     }
-    if (mode === "lang") {
+    if (isLangMode) {
       const isThreeCols = layout === "document" || layout === "bible";
+      const gridClass = isThreeCols 
+        ? "grid grid-cols-3 gap-0.5 px-0.5 w-full h-full" 
+        : "grid grid-cols-2 gap-1 px-1 w-full h-full";
+
+      const tagBoxStyle = "bg-red-600 border border-red-700 shadow-sm h-full flex items-center justify-center";
+
       return (
-        <div className={`grid ${isThreeCols ? "grid-cols-3" : "grid-cols-2"} w-full h-full`}>
-          <div className="flex items-center justify-center">
-            {shelf.tag_1.value && (
+        <div className={gridClass}>
+          {/* Left Tag Slot */}
+          {shelf.tag_1.value ? (
+            <div className={tagBoxStyle}>
               <span 
                 className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap tag-label-span"
                 style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
               >
                 {shelf.tag_1.value}
               </span>
-            )}
-          </div>
-          {isThreeCols && <div />}
-          <div className="flex items-center justify-center">
-            {shelf.tag_2.value && (
+            </div>
+          ) : (
+            <div className="h-full bg-transparent border border-transparent" />
+          )}
+
+          {/* Middle Spacer (only for 3-column layouts) */}
+          {isThreeCols && <div className="h-full bg-transparent border border-transparent" />}
+
+          {/* Right Tag Slot */}
+          {shelf.tag_2.value ? (
+            <div className={tagBoxStyle}>
               <span 
                 className="text-[10px] font-black tracking-tight text-white leading-none whitespace-nowrap tag-label-span"
                 style={{ textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
               >
                 {shelf.tag_2.value}
               </span>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="h-full bg-transparent border border-transparent" />
+          )}
         </div>
       );
     }
@@ -130,7 +147,9 @@ const TagDisplay = memo(({ shelf, shelfIndex, isActive, onClick }: TagDisplayPro
     <div
       role="button"
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={`w-full h-full text-white transition-all duration-200 shadow-sm border cursor-pointer select-none ${barBg} ${
+      className={`w-full h-full text-white transition-all duration-200 select-none cursor-pointer ${
+        isLangMode ? "" : "shadow-sm border"
+      } ${barBg} ${
         isActive ? "ring-2 ring-yellow-400 brightness-110 z-50" : "hover:brightness-105"
       }`}
     >
@@ -1098,6 +1117,8 @@ export default function CartEditor() {
   const [concept, setConcept] = useState("");
   const [comment, setComment] = useState("");
   const [creator, setCreator] = useState("");
+  const [topNotice, setTopNotice] = useState<{ text: string; color: string }>({ text: "", color: "inherit" });
+  const [isEditingTopNotice, setIsEditingTopNotice] = useState(false);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
 
   const [isEditingLocations, setIsEditingLocations] = useState(false);
@@ -1192,6 +1213,7 @@ export default function CartEditor() {
         setComment(existing.cart_a.comment || "");
         setCreator(existing.cart_a.creator || "");
         setIsLayoutLocked(existing.cart_a.isLocked || false);
+        setTopNotice(existing.cart_a.topNotice || { text: "", color: "inherit" });
       }
 
     }
@@ -1357,6 +1379,8 @@ export default function CartEditor() {
     setCartB(makeInitialCartLayoutV2());
     setConcept("");
     setComment("");
+    setTopNotice({ text: "", color: "inherit" });
+    setIsEditingTopNotice(false);
     setActiveTarget(null);
   };
 
@@ -1375,7 +1399,8 @@ export default function CartEditor() {
       creator, 
       comment, 
       supplementary: JSON.stringify(notes), 
-      isLocked: isLockedOverride !== undefined ? isLockedOverride : isLayoutLocked 
+      isLocked: isLockedOverride !== undefined ? isLockedOverride : isLayoutLocked,
+      topNotice
     };
     const finalCartB = { ...cartB, comment: "" };
 
@@ -1459,6 +1484,7 @@ export default function CartEditor() {
     setComment("");
     setCreator("");
     setNotes(DEFAULT_NOTES);
+    setTopNotice({ text: "", color: "inherit" });
     setIsLayoutLocked(false);
     
     // カートA: 直近レイアウトを引き継ぐ / カートB: 常に白紙にリセット
@@ -1479,7 +1505,8 @@ export default function CartEditor() {
           comment: "", 
           creator: "", 
           supplementary: JSON.stringify(DEFAULT_NOTES), 
-          isLocked: false 
+          isLocked: false,
+          topNotice: { text: "", color: "inherit" }
         },
         cart_b: { 
           ...newCartB, 
@@ -1567,10 +1594,11 @@ export default function CartEditor() {
       }));
 
       const canvas = await html2canvas(container, { 
-        scale: 2, 
+        scale: 1.2, 
         useCORS: true, 
         logging: false,
         backgroundColor: "#ffffff",
+        windowWidth: version === "with-info" ? 1180 : 820,
         onclone: (clonedDoc) => {
           const exportStyle = clonedDoc.createElement("style");
           exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -3px !important; }";
@@ -1704,15 +1732,56 @@ export default function CartEditor() {
             clonedContainer.style.setProperty("display", "block", "important");
           } else {
             clonedContainer.style.setProperty("width", "820px", "important");
+            clonedContainer.style.setProperty("height", "1160px", "important");
             clonedContainer.style.setProperty("display", "flex", "important");
             clonedContainer.style.setProperty("flex-direction", "column", "important");
             clonedContainer.style.setProperty("align-items", "center", "important");
+
+            // ① Enlarge top notice text, pull it up
+            const topNoticeWrap = (clonedContainer.querySelector("#export-top-notice") ??
+              clonedContainer.querySelector(".z-20")) as HTMLElement | null;
+            if (topNoticeWrap) {
+              topNoticeWrap.style.setProperty("margin-bottom", "0", "important");
+              topNoticeWrap.style.setProperty("margin-top", "0", "important");
+              const noticeText = topNoticeWrap.querySelector(".text-lg") as HTMLElement | null;
+              if (noticeText) {
+                noticeText.style.setProperty("font-size", "20px", "important");
+                noticeText.style.setProperty("line-height", "1.4", "important");
+                noticeText.style.setProperty("padding", "2px 16px", "important");
+              }
+            }
+
+            // ③ Scale up the cart pair in place (does not move their relative position)
+            const cartWrapper = (clonedContainer.querySelector("#export-cart-wrapper") ??
+              clonedContainer.querySelector(".flex.-space-x-\\[180px\\]") ??
+              Array.from(clonedContainer.querySelectorAll(".flex")).find(
+                (el) => (el as HTMLElement).style.marginLeft?.includes("-") ||
+                         el.className.includes("space-x")
+              )) as HTMLElement | null;
+            if (cartWrapper) {
+              cartWrapper.style.setProperty("transform", "scale(1.15)", "important");
+              cartWrapper.style.setProperty("transform-origin", "top center", "important");
+              cartWrapper.style.setProperty("margin-bottom", "100px", "important");
+            }
+
+            // ② Pull summary table + notes toward the bottom
+            const summaryDiv = (clonedContainer.querySelector("#export-summary-table") ??
+              clonedContainer.querySelector(".mt-6")) as HTMLElement | null;
+            if (summaryDiv) {
+              summaryDiv.style.setProperty("margin-top", "auto", "important");
+            }
+            // supplementary notes section
+            const notesDiv = (clonedContainer.querySelector("#export-supplementary-notes") ??
+              Array.from(clonedContainer.querySelectorAll(".mt-4")).find(el => el.className.includes("max-w"))) as HTMLElement | null;
+            if (notesDiv) {
+              notesDiv.style.setProperty("margin-top", "10px", "important");
+            }
           }
 
 
-          clonedContainer.style.setProperty("height", "auto", "important");
+          clonedContainer.style.setProperty("height", version === "with-info" ? "auto" : "1160px", "important");
           clonedContainer.style.setProperty("background-color", "#ffffff", "important");
-          clonedContainer.style.setProperty("padding", "80px 40px", "important");
+          clonedContainer.style.setProperty("padding", version === "with-info" ? "40px 40px 60px" : "24px 40px 30px", "important");
           clonedContainer.style.setProperty("margin", "0", "important");
         }
       });
@@ -1721,7 +1790,18 @@ export default function CartEditor() {
       // Restoration
       container.style.cssText = originalStyle;
       container.className = originalClassName;
-      const dataUrl = canvas.toDataURL("image/png");
+
+      // Downsample canvas to ~75% to reduce PNG file size (target: 100-300KB)
+      const scaleFactor = 0.75;
+      const resized = document.createElement("canvas");
+      resized.width  = Math.round(canvas.width  * scaleFactor);
+      resized.height = Math.round(canvas.height * scaleFactor);
+      const ctx = resized.getContext("2d")!;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(canvas, 0, 0, resized.width, resized.height);
+
+      const dataUrl = resized.toDataURL("image/png");
       const blob = dataURLtoBlob(dataUrl);
       
       await saveFileWrapper(blob, `${formatPeriodDisplay(period)}.png`, "image/png", ".png");
@@ -1758,6 +1838,7 @@ export default function CartEditor() {
         useCORS: true, 
         logging: false,
         backgroundColor: "#ffffff",
+        windowWidth: version === "with-info" ? 1180 : 1000,
         onclone: (clonedDoc) => {
           const exportStyle = clonedDoc.createElement("style");
           exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -3px !important; }";
@@ -2324,6 +2405,8 @@ export default function CartEditor() {
           loadLayoutForEdit={loadLayoutForEdit}
           notes={notes}
           setNotes={setNotes}
+          topNotice={topNotice}
+          setTopNotice={setTopNotice}
           isLayoutLocked={isLayoutLocked}
           toggleLayoutLock={toggleLayoutLock}
         />
@@ -2709,7 +2792,76 @@ export default function CartEditor() {
                 className={`flex flex-col items-center p-4 bg-background shrink-0 ${isMobileView ? "scale-[0.6] origin-center" : ""}`}
                 style={isMobileView ? { width: "820px" } : {}}
               >
-                <div className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
+                {/* Top Notice Area (PC / Exportable) */}
+                <div id="export-top-notice" className="w-full max-w-[820px] mb-4 z-20">
+                  {isEditingTopNotice && !isLayoutLocked ? (
+                    <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xl space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">注意事項を編集</p>
+                        <button
+                          onClick={() => {
+                            setIsEditingTopNotice(false);
+                            handleSave(true);
+                          }}
+                          className="text-[10px] font-bold bg-[#1b618d] text-white px-3 py-1 rounded-full hover:opacity-90 transition-all shadow-sm"
+                        >
+                          完了
+                        </button>
+                      </div>
+                      <div className="flex gap-2">
+                        {[
+                          { val: "inherit", color: "bg-slate-800" },
+                          { val: "#dc2626", color: "bg-red-600" },
+                          { val: "#2563eb", color: "bg-blue-600" },
+                          { val: "#059669", color: "bg-emerald-600" }
+                        ].map(c => (
+                          <button
+                            key={c.val}
+                            onClick={() => setTopNotice(prev => ({ ...prev, color: c.val }))}
+                            className={`w-5 h-5 rounded-full transition-all ${c.color} ${topNotice.color === c.val ? "ring-2 ring-offset-1 ring-slate-300" : "opacity-40"}`}
+                          />
+                        ))}
+                      </div>
+                      <textarea
+                        value={topNotice.text}
+                        onChange={(e) => setTopNotice(prev => ({ ...prev, text: e.target.value }))}
+                        rows={2}
+                        className="w-full text-base font-bold bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none resize-none focus:ring-2 focus:ring-primary/10 transition-all leading-normal"
+                        style={{ color: topNotice.color !== "inherit" ? topNotice.color : undefined }}
+                        placeholder="注意事項を入力してください（改行可）..."
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => { if (!isLayoutLocked) setIsEditingTopNotice(true); }}
+                      className={`relative group text-center rounded-2xl transition-all ${!isLayoutLocked ? "cursor-pointer hover:bg-slate-50/50 p-2 border border-dashed border-transparent hover:border-slate-200" : ""}`}
+                    >
+                      {topNotice.text && topNotice.text.trim() ? (
+                        <div
+                          className="text-lg font-black whitespace-pre-wrap leading-relaxed px-4 py-2"
+                          style={{ color: topNotice.color !== "inherit" ? topNotice.color : "#1e293b" }}
+                        >
+                          {topNotice.text}
+                        </div>
+                      ) : (
+                        !isLayoutLocked && (
+                          <div className="text-xs font-bold text-slate-300 border-2 border-dashed border-slate-200 rounded-2xl py-3 px-4 hover:text-slate-400 hover:border-slate-300 transition-colors">
+                            ＋ ここに注意事項を追加（大文字・色変更可）
+                          </div>
+                        )
+                      )}
+                      {!isLayoutLocked && topNotice.text && topNotice.text.trim() && (
+                        <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="bg-white shadow-sm border border-slate-200 p-1.5 rounded-lg text-slate-400">
+                            <Pencil className="w-3 h-3" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div id="export-cart-wrapper" className="flex -space-x-[180px] items-start shrink-0 -mx-[175px]">
                   <CartPanel
                     cartId="A" layout={cartA} activeTarget={activeTarget}
                     isSelecting={false} itemMap={itemMap}
@@ -2725,7 +2877,7 @@ export default function CartEditor() {
                 </div>
 
                 {/* Summary Table */}
-                <div className="w-full mt-6 flex gap-8 justify-center text-xs">
+                <div id="export-summary-table" className="w-full mt-6 flex gap-8 justify-center text-xs">
                   {([{ id: "A" as CartId, layout: cartA, setCart: setCartA }, { id: "B" as CartId, layout: cartB, setCart: setCartB }]).map(({ id, layout, setCart }) => {
                     const SHELF_LABELS = ["上段", "中段", "下段"];
                     const posterItem = layout.poster ? itemMap[layout.poster] : null;
@@ -2838,7 +2990,7 @@ export default function CartEditor() {
                 </div>
 
                 {/* Supplementary Notes */}
-                <div className="w-full mt-4 max-w-[820px] mx-auto">
+                <div id="export-supplementary-notes" className="w-full mt-4 max-w-[820px] mx-auto">
                   {isEditingNotes ? (
                     <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xl space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">

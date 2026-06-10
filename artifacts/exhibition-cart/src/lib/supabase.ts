@@ -76,6 +76,7 @@ export interface CartLayoutV2 {
   creator?: string;
   supplementary?: string;
   isLocked?: boolean; // NEW: layout lock state
+  topNotice?: { text: string; color: string }; // NEW: top notice state
 }
 
 
@@ -102,6 +103,7 @@ export function makeInitialCartLayoutV2(): CartLayoutV2 {
     creator: "",
     supplementary: "",
     isLocked: false,
+    topNotice: { text: "", color: "inherit" },
     shelves: [
       makeDefaultShelf("none"),
       makeDefaultShelf("none"),

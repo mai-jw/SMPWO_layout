@@ -92,6 +92,8 @@ interface MobileWizardProps {
   setExportTarget: (t: "png" | "pdf" | "xlsx" | null) => void;
   notes: NoteLine[];
   setNotes: React.Dispatch<React.SetStateAction<NoteLine[]>>;
+  topNotice: { text: string; color: string };
+  setTopNotice: React.Dispatch<React.SetStateAction<{ text: string; color: string }>>;
   onLangOverride: (cart: CartId, section: "poster" | "shelf", shelfIdx?: number, slotIdx?: number, lang?: string) => void;
   isLayoutLocked: boolean;
   toggleLayoutLock: () => void;
@@ -115,6 +117,7 @@ export function MobileWizard({
   executeDeleteLayoutForPeriod, loadLayoutForEdit,
   exportTarget, setExportTarget,
   notes, setNotes,
+  topNotice, setTopNotice,
   onLangOverride,
   isLayoutLocked,
   toggleLayoutLock
@@ -130,6 +133,7 @@ export function MobileWizard({
   const [sortOrder, setSortOrder] = useState<"newest" | "name_asc" | "name_desc">("newest");
   const [previewPeriod, setPreviewPeriod] = useState<string>("");
   const [selectedPreviewPeriod, setSelectedPreviewPeriod] = useState<string | null>(null);
+  const [isEditingTopNotice, setIsEditingTopNotice] = useState(false);
 
   const isNavigatingFromPopState = React.useRef(false);
 
@@ -717,6 +721,63 @@ export function MobileWizard({
                   </div>
                 )}
               </div>
+
+              {/* Mobile top notice section */}
+              {isEditingTopNotice && !isLayoutLocked ? (
+                <div className="bg-white rounded-3xl p-5 shadow-md space-y-4 border border-slate-100">
+                  <div className="flex items-center justify-between border-b border-slate-50 pb-2">
+                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">注意事項を編集</span>
+                    <button 
+                      onClick={() => setIsEditingTopNotice(false)} 
+                      className="text-[10px] font-bold bg-primary text-white px-3 py-1 rounded-full hover:bg-primary/90 transition-colors shadow-sm"
+                    >
+                      完了
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    {[
+                      { val: "inherit", color: "bg-slate-800" },
+                      { val: "#dc2626", color: "bg-red-600" },
+                      { val: "#2563eb", color: "bg-blue-600" },
+                      { val: "#059669", color: "bg-emerald-600" }
+                    ].map(c => (
+                      <button
+                        key={c.val}
+                        onClick={() => setTopNotice(prev => ({ ...prev, color: c.val }))}
+                        className={`w-5 h-5 rounded-full transition-all ${c.color} ${topNotice.color === c.val ? "ring-2 ring-offset-1 ring-slate-300" : "opacity-40"}`}
+                      />
+                    ))}
+                  </div>
+                  <textarea
+                    value={topNotice.text}
+                    onChange={(e) => setTopNotice(prev => ({ ...prev, text: e.target.value }))}
+                    rows={2}
+                    className="w-full text-sm font-bold bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none resize-none focus:ring-2 focus:ring-primary/10 transition-all leading-normal"
+                    style={{ color: topNotice.color !== "inherit" ? topNotice.color : undefined }}
+                    placeholder="注意事項を入力してください（改行可）..."
+                  />
+                </div>
+              ) : (
+                <div 
+                  onClick={() => { if (!isLayoutLocked) setIsEditingTopNotice(true); }}
+                  className={`w-full text-center rounded-2xl transition-all ${!isLayoutLocked ? "active:scale-[0.98] border border-transparent bg-white/40 p-3 hover:bg-white/60" : ""}`}
+                >
+                  {topNotice.text && topNotice.text.trim() ? (
+                    <div 
+                      className="text-base font-black whitespace-pre-wrap leading-relaxed"
+                      style={{ color: topNotice.color !== "inherit" ? topNotice.color : "#1e293b" }}
+                    >
+                      {topNotice.text}
+                    </div>
+                  ) : (
+                    !isLayoutLocked && (
+                      <div className="text-xs font-bold text-slate-300 border-2 border-dashed border-slate-200 rounded-2xl py-3 px-4 hover:text-slate-400 hover:border-slate-300 transition-colors">
+                        ＋ ここに注意事項を追加（大文字・色変更可）
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
 
               {/* Cart A and B side-by-side actual image previews */}
               <div className="grid grid-cols-2 gap-4">
