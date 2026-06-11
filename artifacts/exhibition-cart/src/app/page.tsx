@@ -1599,6 +1599,7 @@ export default function CartEditor() {
         logging: false,
         backgroundColor: "#ffffff",
         windowWidth: version === "with-info" ? 1180 : 820,
+        windowHeight: version === "with-info" ? 900 : 1458,
         onclone: (clonedDoc) => {
           const exportStyle = clonedDoc.createElement("style");
           exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -3px !important; }";
@@ -1732,7 +1733,7 @@ export default function CartEditor() {
             clonedContainer.style.setProperty("display", "block", "important");
           } else {
             clonedContainer.style.setProperty("width", "820px", "important");
-            clonedContainer.style.setProperty("height", "1160px", "important");
+            clonedContainer.style.setProperty("height", "1458px", "important");
             clonedContainer.style.setProperty("display", "flex", "important");
             clonedContainer.style.setProperty("flex-direction", "column", "important");
             clonedContainer.style.setProperty("align-items", "center", "important");
@@ -1751,7 +1752,7 @@ export default function CartEditor() {
               }
             }
 
-            // ③ Scale up the cart pair in place (does not move their relative position)
+            // ③ Scale up the cart pair in place (sizes unchanged)
             const cartWrapper = (clonedContainer.querySelector("#export-cart-wrapper") ??
               clonedContainer.querySelector(".flex.-space-x-\\[180px\\]") ??
               Array.from(clonedContainer.querySelectorAll(".flex")).find(
@@ -1759,29 +1760,116 @@ export default function CartEditor() {
                          el.className.includes("space-x")
               )) as HTMLElement | null;
             if (cartWrapper) {
-              cartWrapper.style.setProperty("transform", "scale(1.15)", "important");
+              // Keep scale unchanged — do NOT alter cart part sizes
+              cartWrapper.style.setProperty("transform", "scale(1.60)", "important");
               cartWrapper.style.setProperty("transform-origin", "top center", "important");
-              cartWrapper.style.setProperty("margin-bottom", "100px", "important");
+              cartWrapper.style.setProperty("margin-bottom", "370px", "important");
+              // Center the wrapper: remove negative outer margins
+              cartWrapper.style.setProperty("margin-left", "0", "important");
+              cartWrapper.style.setProperty("margin-right", "0", "important");
+              // CartA moves right by 30px; CartB compensates to stay at its current position
+              cartWrapper.style.setProperty("gap", "0px", "important");
+              Array.from(cartWrapper.children).forEach((kid: any, i: number) => {
+                // i=0: CartA — shift right 30px
+                // i=1: CartB — -60px keeps CartB at the same absolute position
+                kid.style.setProperty("margin-left", i === 0 ? "30px" : "-60px", "important");
+              });
             }
 
-            // ② Pull summary table + notes toward the bottom
+            // ② Pull summary table + notes toward the bottom, and scale them up
             const summaryDiv = (clonedContainer.querySelector("#export-summary-table") ??
               clonedContainer.querySelector(".mt-6")) as HTMLElement | null;
             if (summaryDiv) {
               summaryDiv.style.setProperty("margin-top", "auto", "important");
+              summaryDiv.style.setProperty("overflow", "visible", "important");
+              // Expand the two cart column wrappers to fill full width
+              summaryDiv.querySelectorAll(":scope > div").forEach((col: any) => {
+                col.style.setProperty("flex", "1", "important");
+                col.style.setProperty("max-width", "none", "important");
+                col.style.setProperty("min-width", "0", "important");
+                col.style.setProperty("overflow", "visible", "important");
+              });
+              // Table: auto layout so columns size to content naturally
+              summaryDiv.querySelectorAll("table").forEach((table: any) => {
+                table.style.setProperty("width", "100%", "important");
+                table.style.setProperty("table-layout", "auto", "important");
+              });
+              // Label column (ポスター/上段/中段/下段) — shrink-wrapped, no wrap
+              summaryDiv.querySelectorAll("td:first-child").forEach((td: any) => {
+                td.style.setProperty("white-space", "nowrap", "important");
+                td.style.setProperty("padding-right", "8px", "important");
+              });
+              // Content column — allow wrapping, visible overflow
+              summaryDiv.querySelectorAll("td:not(:first-child)").forEach((td: any) => {
+                td.style.setProperty("word-break", "break-word", "important");
+                td.style.setProperty("white-space", "normal", "important");
+                td.style.setProperty("overflow", "visible", "important");
+              });
+              // Item name div inside content cells — allow wrapping
+              summaryDiv.querySelectorAll("td:not(:first-child) div").forEach((el: any) => {
+                el.style.setProperty("white-space", "normal", "important");
+                el.style.setProperty("overflow", "visible", "important");
+                el.style.setProperty("text-overflow", "clip", "important");
+              });
+              // Language spans — prevent wrapping (e.g. 中国語（簡体字）must not break)
+              summaryDiv.querySelectorAll("td:not(:first-child) span").forEach((el: any) => {
+                el.style.setProperty("white-space", "nowrap", "important");
+                el.style.setProperty("overflow", "visible", "important");
+                el.style.setProperty("text-overflow", "clip", "important");
+                el.style.setProperty("display", "inline-block", "important");
+              });
+              // Scale up all text — use absolute sizes for reliability
+              summaryDiv.querySelectorAll("p.text-center").forEach((el: any) => {
+                // Cart label (カートA / カートB) — prevent bottom clipping
+                el.style.setProperty("font-size", "17px", "important");
+                el.style.setProperty("line-height", "2.0", "important");
+                el.style.setProperty("padding-bottom", "4px", "important");
+                el.style.setProperty("margin-bottom", "14px", "important");
+                el.style.setProperty("overflow", "visible", "important");
+              });
+              summaryDiv.querySelectorAll("td:first-child").forEach((el: any) => {
+                el.style.setProperty("font-size", "13px", "important");
+              });
+              summaryDiv.querySelectorAll("td:not(:first-child)").forEach((el: any) => {
+                el.style.setProperty("font-size", "12px", "important");
+              });
+              summaryDiv.querySelectorAll("td:not(:first-child) div.font-bold").forEach((el: any) => {
+                el.style.setProperty("font-size", "13px", "important");
+              });
+              summaryDiv.querySelectorAll("td:not(:first-child) span, td:not(:first-child) select").forEach((el: any) => {
+                el.style.setProperty("font-size", "12px", "important");
+              });
+              summaryDiv.querySelectorAll("div, span, p, td, th").forEach((el: any) => {
+                el.style.setProperty("line-height", "1.5", "important");
+              });
             }
+            
             // supplementary notes section
             const notesDiv = (clonedContainer.querySelector("#export-supplementary-notes") ??
               Array.from(clonedContainer.querySelectorAll(".mt-4")).find(el => el.className.includes("max-w"))) as HTMLElement | null;
             if (notesDiv) {
               notesDiv.style.setProperty("margin-top", "10px", "important");
+              notesDiv.style.setProperty("max-width", "none", "important");
+              notesDiv.style.setProperty("width", "100%", "important");
+              notesDiv.querySelectorAll("p, div, span").forEach((el: any) => {
+                const currentFontSize = window.getComputedStyle(el).fontSize;
+                if (currentFontSize && currentFontSize.includes("px")) {
+                  const num = parseFloat(currentFontSize);
+                  if (num > 0) {
+                    el.style.setProperty("font-size", `${num * 1.3}px`, "important");
+                  }
+                } else {
+                  el.style.setProperty("font-size", "16px", "important");
+                }
+                el.style.setProperty("line-height", "1.4", "important");
+              });
             }
           }
 
 
-          clonedContainer.style.setProperty("height", version === "with-info" ? "auto" : "1160px", "important");
+          clonedContainer.style.setProperty("height", version === "with-info" ? "auto" : "1458px", "important");
           clonedContainer.style.setProperty("background-color", "#ffffff", "important");
-          clonedContainer.style.setProperty("padding", version === "with-info" ? "40px 40px 60px" : "24px 40px 30px", "important");
+          clonedContainer.style.setProperty("padding", version === "with-info" ? "40px 40px 60px" : "40px 40px 40px", "important");
           clonedContainer.style.setProperty("margin", "0", "important");
         }
       });
