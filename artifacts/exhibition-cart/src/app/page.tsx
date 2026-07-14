@@ -9,7 +9,7 @@ import {
   Check, Trash2, Library, Settings, Star, Book, BookOpen, FileText,
   Mail, Bookmark, Notebook, Scroll, Contact, Newspaper, BookCopy, Files,
   Map, BookText, Languages, Cloud, Monitor, Smartphone, Home, LayoutGrid, Menu, LayoutDashboard, SortAsc,
-  Plus, PlusCircle, ChevronLeft, FolderOpen, Lock, LockOpen,
+  Plus, PlusCircle, ChevronLeft, FolderOpen, Lock, LockOpen, GripVertical,
 } from "lucide-react";
 import Link from "next/link";
 import { useItems, useUpdateItem, useDeleteItem, useCopyItem } from "@/hooks/use-items";
@@ -22,6 +22,7 @@ import {
   LAYOUT_TO_CATEGORIES, LANG_FILTER_OPTIONS, EXPLICIT_LANG_KEYS 
 } from "@/lib/config";
 import { MobileWizard } from "@/components/MobileWizard";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import {
   type Item, type ShelfKey, type ShelfData, type CartLayoutV2,
   type TagData, type ShelfLayoutType, type NoteLine,
@@ -975,10 +976,10 @@ function SelectionSidebar({
             </div>
             <div className="flex flex-col items-center">
               <p className="text-base font-black text-slate-700 w-full">編集箇所を選択してください</p>
-              <p className="text-[11px] font-bold text-slate-400 mt-1 leading-relaxed w-full text-left bg-slate-50 p-3 rounded-lg border border-slate-100 mt-3">
-                まず段の設定をおこなってください。<br />
-                各スロットの画像を選択してください。
-              </p>
+              <div className="text-sm font-bold mt-3 leading-relaxed w-full text-left space-y-1" style={{ color: "#d9480f" }}>
+                <p className="whitespace-nowrap">まず段の設定をおこなってください。</p>
+                <p className="whitespace-nowrap">各スロットの画像を選択してください。</p>
+              </div>
             </div>
           </div>
         ) : activeTarget.section === "tag" ? (
@@ -1124,6 +1125,9 @@ export default function CartEditor() {
   const [isEditingLocations, setIsEditingLocations] = useState(false);
   const [locationEditInput, setLocationEditInput] = useState("");
   const [layoutDeleteConfirm, setLayoutDeleteConfirm] = useState(false);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
+  const dragLocIndex = useRef<number | null>(null);
+  const dragLocOverIndex = useRef<number | null>(null);
   
   // View Mode state (Device-based + Manual Override)
   const { isMobileView, toggleViewMode, hasMounted } = useViewMode();
@@ -1145,12 +1149,34 @@ export default function CartEditor() {
     }
   }, [hasMounted, isMobileView]);
 
+  useEffect(() => {
+    if (hasMounted) {
+      if (!isMobileView) {
+        document.body.style.zoom = "1.1";
+      } else {
+        document.body.style.zoom = "1";
+      }
+    }
+    return () => {
+      if (typeof document !== "undefined") {
+        document.body.style.zoom = "1";
+      }
+    };
+  }, [isMobileView, hasMounted]);
+
   const { data: locationsConfig = DEFAULT_LOCATIONS } = useLocationsConfig();
   const saveLocationsConfig = useSaveLocationsConfig();
   const [editingLocList, setEditingLocList] = useState<string[]>([]);
   
   useEffect(() => {
     setEditingLocList(locationsConfig);
+  }, [locationsConfig]);
+
+  useEffect(() => {
+    setNewLocations(prev => {
+      const filtered = prev.filter(l => l === "すべて" || locationsConfig.includes(l));
+      return filtered.length === 0 ? ["すべて"] : filtered;
+    });
   }, [locationsConfig]);
 
   const formatPeriodDisplay = useCallback((p: string) => {
@@ -2488,7 +2514,7 @@ export default function CartEditor() {
 
       <AnimatePresence>
         {isEditingLocations && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsEditingLocations(false)} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[80vh] overflow-hidden">
               <div className="p-4 border-b border-slate-100 flex items-center justify-between">
@@ -2498,17 +2524,29 @@ export default function CartEditor() {
               <div className="flex-1 overflow-y-auto p-2 min-h-[50px]">
                 <div className="space-y-1">
                   {editingLocList.map((loc, i) => (
-                    <div key={loc} className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-lg group border border-transparent">
-                      <div className="flex flex-col gap-0.5 opacity-30 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => {
-                          if (i === 0) return;
-                          setEditingLocList(prev => { const n = [...prev]; [n[i-1], n[i]] = [n[i], n[i-1]]; return n; });
-                        }} className="p-0.5 hover:bg-slate-200 rounded disabled:opacity-30" disabled={i === 0}><ChevronDown className="w-3 h-3 rotate-180" /></button>
-                        <button onClick={() => {
-                          if (i === editingLocList.length - 1) return;
-                          setEditingLocList(prev => { const n = [...prev]; [n[i+1], n[i]] = [n[i], n[i+1]]; return n; });
-                        }} className="p-0.5 hover:bg-slate-200 rounded disabled:opacity-30" disabled={i === editingLocList.length - 1}><ChevronDown className="w-3 h-3" /></button>
-                      </div>
+                    <div
+                      key={loc}
+                      draggable
+                      onDragStart={() => { dragLocIndex.current = i; }}
+                      onDragEnter={() => { dragLocOverIndex.current = i; }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDragEnd={() => {
+                        const from = dragLocIndex.current;
+                        const to = dragLocOverIndex.current;
+                        if (from !== null && to !== null && from !== to) {
+                          setEditingLocList(prev => {
+                            const n = [...prev];
+                            const [moved] = n.splice(from, 1);
+                            n.splice(to, 0, moved);
+                            return n;
+                          });
+                        }
+                        dragLocIndex.current = null;
+                        dragLocOverIndex.current = null;
+                      }}
+                      className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-lg group border border-transparent cursor-grab active:cursor-grabbing"
+                    >
+                      <GripVertical className="w-4 h-4 text-slate-300 group-hover:text-slate-400 transition-colors shrink-0" />
                       <span className="flex-1 text-sm font-bold truncate">{loc}</span>
                       <button onClick={() => setEditingLocList(prev => prev.filter(l => l !== loc))} className="p-1.5 text-slate-400 hover:text-red-500 rounded-md hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"><Trash2 className="w-4 h-4" /></button>
                     </div>
@@ -2589,9 +2627,9 @@ export default function CartEditor() {
       )}
 
       {/* Wrap existing content in conditional to hide when showing wizard */}
-      <div className={`flex flex-col h-[calc(100vh-56px)] bg-background ${isMobileView ? "pointer-events-none fixed inset-0 -z-10" : "flex"}`}>
+      <div className={`flex flex-col h-[calc(100vh-56px)] bg-background ${isMobileView ? "pointer-events-none fixed inset-0 -z-10" : "flex min-w-[1280px]"}`}>
       {/* Top Toolbar */}
-      <div className="shrink-0 bg-white px-4 py-1.5 flex items-center gap-3 relative z-30">
+      <div className="shrink-0 bg-white px-4 py-2.5 flex items-center gap-3 relative z-30">
         {/* Absolute border to stay on top of scaled logo */}
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-border z-50 pointer-events-none" />
 
@@ -2611,8 +2649,8 @@ export default function CartEditor() {
         )}
 
         
-        <div className={`flex items-center gap-3 tracking-tight h-10 relative ${isMobileView ? "mr-2" : "mr-6"}`}>
-          <div className="w-12 h-10 flex items-center justify-center relative mx-4 shrink-0">
+        <div className={`flex items-center gap-3 tracking-tight h-12 relative ${isMobileView ? "mr-2" : "mr-6"}`}>
+          <div className="w-12 h-12 flex items-center justify-center relative mx-4 shrink-0">
             <img 
               src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/samesame.gif" 
               alt="SMPWO Logo" 
@@ -2622,14 +2660,14 @@ export default function CartEditor() {
           {isMobileView ? (
             <span className="font-rounded font-black text-sm tracking-widest text-[#64748b] mt-0.5 relative z-10 block whitespace-nowrap">SMPWO LAYOUT</span>
           ) : (
-            <span className="font-rounded font-black text-xl tracking-widest text-[#64748b] mt-0.5 relative z-10 hidden sm:inline">SMPWO LAYOUT</span>
+            <span className="font-rounded font-black text-2xl tracking-widest text-[#64748b] mt-0.5 relative z-10 hidden sm:inline">SMPWO LAYOUT</span>
           )}
         </div>
 
         {/* Period selector: PC only */}
         {!isMobileView && (
-          <div className="flex items-center gap-1.5 bg-white border border-border rounded-none px-2 py-0.5 shadow-xs hover:border-primary/40 transition-colors">
-            <CalendarDays className="w-3.5 h-3.5 text-muted-foreground shrink-0 ml-1" />
+          <div className="flex items-center gap-1.5 bg-white border border-border rounded-none px-3 py-1 shadow-xs hover:border-primary/40 transition-colors">
+            <CalendarDays className="w-4 h-4 text-muted-foreground shrink-0 ml-1" />
             <select 
               value={period} 
               onChange={(e) => {
@@ -2637,7 +2675,7 @@ export default function CartEditor() {
               }}
 
 
-              className="text-xs sm:text-sm font-semibold text-foreground bg-transparent outline-none w-32 sm:w-56 cursor-pointer"
+              className="text-sm font-semibold text-foreground bg-transparent outline-none w-36 sm:w-60 cursor-pointer"
             >
               {!layouts.some(l => l.period === period) && (
                 <option value={period}>{formatPeriodDisplay(period)}</option>
@@ -2651,8 +2689,8 @@ export default function CartEditor() {
         {!isMobileView && (
           <div className="relative" ref={newPanelRef}>
             <button onClick={() => setShowNewPanel((v) => !v)}
-              className="flex items-center gap-1.5 text-sm px-2 sm:px-3 py-0.5 rounded-none border border-border bg-white hover:bg-muted font-bold text-foreground transition-all shadow-xs active:scale-95 select-none">
-              {isMobileView ? "新規" : "新規作成"}<ChevronDown className="w-3 h-3" />
+              className="flex items-center gap-1.5 text-sm px-3 sm:px-4 py-1.5 rounded-none border border-border bg-white hover:bg-muted font-bold text-foreground transition-all shadow-xs active:scale-95 select-none whitespace-nowrap">
+              {isMobileView ? "新規" : "新規作成"}<ChevronDown className="w-4 h-4 shrink-0" />
             </button>
             <AnimatePresence>
               {showNewPanel && (
@@ -2756,44 +2794,54 @@ export default function CartEditor() {
         {!isMobileView && (
           <>
             {/* Lock Button */}
-            <button
-              onClick={toggleLayoutLock}
-              className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-bold transition-all select-none border ${
-                isLayoutLocked 
-                  ? "bg-rose-50 text-rose-600 border-rose-200 shadow-inner" 
-                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 shadow-sm"
-              }`}
-              title={isLayoutLocked ? "ロックを解除" : "レイアウトをロック"}
-            >
-              {isLayoutLocked ? (
-                <>
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>提出済ロック</span>
-                </>
-              ) : (
-                <>
-                  <LockOpen className="w-3.5 h-3.5 opacity-60" />
-                  <span>提出済ロック</span>
-                </>
-              )}
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={toggleLayoutLock}
+                  className={`flex items-center gap-1.5 text-sm px-3 py-1.5 min-h-[32px] rounded-md font-bold transition-all select-none border cursor-pointer ${
+                    isLayoutLocked 
+                      ? "bg-rose-50 text-rose-600 border-rose-200 shadow-inner" 
+                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 shadow-sm"
+                  }`}
+                >
+                  {isLayoutLocked ? (
+                    <>
+                      <Lock className="w-4 h-4 shrink-0" />
+                      <span className="header-btn-text">提出済ロック</span>
+                    </>
+                  ) : (
+                    <>
+                      <LockOpen className="w-4 h-4 opacity-60 shrink-0" />
+                      <span className="header-btn-text">提出済ロック</span>
+                    </>
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isLayoutLocked ? "ロックを解除" : "提出済ロック"}
+              </TooltipContent>
+            </Tooltip>
 
             {/* Save Button (Removed Library/Upload from here) */}
-            <button onClick={() => handleSave()} disabled={saveStatus === "saving" || !period.trim()}
-              className={`flex items-center gap-1.5 text-xs px-3 py-1 min-h-[28px] rounded-md font-medium transition-all select-none disabled:opacity-60 ${
-                saveStatus === "saved" ? "bg-emerald-500 text-white" :
-                saveStatus === "error" ? "bg-red-500 text-white" : "bg-[#1b618d] text-white hover:opacity-90 shadow-sm"
-              }`}>
-              {saveStatus === "saved" ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> :
-              saveStatus === "saving" ? <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" /> :
-              <Save className="w-3.5 h-3.5 shrink-0" />}
-              <span className="hidden sm:inline">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button onClick={() => handleSave()} disabled={saveStatus === "saving" || !period.trim()}
+                  className={`flex items-center gap-1.5 text-sm px-3 py-1.5 min-h-[32px] rounded-md font-medium transition-all select-none disabled:opacity-60 cursor-pointer ${
+                    saveStatus === "saved" ? "bg-emerald-500 text-white" :
+                    saveStatus === "error" ? "bg-red-500 text-white" : "bg-[#1b618d] text-white hover:opacity-90 shadow-sm"
+                  }`}>
+                  {saveStatus === "saved" ? <CheckCircle2 className="w-4 h-4 shrink-0" /> :
+                  saveStatus === "saving" ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" /> :
+                  <Save className="w-4 h-4 shrink-0" />}
+                  <span className="header-btn-text">
+                    {saveStatus === "saved" ? "保存済み" : saveStatus === "error" ? "エラー" : saveStatus === "saving" ? "保存中…" : (isExistingPeriod ? "上書き保存" : "保存")}
+                  </span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
                 {saveStatus === "saved" ? "保存済み" : saveStatus === "error" ? "エラー" : saveStatus === "saving" ? "保存中…" : (isExistingPeriod ? "上書き保存" : "保存")}
-              </span>
-              <span className="sm:hidden">
-                {saveStatus === "saved" ? "OK" : saveStatus === "saving" ? "…" : "保存"}
-              </span>
-            </button>
+              </TooltipContent>
+            </Tooltip>
 
             {isExistingPeriod && (
               <div className="relative">
@@ -2829,23 +2877,40 @@ export default function CartEditor() {
             {/* Compact Export Buttons for Mobile */}
 
 
-            <div className="flex items-center gap-1 px-1 border-l border-border ml-1">
+            <div className="flex items-center gap-1.5 px-2 border-l border-border ml-1">
               {[
-                { key: "png" as const, label: "PNG", icon: <FileImage className="w-3.5 h-3.5" />, cls: "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold shadow-xs" },
-                { key: "pdf" as const, label: "PDF", icon: <Download className="w-3.5 h-3.5" />, cls: "border-red-400 bg-red-50 text-red-700 hover:bg-red-100 font-bold shadow-xs" },
-                { key: "xlsx" as const, label: "Excel", icon: <FileSpreadsheet className="w-3.5 h-3.5" />, cls: "border-green-400 bg-green-50 text-green-700 hover:bg-green-100 font-bold shadow-xs" },
-              ].map(({ key, label, icon, cls }) => (
+                { key: "png" as const, label: "PNG", icon: <FileImage className="w-4 h-4" />, cls: "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold shadow-xs", size: "lg" },
+                { key: "pdf" as const, label: "PDF", icon: <Download className="w-3.5 h-3.5" />, cls: "border-red-400 bg-red-50 text-red-700 hover:bg-red-100 font-bold shadow-xs", size: "sm" },
+                { key: "xlsx" as const, label: "Excel", icon: <FileSpreadsheet className="w-3.5 h-3.5" />, cls: "border-green-400 bg-green-50 text-green-700 hover:bg-green-100 font-bold shadow-xs", size: "sm" },
+              ].map(({ key, label, icon, cls, size }) => (
                 <button key={key} disabled={!!exporting}
                   onClick={() => setExportTarget(key)}
-                  className={`flex items-center gap-1 text-[10px] px-1.5 sm:px-2 py-0.5 rounded-md border disabled:opacity-50 transition-all active:scale-95 select-none ${cls}`}>
-
-                  {exporting === key ? <div className="w-3.5 h-3.5 border-2 border-current/30 border-t-white rounded-full animate-spin" /> : icon}
+                  className={`flex items-center gap-1 border disabled:opacity-50 transition-all active:scale-95 select-none rounded-md ${cls} ${
+                    size === "lg"
+                      ? "text-xs px-2 sm:px-2.5 py-1"
+                      : "text-[10px] px-1.5 sm:px-2 py-0.5"
+                  }`}>
+                  {exporting === key ? <div className={`border-2 border-current/30 border-t-white rounded-full animate-spin ${size === "lg" ? "w-4 h-4" : "w-3.5 h-3.5"}`} /> : icon}
                   <span className="hidden sm:inline">{label}</span>
                   {key === "xlsx" && <span className="sm:hidden">Excel</span>}
                   {key !== "xlsx" && <span className="sm:hidden uppercase">{key}</span>}
                 </button>
               ))}
             </div>
+
+            {/* Right Sidebar Toggle Button */}
+            <button
+              onClick={() => setIsRightSidebarOpen(prev => !prev)}
+              className={`flex items-center gap-1.5 text-xs px-2.5 py-1 min-h-[28px] rounded-md font-bold transition-all select-none border ml-1 cursor-pointer ${
+                isRightSidebarOpen 
+                  ? "bg-sky-50 text-[#1b618d] border-sky-200 hover:bg-sky-100" 
+                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+              }`}
+              title={isRightSidebarOpen ? "コンセプトとコメントを非表示" : "コンセプトとコメントを表示"}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>{isRightSidebarOpen ? "コメント非表示" : "コメント表示"}</span>
+            </button>
           </>
         )}
         {/* View Mode Toggle (PC) - removed as per user request */}
@@ -2858,27 +2923,39 @@ export default function CartEditor() {
         {/* Desktop Left Sidebar: LIBRARY & Upload Buttons */}
         {!isMobileView && (
           <aside className="w-[72px] bg-[#64748b] border-r border-slate-700/30 flex flex-col items-center py-8 gap-8 shrink-0 z-20 shadow-[4px_0_12px_rgba(0,0,0,0.1)]">
-            <Link 
-              href="/library" 
-              className="group flex flex-col items-center gap-1.5 transition-all"
-              title="LIBRARY"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white group-hover:bg-[#aecbe2] group-hover:text-slate-800 transition-all shadow-lg group-hover:scale-110">
-                <Library className="w-6 h-6" />
-              </div>
-              <span className="text-[10px] font-black text-white/50 group-hover:text-white uppercase tracking-widest mt-0.5">Library</span>
-            </Link>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link 
+                  href="/library" 
+                  className="group flex flex-col items-center gap-1.5 transition-all"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white group-hover:bg-[#aecbe2] group-hover:text-slate-800 transition-all shadow-lg group-hover:scale-110">
+                    <Library className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] font-black text-white/50 group-hover:text-white uppercase tracking-widest mt-0.5">Library</span>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={12}>
+                登録済み画像の閲覧
+              </TooltipContent>
+            </Tooltip>
 
-            <button 
-              onClick={openUploadPanel}
-              className="group flex flex-col items-center gap-1.5 transition-all"
-              title="画像をアップロード"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-[#ffd76d] flex items-center justify-center text-zinc-800 transition-all shadow-lg group-hover:bg-[#ffeaab] group-hover:scale-110">
-                <Upload className="w-6 h-6" />
-              </div>
-              <span className="text-[10px] font-black text-white/50 group-hover:text-white uppercase tracking-widest mt-0.5">Upload</span>
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  onClick={openUploadPanel}
+                  className="group flex flex-col items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-[#ffd76d] flex items-center justify-center text-zinc-800 transition-all shadow-lg group-hover:bg-[#ffeaab] group-hover:scale-110">
+                    <Upload className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] font-black text-white/50 group-hover:text-white uppercase tracking-widest mt-0.5">Upload</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={12}>
+                画像の新規登録
+              </TooltipContent>
+            </Tooltip>
           </aside>
         )}
 
@@ -2943,8 +3020,8 @@ export default function CartEditor() {
 
 
         
-        <main className="flex-1 overflow-auto p-3 sm:p-5 h-full bg-[#fdfaf3]">
-          <div className="flex items-center justify-between mb-4">
+        <main className="flex-1 overflow-auto p-2 sm:p-3 h-full bg-[#fdfaf3]">
+          <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-black text-foreground tracking-tight">カートレイアウト</h2>
             </div>
@@ -2958,7 +3035,7 @@ export default function CartEditor() {
 
           <div 
             ref={cartScrollRef}
-            className={`flex-1 w-full flex flex-col items-center justify-center pb-12 pt-4 overflow-hidden select-none`}
+            className={`flex-1 w-full flex flex-col items-center justify-center pb-12 pt-1 overflow-hidden select-none`}
             style={{ WebkitOverflowScrolling: "touch" }}
           >
             <motion.div layout className={`shrink-0 flex items-center justify-center ${isMobileView ? "-mt-12" : ""}`}>
@@ -2969,7 +3046,7 @@ export default function CartEditor() {
                 style={isMobileView ? { width: "820px" } : {}}
               >
                 {/* Top Notice Area (PC / Exportable) */}
-                <div id="export-top-notice" className="w-full max-w-[820px] mb-4 z-20">
+                <div id="export-top-notice" className="w-full max-w-[820px] mb-2 z-20">
                   {isEditingTopNotice && !isLayoutLocked ? (
                     <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xl space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -3295,12 +3372,19 @@ export default function CartEditor() {
         </AnimatePresence>
 
         {/* Desktop Right Settings Sidebar (Concept & Comments) */}
-        {!isMobileView && (
+        {!isMobileView && isRightSidebarOpen && (
           <aside className="w-[360px] h-full bg-white border-l border-border flex flex-col shrink-0 z-10 shadow-sm">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <h3 className="font-bold text-slate-800 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-primary" /> コンセプトとコメント
               </h3>
+              <button 
+                onClick={() => setIsRightSidebarOpen(false)}
+                className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                title="非表示にする"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
             <div className="flex-1 overflow-y-auto p-5 space-y-8 scrollbar-hide">
               {/* Creator & Concept Section */}
@@ -3826,7 +3910,20 @@ export default function CartEditor() {
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase text-slate-400 px-1">地点を選択</label>
+                          <div className="flex items-center justify-between px-1">
+                            <label className="text-[10px] font-black uppercase text-slate-400">地点を選択</label>
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                setEditingLocList(locationsConfig);
+                                setIsEditingLocations(true);
+                              }}
+                              className="text-[10px] font-bold text-sky-500 hover:text-sky-600 transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                              <Pencil className="w-3 h-3" />
+                              追加・編集
+                            </button>
+                          </div>
                           <div className="grid grid-cols-2 gap-2 bg-slate-50 p-4 rounded-[2rem] border-2 border-slate-100 max-h-[160px] overflow-y-auto">
                             <label className="flex items-center gap-3 p-2 rounded-xl hover:bg-white cursor-pointer transition-colors text-xs font-bold">
                               <input type="checkbox" checked={newLocations.includes("すべて")} onChange={() => setNewLocations(["すべて"])} className="rounded text-sky-500" />
@@ -3979,6 +4076,11 @@ export default function CartEditor() {
         .scrollbar-hide {
           -ms-overflow-style: none;
           scrollbar-width: none;
+        }
+        @media (max-width: 1400px) {
+          .header-btn-text {
+            display: none;
+          }
         }
       `}</style>
     </div>
