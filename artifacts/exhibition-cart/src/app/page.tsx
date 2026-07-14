@@ -28,9 +28,7 @@ import {
   type TagData, type ShelfLayoutType, type NoteLine,
   makeInitialCartLayoutV2, makeDefaultShelf, filledCountV2, maxCountV2,
 } from "@/lib/supabase";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
-import ExcelJS from "exceljs";
+// Heavy export libs are loaded on-demand inside handlers to reduce initial bundle size
 
 export type CartId = "A" | "B";
 export type ActiveTarget =
@@ -1128,6 +1126,8 @@ export default function CartEditor() {
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
   const dragLocIndex = useRef<number | null>(null);
   const dragLocOverIndex = useRef<number | null>(null);
+  // Tracks which metadata field is focused — prevents background refetch from overwriting active input
+  const focusedMetaField = useRef<string | null>(null);
   
   // View Mode state (Device-based + Manual Override)
   const { isMobileView, toggleViewMode, hasMounted } = useViewMode();
@@ -1235,9 +1235,10 @@ export default function CartEditor() {
           const raw = existing.cart_a.supplementary || "";
           setNotes(raw.trim() ? raw.split("\n").map(l => ({ text: l, color: "inherit" })) : []);
         }
-        setConcept(existing.cart_a.concept || "");
-        setComment(existing.cart_a.comment || "");
-        setCreator(existing.cart_a.creator || "");
+        // Skip overwriting fields the user is actively editing
+        if (focusedMetaField.current !== "concept") setConcept(existing.cart_a.concept || "");
+        if (focusedMetaField.current !== "comment") setComment(existing.cart_a.comment || "");
+        if (focusedMetaField.current !== "creator") setCreator(existing.cart_a.creator || "");
         setIsLayoutLocked(existing.cart_a.isLocked || false);
         setTopNotice(existing.cart_a.topNotice || { text: "", color: "inherit" });
       }
@@ -1619,7 +1620,8 @@ export default function CartEditor() {
         return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
       }));
 
-      const canvas = await html2canvas(container, { 
+      const html2canvasLib = (await import("html2canvas")).default;
+      const canvas = await html2canvasLib(container, { 
         scale: 1.2, 
         useCORS: true, 
         logging: false,
@@ -2035,7 +2037,8 @@ export default function CartEditor() {
         return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
       }));
 
-      const canvas = await html2canvas(container, { 
+      const html2canvasLib2 = (await import("html2canvas")).default;
+      const canvas = await html2canvasLib2(container, { 
         scale: 2, 
         useCORS: true, 
         logging: false,
@@ -2267,7 +2270,8 @@ export default function CartEditor() {
       container.style.cssText = originalStyle;
       container.className = originalClassName;
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: [216, 384] });
+      const { jsPDF: JsPDF } = await import("jspdf");
+      const pdf = new JsPDF({ orientation: "portrait", unit: "mm", format: [216, 384] });
       const pW = pdf.internal.pageSize.getWidth();
       const pH = pdf.internal.pageSize.getHeight();
       
@@ -2308,7 +2312,8 @@ export default function CartEditor() {
         if (img.complete) return Promise.resolve();
         return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
       }));
-      const cartCanvas = await html2canvas(container, { 
+      const html2canvasLib3 = (await import("html2canvas")).default;
+      const cartCanvas = await html2canvasLib3(container, { 
         scale: 2, 
         useCORS: true, 
         logging: true,
@@ -2446,6 +2451,7 @@ export default function CartEditor() {
       });
 
       const cartImgBase64 = cartCanvas.toDataURL("image/png");
+      const ExcelJS = (await import("exceljs")).default;
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("配置レイアウト");
       const cartImageId = workbook.addImage({ base64: cartImgBase64, extension: "png" });
@@ -3402,7 +3408,8 @@ export default function CartEditor() {
                     type="text"
                     value={creator}
                     onChange={(e) => setCreator(e.target.value)}
-                    onBlur={() => handleSave(true)}
+                    onFocus={() => { focusedMetaField.current = "creator"; }}
+                    onBlur={() => { focusedMetaField.current = null; handleSave(true); }}
                     placeholder="作成者の名前を入力"
                     disabled={isLayoutLocked}
                     className={`w-full text-xs font-bold border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all ${isLayoutLocked ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -3414,7 +3421,8 @@ export default function CartEditor() {
                   <textarea 
                     value={concept}
                     onChange={(e) => setConcept(e.target.value)}
-                    onBlur={() => handleSave(true)}
+                    onFocus={() => { focusedMetaField.current = "concept"; }}
+                    onBlur={() => { focusedMetaField.current = null; handleSave(true); }}
                     placeholder="コンセプトを入力してください"
                     disabled={isLayoutLocked}
                     className={`w-full text-xs font-medium border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none h-[120px] ${isLayoutLocked ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -3429,7 +3437,8 @@ export default function CartEditor() {
                   <textarea 
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    onBlur={() => handleSave(true)}
+                    onFocus={() => { focusedMetaField.current = "comment"; }}
+                    onBlur={() => { focusedMetaField.current = null; handleSave(true); }}
                     placeholder="コメントを入力してください"
                     disabled={isLayoutLocked}
                     className={`w-full text-xs font-medium border border-slate-200 rounded-xl p-3 bg-slate-50 focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/5 outline-none transition-all resize-none h-[150px] ${isLayoutLocked ? "opacity-50 cursor-not-allowed" : ""}`}
