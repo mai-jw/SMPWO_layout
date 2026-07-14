@@ -1722,12 +1722,10 @@ export default function CartEditor() {
                   <p style="font-size: 11px; color: #64748b; font-weight: 800; margin-bottom: 6px; text-transform: uppercase;">コメント</p>
                   <p style="font-size: 13px; font-weight: 600; color: #334155; white-space: normal; word-break: break-all; overflow-wrap: break-word; line-height: 1.5;">${safeComment}</p>
                 </div>
-
               </div>
             `;
             wrapper.appendChild(infoPanel);
             clonedContainer.appendChild(wrapper);
-
 
             clonedContainer.style.setProperty("width", "1180px", "important");
             clonedContainer.style.setProperty("display", "block", "important");
@@ -1763,7 +1761,7 @@ export default function CartEditor() {
               // Keep scale unchanged — do NOT alter cart part sizes
               cartWrapper.style.setProperty("transform", "scale(1.60)", "important");
               cartWrapper.style.setProperty("transform-origin", "top center", "important");
-              cartWrapper.style.setProperty("margin-bottom", "370px", "important");
+              cartWrapper.style.setProperty("margin-bottom", "220px", "important");
               // Center the wrapper: remove negative outer margins
               cartWrapper.style.setProperty("margin-left", "0", "important");
               cartWrapper.style.setProperty("margin-right", "0", "important");
@@ -1776,96 +1774,186 @@ export default function CartEditor() {
               });
             }
 
-            // ② Pull summary table + notes toward the bottom, and scale them up
+            // ② Pull summary table + notes toward the bottom
             const summaryDiv = (clonedContainer.querySelector("#export-summary-table") ??
               clonedContainer.querySelector(".mt-6")) as HTMLElement | null;
             if (summaryDiv) {
               summaryDiv.style.setProperty("margin-top", "auto", "important");
+              summaryDiv.style.setProperty("margin-bottom", "20px", "important");
               summaryDiv.style.setProperty("overflow", "visible", "important");
-              // Expand the two cart column wrappers to fill full width
-              summaryDiv.querySelectorAll(":scope > div").forEach((col: any) => {
-                col.style.setProperty("flex", "1", "important");
-                col.style.setProperty("max-width", "none", "important");
-                col.style.setProperty("min-width", "0", "important");
-                col.style.setProperty("overflow", "visible", "important");
-              });
-              // Table: auto layout so columns size to content naturally
-              summaryDiv.querySelectorAll("table").forEach((table: any) => {
-                table.style.setProperty("width", "100%", "important");
-                table.style.setProperty("table-layout", "auto", "important");
-              });
-              // Label column (ポスター/上段/中段/下段) — shrink-wrapped, no wrap
-              summaryDiv.querySelectorAll("td:first-child").forEach((td: any) => {
-                td.style.setProperty("white-space", "nowrap", "important");
-                td.style.setProperty("padding-right", "8px", "important");
-              });
-              // Content column — allow wrapping, visible overflow
-              summaryDiv.querySelectorAll("td:not(:first-child)").forEach((td: any) => {
-                td.style.setProperty("word-break", "break-word", "important");
-                td.style.setProperty("white-space", "normal", "important");
-                td.style.setProperty("overflow", "visible", "important");
-              });
-              // Item name div inside content cells — allow wrapping
-              summaryDiv.querySelectorAll("td:not(:first-child) div").forEach((el: any) => {
-                el.style.setProperty("white-space", "normal", "important");
-                el.style.setProperty("overflow", "visible", "important");
-                el.style.setProperty("text-overflow", "clip", "important");
-              });
-              // Language spans — prevent wrapping (e.g. 中国語（簡体字）must not break)
-              summaryDiv.querySelectorAll("td:not(:first-child) span").forEach((el: any) => {
-                el.style.setProperty("white-space", "nowrap", "important");
-                el.style.setProperty("overflow", "visible", "important");
-                el.style.setProperty("text-overflow", "clip", "important");
-                el.style.setProperty("display", "inline-block", "important");
-              });
-              // Scale up all text — use absolute sizes for reliability
-              summaryDiv.querySelectorAll("p.text-center").forEach((el: any) => {
-                // Cart label (カートA / カートB) — prevent bottom clipping
-                el.style.setProperty("font-size", "17px", "important");
-                el.style.setProperty("line-height", "2.0", "important");
-                el.style.setProperty("padding-bottom", "4px", "important");
-                el.style.setProperty("margin-bottom", "14px", "important");
-                el.style.setProperty("overflow", "visible", "important");
-              });
-              summaryDiv.querySelectorAll("td:first-child").forEach((el: any) => {
-                el.style.setProperty("font-size", "13px", "important");
-              });
-              summaryDiv.querySelectorAll("td:not(:first-child)").forEach((el: any) => {
-                el.style.setProperty("font-size", "12px", "important");
-              });
-              summaryDiv.querySelectorAll("td:not(:first-child) div.font-bold").forEach((el: any) => {
-                el.style.setProperty("font-size", "13px", "important");
-              });
-              summaryDiv.querySelectorAll("td:not(:first-child) span, td:not(:first-child) select").forEach((el: any) => {
-                el.style.setProperty("font-size", "12px", "important");
-              });
-              summaryDiv.querySelectorAll("div, span, p, td, th").forEach((el: any) => {
-                el.style.setProperty("line-height", "1.5", "important");
-              });
-            }
-            
-            // supplementary notes section
-            const notesDiv = (clonedContainer.querySelector("#export-supplementary-notes") ??
-              Array.from(clonedContainer.querySelectorAll(".mt-4")).find(el => el.className.includes("max-w"))) as HTMLElement | null;
-            if (notesDiv) {
-              notesDiv.style.setProperty("margin-top", "10px", "important");
-              notesDiv.style.setProperty("max-width", "none", "important");
-              notesDiv.style.setProperty("width", "100%", "important");
-              notesDiv.querySelectorAll("p, div, span").forEach((el: any) => {
-                const currentFontSize = window.getComputedStyle(el).fontSize;
-                if (currentFontSize && currentFontSize.includes("px")) {
-                  const num = parseFloat(currentFontSize);
-                  if (num > 0) {
-                    el.style.setProperty("font-size", `${num * 1.3}px`, "important");
-                  }
-                } else {
-                  el.style.setProperty("font-size", "16px", "important");
-                }
-                el.style.setProperty("line-height", "1.4", "important");
-              });
             }
           }
 
+          // Common Styling for Cart Layout Detail Tables (PNG Export only)
+          const finalSummaryDiv = (clonedContainer.querySelector("#export-summary-table") ??
+            clonedContainer.querySelector(".mt-6")) as HTMLElement | null;
+          if (finalSummaryDiv) {
+            finalSummaryDiv.style.setProperty("gap", "12px", "important");
+            finalSummaryDiv.style.setProperty("overflow", "visible", "important");
+
+            // ── STEP 1: Full reset of all height/overflow constraints ──────────────
+            finalSummaryDiv.querySelectorAll("*").forEach((el: any) => {
+              el.style.setProperty("height", "auto", "important");
+              el.style.setProperty("max-height", "none", "important");
+              el.style.setProperty("min-height", "0", "important");
+              el.style.setProperty("overflow", "visible", "important");
+              el.style.setProperty("clip", "auto", "important");
+              el.style.setProperty("clip-path", "none", "important");
+            });
+
+            // ── STEP 2: Column layout ──────────────────────────────────────────────
+            const cols = Array.from(finalSummaryDiv.querySelectorAll(":scope > div"));
+
+            // Hide the label column (ポスター/上段...) for Cart B to maximize horizontal space
+            if (cols[1]) {
+              cols[1].querySelectorAll("td:first-child").forEach((td: any) => {
+                td.style.setProperty("display", "none", "important");
+              });
+            }
+
+            cols.forEach((col: any) => {
+              col.style.setProperty("flex", "1", "important");
+              col.style.setProperty("max-width", "none", "important");
+              col.style.setProperty("min-width", "0", "important");
+              col.style.setProperty("overflow", "visible", "important");
+            });
+
+            // ── STEP 3: Table / Row sizing ─────────────────────────────────────────
+            finalSummaryDiv.querySelectorAll("table").forEach((table: any) => {
+              table.style.setProperty("width", "100%", "important");
+              table.style.setProperty("table-layout", "auto", "important");
+              table.style.setProperty("overflow", "visible", "important");
+              table.style.setProperty("height", "auto", "important");
+            });
+
+            finalSummaryDiv.querySelectorAll("tr").forEach((tr: any) => {
+              tr.style.setProperty("height", "auto", "important");
+              tr.style.setProperty("min-height", "80px", "important");
+              tr.style.setProperty("overflow", "visible", "important");
+            });
+
+            // ── STEP 4: Cell sizing and alignment ─────────────────────────────────
+            finalSummaryDiv.querySelectorAll("td").forEach((td: any) => {
+              td.style.setProperty("height", "auto", "important");
+              td.style.setProperty("min-height", "80px", "important");
+              td.style.setProperty("padding-top", "0px", "important");
+              td.style.setProperty("padding-bottom", "6px", "important");
+              td.style.setProperty("padding-left", "2px", "important");
+              td.style.setProperty("padding-right", "2px", "important");
+              td.style.setProperty("vertical-align", "top", "important");
+              td.style.setProperty("overflow", "visible", "important");
+            });
+
+            finalSummaryDiv.querySelectorAll("td:first-child").forEach((td: any) => {
+              td.style.setProperty("white-space", "nowrap", "important");
+              td.style.setProperty("padding-right", "6px", "important");
+            });
+
+            finalSummaryDiv.querySelectorAll("td:not(:first-child)").forEach((td: any) => {
+              td.style.setProperty("word-break", "break-word", "important");
+              td.style.setProperty("white-space", "normal", "important");
+              td.style.setProperty("overflow", "visible", "important");
+            });
+
+            // ── STEP 5: Inner div/span resets ─────────────────────────────────────
+            finalSummaryDiv.querySelectorAll("td > div, td > span").forEach((el: any) => {
+              el.style.setProperty("height", "auto", "important");
+              el.style.setProperty("max-height", "none", "important");
+              el.style.setProperty("overflow", "visible", "important");
+            });
+
+            // ── STEP 6: Hide カートA / カートB headers ────────────────────────────
+            finalSummaryDiv.querySelectorAll("p.text-center").forEach((el: any) => {
+              el.style.setProperty("display", "none", "important");
+            });
+
+            // ── STEP 7: Font sizes and line-heights (px units) ────────────────────
+            finalSummaryDiv.querySelectorAll("td:first-child").forEach((el: any) => {
+              el.style.setProperty("font-size", "18px", "important");
+              el.style.setProperty("line-height", "24px", "important");
+            });
+
+            finalSummaryDiv.querySelectorAll("td:not(:first-child)").forEach((el: any) => {
+              el.style.setProperty("font-size", "15px", "important");
+              el.style.setProperty("line-height", "20px", "important");
+            });
+
+            // Publication title (div.font-bold)
+            finalSummaryDiv.querySelectorAll("td:not(:first-child)").forEach((td: any) => {
+              const titleElements = td.querySelectorAll("div.font-bold");
+              const itemCount = titleElements.length;
+              
+              titleElements.forEach((el: any) => {
+                el.classList.remove("text-[10px]", "text-[11px]", "text-xs", "text-sm", "text-md");
+                
+                // Truncation limit: 20 chars if 1 item on the shelf, 10 chars if 2 items
+                const limit = itemCount === 1 ? 20 : 10;
+
+                // Restore full name from title attribute (for shelf items) or use textContent (for poster)
+                const originalName = el.getAttribute("title") || el.textContent || "";
+                if (originalName && originalName !== "—") {
+                  const finalName = originalName.length > limit ? originalName.slice(0, limit) + "…" : originalName;
+                  el.textContent = finalName;
+                }
+
+                el.style.setProperty("font-size", "21px", "important");
+                el.style.setProperty("line-height", "30px", "important");
+                el.style.setProperty("height", "auto", "important");
+                el.style.setProperty("overflow", "hidden", "important");
+                el.style.setProperty("white-space", "nowrap", "important");
+                el.style.setProperty("text-overflow", "ellipsis", "important");
+                
+                // Safe max-width: ~420px for 1 item (20 chars + ...), ~210px for 2 items (10 chars + ...)
+                const maxWidth = itemCount === 1 ? "420px" : "210px";
+                el.style.setProperty("max-width", maxWidth, "important");
+
+                el.style.setProperty("display", "block", "important");
+                el.style.setProperty("margin-top", "-6px", "important");
+                el.style.setProperty("margin-bottom", "0px", "important");
+                el.style.setProperty("padding-top", "0px", "important");
+                el.style.setProperty("padding-bottom", "6px", "important");
+              });
+            });
+
+            // Language label (span / select)
+            finalSummaryDiv.querySelectorAll("td:not(:first-child) span").forEach((el: any) => {
+              el.classList.remove("text-[10px]", "text-[11px]", "text-xs", "text-sm", "text-md");
+              el.style.setProperty("font-size", "17px", "important");
+              el.style.setProperty("line-height", "22px", "important");
+              el.style.setProperty("display", "inline-block", "important");
+              el.style.setProperty("overflow", "visible", "important");
+              el.style.setProperty("white-space", "nowrap", "important");
+              el.style.setProperty("margin-top", "-2px", "important");
+            });
+
+            finalSummaryDiv.querySelectorAll("td:not(:first-child) select").forEach((el: any) => {
+              el.classList.remove("text-[10px]", "text-[11px]", "text-xs", "text-sm", "text-md");
+              el.style.setProperty("font-size", "17px", "important");
+              el.style.setProperty("line-height", "22px", "important");
+            });
+          }
+
+          // Common Styling for Supplementary Notes (PNG Export only)
+          // NOTE: syncStyles copies font-size as inline !important which blocks setProperty.
+          // We bypass this by directly replacing font-size in cssText.
+          const finalNotesDiv = (clonedDoc.getElementById("export-supplementary-notes") ??
+            clonedContainer.querySelector("#export-supplementary-notes") ??
+            Array.from(clonedContainer.querySelectorAll(".mt-4")).find(el => el.className.includes("max-w"))) as HTMLElement | null;
+          if (finalNotesDiv) {
+            finalNotesDiv.style.setProperty("margin-top", "12px", "important");
+            finalNotesDiv.style.setProperty("max-width", "none", "important");
+            finalNotesDiv.style.setProperty("width", "100%", "important");
+            finalNotesDiv.style.setProperty("overflow", "visible", "important");
+            finalNotesDiv.querySelectorAll("*").forEach((el: any) => {
+              // Remove Tailwind size classes
+              el.classList.remove("text-xs", "text-sm", "text-md", "text-lg", "text-xl", "text-2xl", "text-[10px]", "text-[11px]", "text-[12px]");
+              // Directly rewrite cssText to override syncStyles' !important inline font-size
+              const base = el.style.cssText
+                .replace(/font-size\s*:\s*[^;!]+(!important)?\s*;?/gi, "")
+                .replace(/line-height\s*:\s*[^;!]+(!important)?\s*;?/gi, "");
+              el.style.cssText = base + " font-size: 20px !important; line-height: 26px !important; overflow: visible !important; height: auto !important;";
+            });
+          }
 
           clonedContainer.style.setProperty("height", version === "with-info" ? "auto" : "1458px", "important");
           clonedContainer.style.setProperty("background-color", "#ffffff", "important");
