@@ -309,8 +309,8 @@ const CartPanel = memo(({
 
   return (
     <div className="flex flex-col items-center gap-0.5">
-      <h3 className="text-xs font-black text-muted-foreground tracking-widest flex items-center justify-center">
-        <span>カート</span>
+      <h3 className="text-xs font-black text-muted-foreground tracking-widest flex items-center justify-center whitespace-nowrap pr-2">
+        <span className="whitespace-nowrap">カート</span>
         <span className="ml-1">{cartId}</span>
       </h3>
       <div className="w-[500px]">
@@ -1653,6 +1653,16 @@ export default function CartEditor() {
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
+          // Shift Cart B slightly left in the with-info layout
+          if (version === "with-info") {
+            const clonedCarts = clonedContainer.querySelectorAll("#export-cart-wrapper > div");
+            if (clonedCarts.length >= 2) {
+              const cartBEl = clonedCarts[1] as HTMLElement;
+              cartBEl.style.setProperty("position", "relative", "important");
+              cartBEl.style.setProperty("left", "-20px", "important");
+            }
+          }
+
           const resetStyle = clonedDoc.createElement("style");
           resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
           clonedDoc.head.appendChild(resetStyle);
@@ -1797,8 +1807,8 @@ export default function CartEditor() {
               cartWrapper.style.setProperty("gap", "0px", "important");
               Array.from(cartWrapper.children).forEach((kid: any, i: number) => {
                 // i=0: CartA — shift right 30px
-                // i=1: CartB — -60px keeps CartB at the same absolute position
-                kid.style.setProperty("margin-left", i === 0 ? "30px" : "-60px", "important");
+                // i=1: CartB — -80px shifts CartB 20px left to prevent overlapping/improve offset
+                kid.style.setProperty("margin-left", i === 0 ? "30px" : "-80px", "important");
               });
             }
 
@@ -2068,6 +2078,16 @@ export default function CartEditor() {
           const clonedContainer = clonedDoc.getElementById("export-container");
           if (!clonedContainer) return;
 
+          // Shift Cart B slightly left in the with-info layout
+          if (version === "with-info") {
+            const clonedCarts = clonedContainer.querySelectorAll("#export-cart-wrapper > div");
+            if (clonedCarts.length >= 2) {
+              const cartBEl = clonedCarts[1] as HTMLElement;
+              cartBEl.style.setProperty("position", "relative", "important");
+              cartBEl.style.setProperty("left", "-20px", "important");
+            }
+          }
+
           const resetStyle = clonedDoc.createElement("style");
           resetStyle.innerHTML = "*, ::before, ::after { box-sizing: border-box; }";
           clonedDoc.head.appendChild(resetStyle);
@@ -2201,10 +2221,14 @@ export default function CartEditor() {
               
               // Apply centering and scale to individual carts
               const carts = Array.from(cartsWrapper.children);
-              carts.forEach((cart: any) => {
+              carts.forEach((cart: any, idx: number) => {
                 cart.style.setProperty("margin", "0 auto", "important");
                 cart.style.setProperty("transform", "scale(1.95)", "important"); // Balanced scale
                 cart.style.setProperty("transform-origin", "top center", "important");
+                if (idx === 1) {
+                  cart.style.setProperty("position", "relative", "important");
+                  cart.style.setProperty("left", "-20px", "important");
+                }
               });
             }
 
