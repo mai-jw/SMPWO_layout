@@ -316,7 +316,7 @@ const CartPanel = memo(({
       <div className="w-[500px]">
         <div className="relative w-full aspect-1080/1350">
           <img 
-            src="https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/cart_empty_guid.png"
+            src={CART_IMAGE_URL}
             alt="Cart Base"
             crossOrigin="anonymous"
             className="absolute inset-0 w-full h-full object-contain"

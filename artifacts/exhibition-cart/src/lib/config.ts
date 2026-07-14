@@ -9,7 +9,7 @@ import {
 
 // ─── Layout Constants ───
 
-export const CART_IMAGE_URL = "https://dugmuhbuujmfwmdehgdt.supabase.co/storage/v1/object/public/design/cart_empty_guid.png";
+export const CART_IMAGE_URL = "/cart_empty_guid.png";
 
 /**
  * Coordinate mapping for shelf placement (Percentages)
