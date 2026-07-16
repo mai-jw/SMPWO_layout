@@ -472,7 +472,7 @@ export function MobileWizard({
         {step === "select-edit" && (
           <motion.div key="select-edit" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="flex flex-col h-full overflow-hidden bg-cream">
             <WizardHeader title="配置を編集する" onBack={() => setStep("menu")} />
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
               {layouts.length === 0 ? (
                 <EmptyState icon={<Search />} text="保存済みのデータはありません" sub="新規作成から始めてください" />
               ) : (
@@ -507,7 +507,7 @@ export function MobileWizard({
         {step === "select-delete" && (
           <motion.div key="select-delete" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="flex flex-col h-full overflow-hidden bg-cream">
             <WizardHeader title="データを削除する" onBack={() => setStep("menu")} />
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
               {layouts.length === 0 ? (
                 <EmptyState icon={<Trash2 />} text="削除できるデータはありません" />
               ) : (
