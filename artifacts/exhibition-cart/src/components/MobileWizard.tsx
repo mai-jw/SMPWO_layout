@@ -470,9 +470,14 @@ export function MobileWizard({
         })()}
 
         {step === "select-edit" && (
-          <motion.div key="select-edit" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="absolute inset-0 flex flex-col overflow-hidden bg-cream">
-            <WizardHeader title="配置を編集する" onBack={() => setStep("menu")} />
-            <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
+          <motion.div key="select-edit" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="absolute inset-0 bg-cream" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+            <div className="sticky top-0 z-10 shrink-0 pt-16 pb-8 px-8 flex items-center gap-6 bg-white rounded-b-[3rem] shadow-sm">
+              <button onClick={() => setStep("menu")} className="w-14 h-14 flex items-center justify-center bg-cream rounded-[1.5rem] active:scale-90 transition-all shadow-inner">
+                <ChevronLeft className="w-7 h-7" style={{ color: COLORS.deepPurple }} />
+              </button>
+              <h2 className="text-xl font-black tracking-tight" style={{ color: COLORS.deepPurple }}>配置を編集する</h2>
+            </div>
+            <div className="p-6 space-y-4">
               {layouts.length === 0 ? (
                 <EmptyState icon={<Search />} text="保存済みのデータはありません" sub="新規作成から始めてください" />
               ) : (
@@ -505,9 +510,14 @@ export function MobileWizard({
         )}
 
         {step === "select-delete" && (
-          <motion.div key="select-delete" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="absolute inset-0 flex flex-col overflow-hidden bg-cream">
-            <WizardHeader title="データを削除する" onBack={() => setStep("menu")} />
-            <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
+          <motion.div key="select-delete" initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="absolute inset-0 bg-cream" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+            <div className="sticky top-0 z-10 shrink-0 pt-16 pb-8 px-8 flex items-center gap-6 bg-white rounded-b-[3rem] shadow-sm">
+              <button onClick={() => setStep("menu")} className="w-14 h-14 flex items-center justify-center bg-cream rounded-[1.5rem] active:scale-90 transition-all shadow-inner">
+                <ChevronLeft className="w-7 h-7" style={{ color: COLORS.deepPurple }} />
+              </button>
+              <h2 className="text-xl font-black tracking-tight" style={{ color: COLORS.deepPurple }}>データを削除する</h2>
+            </div>
+            <div className="p-6 space-y-4">
               {layouts.length === 0 ? (
                 <EmptyState icon={<Trash2 />} text="削除できるデータはありません" />
               ) : (
