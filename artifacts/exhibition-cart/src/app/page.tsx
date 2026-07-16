@@ -3862,7 +3862,7 @@ export default function CartEditor() {
                 </div>
 
                 {/* Right Side: Content */}
-                <div className="flex-1 p-10 flex flex-col">
+                <div className="flex-1 p-10 flex flex-col min-h-0">
                   {welcomeStep === "choice" && (
                     <div className="flex-1 flex flex-col justify-center gap-8">
                       <div className="flex items-center gap-6">
@@ -3909,7 +3909,7 @@ export default function CartEditor() {
                   )}
 
                   {welcomeStep === "new" && (
-                    <div className="flex-1 flex flex-col">
+                    <div className="flex-1 flex flex-col min-h-0">
                       <div className="flex items-center gap-2 mb-6">
                         <button onClick={() => setWelcomeStep("choice")} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
                           <ChevronLeft className="w-5 h-5 text-slate-400" />
@@ -3917,7 +3917,7 @@ export default function CartEditor() {
                         <h3 className="text-xl font-black text-slate-800">新規レイアウト作成</h3>
                       </div>
 
-                      <div className="space-y-6 flex-1 overflow-y-auto pr-2 scrollbar-hide">
+                      <div className="space-y-6 flex-1 min-h-0 overflow-y-auto pr-2">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <label className="text-[10px] font-black uppercase text-slate-400 px-1">対象月</label>
@@ -3995,7 +3995,7 @@ export default function CartEditor() {
                   )}
 
                   {welcomeStep === "edit" && (
-                    <div className="flex-1 flex flex-col">
+                    <div className="flex-1 flex flex-col min-h-0">
                       <div className="flex items-center gap-2 mb-6">
                         <button onClick={() => setWelcomeStep("choice")} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
                           <ChevronLeft className="w-5 h-5 text-slate-400" />
@@ -4003,7 +4003,7 @@ export default function CartEditor() {
                         <h3 className="text-xl font-black text-slate-800">編集</h3>
                       </div>
 
-                      <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide space-y-3">
+                      <div className="flex-1 min-h-0 overflow-y-auto pr-2 space-y-3">
                         {layouts.length === 0 ? (
                           <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4">
                             <FolderOpen className="w-12 h-12 opacity-20" />
