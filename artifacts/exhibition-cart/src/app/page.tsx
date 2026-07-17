@@ -2753,7 +2753,7 @@ export default function CartEditor() {
                         )}
                       </div>
                       <button 
-                        onClick={() => setIsEditingLocations(true)}
+                        onClick={() => { setEditingLocList(locationsConfig); setIsEditingLocations(true); }}
                         className="text-muted-foreground hover:text-primary transition-colors p-1 rounded-md hover:bg-muted"
                         title="地点リストを編集"
                       >
@@ -3757,7 +3757,7 @@ export default function CartEditor() {
                     <div className="space-y-2">
                        <div className="flex items-center justify-between">
                          <p className="text-[10px] font-bold text-slate-400">地点を選択</p>
-                         <button onClick={() => setIsEditingLocations(true)} className="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-primary">
+                         <button onClick={() => { setEditingLocList(locationsConfig); setIsEditingLocations(true); }} className="p-1 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-primary">
                            <Pencil className="w-3.5 h-3.5" />
                          </button>
                        </div>
