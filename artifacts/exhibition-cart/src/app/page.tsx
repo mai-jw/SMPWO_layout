@@ -1192,6 +1192,8 @@ export default function CartEditor() {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      // Do not close the panel while the location editing modal is open
+      if (isEditingLocations) return;
       if (newPanelRef.current && !newPanelRef.current.contains(event.target as Node)) {
         setShowNewPanel(false);
       }
@@ -1202,7 +1204,7 @@ export default function CartEditor() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showNewPanel]);
+  }, [showNewPanel, isEditingLocations]);
 
 
   const { data: items = [], isLoading } = useItems();

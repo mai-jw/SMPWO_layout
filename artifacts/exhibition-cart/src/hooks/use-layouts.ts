@@ -176,6 +176,10 @@ export function useSaveLocationsConfig() {
         
       if (error) throw new Error(error.message);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: LOCATIONS_QUERY_KEY }),
+    onSuccess: (_data, variables) => {
+      // Immediately update local cache so the UI reflects changes without waiting for refetch
+      queryClient.setQueryData(LOCATIONS_QUERY_KEY, variables);
+      queryClient.invalidateQueries({ queryKey: LOCATIONS_QUERY_KEY });
+    },
   });
 }
