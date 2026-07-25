@@ -3,7 +3,6 @@ name: Supabase Keep Alive
 on:
   schedule:
     # 3日ごとの午前0時(UTC)に実行
-    # ※GitHub Actionsのスケジュールは遅延することがありますが、数日おきの実行であれば問題ありません。
     - cron: '0 0 */3 * *'
   workflow_dispatch: # GitHub UIから手動で実行できるようにする
 
@@ -12,7 +11,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Supabase API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          curl -i -X GET "${{ secrets.SUPABASE_URL }}/rest/v1/" \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "::error::SUPABASE_URL is missing! Please set SUPABASE_URL in GitHub Secrets."
+            exit 1
+          fi
+          
+          # URL末尾のスラッシュをトリムして安全に結合
+          CLEAN_URL="${SUPABASE_URL%/}"
+          
+          echo "Pinging ${CLEAN_URL}/rest/v1/ ..."
+          curl -i -s -S -X GET "${CLEAN_URL}/rest/v1/" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}"
