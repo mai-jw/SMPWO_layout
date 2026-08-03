@@ -1779,13 +1779,43 @@ export default function CartEditor() {
             // ── STEP 2: Column layout ──────────────────────────────────────────────
             const cols = Array.from(finalSummaryDiv.querySelectorAll(":scope > div"));
 
-            // Hide the label column (ポスター/上段...) for Cart B to maximize horizontal space
-            // and add padding-left to align Cart B's right detail column vertically with Cart B's right shelf slot
+            // ① Cart A:
+            // - Label column: keep position (width: 50px, padding-left: 4px, padding-right: 0px)
+            // - Left detail column: keep current position (margin-left: -8px)
+            // - Right detail column: shift rightward to align vertically with Cart A's right shelf slot
+            if (cols[0]) {
+              (cols[0] as HTMLElement).style.setProperty("padding-left", "0px", "important");
+              (cols[0] as HTMLElement).style.setProperty("margin-left", "0px", "important");
+              cols[0].querySelectorAll("td:first-child").forEach((td: any) => {
+                td.style.setProperty("padding-left", "4px", "important");
+                td.style.setProperty("padding-right", "0px", "important");
+                td.style.setProperty("width", "50px", "important");
+              });
+
+              // Left detail column
+              cols[0].querySelectorAll("td:not(:first-child) > div > div:nth-child(1)").forEach((slot1: any) => {
+                slot1.style.setProperty("margin-left", "-8px", "important");
+              });
+
+              // Shift Cart A right detail column (2nd slot) rightward to align with Cart A's right rack
+              cols[0].querySelectorAll("td:not(:first-child) > div > div:nth-child(2)").forEach((slot2: any) => {
+                slot2.style.setProperty("margin-left", "48px", "important");
+              });
+            }
+
+            // ② Cart B:
+            // - Left detail column: keep current position
+            // - Right detail column: shift leftward to align vertically with Cart B's right shelf slot
             if (cols[1]) {
               cols[1].querySelectorAll("td:first-child").forEach((td: any) => {
                 td.style.setProperty("display", "none", "important");
               });
               (cols[1] as HTMLElement).style.setProperty("padding-left", "38px", "important");
+
+              // Shift Cart B right detail column (2nd slot) leftward to align with Cart B's right rack
+              cols[1].querySelectorAll("td:not(:first-child) > div > div:nth-child(2)").forEach((slot2: any) => {
+                slot2.style.setProperty("margin-left", "-18px", "important");
+              });
             }
 
             cols.forEach((col: any) => {
