@@ -1567,7 +1567,18 @@ export default function CartEditor() {
         windowHeight: version === "with-info" ? 900 : 1458,
         onclone: (clonedDoc) => {
           const exportStyle = clonedDoc.createElement("style");
-          exportStyle.innerHTML = ".tag-label-span { position: relative !important; top: -3px !important; }";
+          exportStyle.innerHTML = [
+            ".tag-label-span { position: relative !important; top: -3px !important; }",
+            // Force html2canvas to render Japanese text without word-segmentation spacing
+            "#export-summary-table div.font-bold {",
+            "  word-spacing: 0 !important;",
+            "  letter-spacing: 0 !important;",
+            "  word-break: break-all !important;",
+            "  font-kerning: none !important;",
+            "  text-rendering: optimizeSpeed !important;",
+            "  font-variant-ligatures: none !important;",
+            "}",
+          ].join("\n");
           clonedDoc.head.appendChild(exportStyle);
 
           // Fix for select elements not rendering selected value in html2canvas
@@ -1779,42 +1790,42 @@ export default function CartEditor() {
             // ── STEP 2: Column layout ──────────────────────────────────────────────
             const cols = Array.from(finalSummaryDiv.querySelectorAll(":scope > div"));
 
-            // ① Cart A:
-            // - Label column: keep position (width: 50px, padding-left: 4px, padding-right: 0px)
-            // - Left detail column: keep current position (margin-left: -8px)
-            // - Right detail column: shift rightward to align vertically with Cart A's right shelf slot
+            // ① & ② & ③ Cart A:
+            // - 1) Shift label column leftward (margin-left: -20px)
+            // - 2) Shift Cart A left detail column rightward (margin-left: 12px) to clear overlap with label
+            // - 3) Shift Cart A right detail column leftward (margin-left: 24px) to align vertically with Cart A's right shelf slot
             if (cols[0]) {
               (cols[0] as HTMLElement).style.setProperty("padding-left", "0px", "important");
-              (cols[0] as HTMLElement).style.setProperty("margin-left", "0px", "important");
+              (cols[0] as HTMLElement).style.setProperty("margin-left", "-26px", "important");
               cols[0].querySelectorAll("td:first-child").forEach((td: any) => {
-                td.style.setProperty("padding-left", "4px", "important");
-                td.style.setProperty("padding-right", "0px", "important");
-                td.style.setProperty("width", "50px", "important");
+                td.style.setProperty("padding-left", "0px", "important");
+                td.style.setProperty("padding-right", "8px", "important");
+                td.style.setProperty("width", "68px", "important");
               });
 
-              // Left detail column
+              // 2) Cart A left detail column (1st slot)
               cols[0].querySelectorAll("td:not(:first-child) > div > div:nth-child(1)").forEach((slot1: any) => {
-                slot1.style.setProperty("margin-left", "-8px", "important");
+                slot1.style.setProperty("margin-left", "2px", "important");
               });
 
-              // Shift Cart A right detail column (2nd slot) rightward to align with Cart A's right rack
+              // 3) Cart A right detail column (2nd slot): align vertically with Cart A right shelf slot
               cols[0].querySelectorAll("td:not(:first-child) > div > div:nth-child(2)").forEach((slot2: any) => {
-                slot2.style.setProperty("margin-left", "48px", "important");
+                slot2.style.setProperty("margin-left", "24px", "important");
               });
             }
 
-            // ② Cart B:
-            // - Left detail column: keep current position
-            // - Right detail column: shift leftward to align vertically with Cart B's right shelf slot
+            // ④ Cart B:
+            // - Hide label column
+            // - 4) Shift Cart B right detail column rightward (margin-left: 6px) to align vertically with Cart B's right shelf slot
             if (cols[1]) {
               cols[1].querySelectorAll("td:first-child").forEach((td: any) => {
                 td.style.setProperty("display", "none", "important");
               });
               (cols[1] as HTMLElement).style.setProperty("padding-left", "38px", "important");
 
-              // Shift Cart B right detail column (2nd slot) leftward to align with Cart B's right rack
+              // 4) Cart B right detail column (2nd slot): shift rightward to align vertically with Cart B right shelf slot
               cols[1].querySelectorAll("td:not(:first-child) > div > div:nth-child(2)").forEach((slot2: any) => {
-                slot2.style.setProperty("margin-left", "-18px", "important");
+                slot2.style.setProperty("margin-left", "6px", "important");
               });
             }
 
@@ -1886,40 +1897,60 @@ export default function CartEditor() {
             });
 
             // Publication title (div.font-bold)
-            finalSummaryDiv.querySelectorAll("td:not(:first-child)").forEach((td: any) => {
-              const titleElements = td.querySelectorAll("div.font-bold");
-              const itemCount = titleElements.length;
-              
-              titleElements.forEach((el: any) => {
-                el.classList.remove("text-[10px]", "text-[11px]", "text-xs", "text-sm", "text-md");
-                
-                // Truncation limit: 20 chars if 1 item on the shelf, 10 chars if 2 items
-                const limit = itemCount === 1 ? 20 : 10;
+            finalSummaryDiv.querySelectorAll("div.font-bold").forEach((el: any) => {
+              el.classList.remove("text-[10px]", "text-[11px]", "text-xs", "text-sm", "text-md");
 
-                // Restore full name from title attribute (for shelf items) or use textContent (for poster)
-                const originalName = el.getAttribute("title") || el.textContent || "";
-                if (originalName && originalName !== "—") {
-                  const finalName = formatPublicationTitle(originalName);
-                  el.textContent = finalName;
+              // Restore full name from title attribute
+              const originalName = el.getAttribute("title") || el.textContent || "";
+              const tr = el.closest("tr");
+              const isPoster = tr ? tr.previousElementSibling === null : false;
+
+              if (originalName && originalName !== "—") {
+                let titleText = isPoster ? originalName : formatPublicationTitle(originalName);
+                
+                // Only remove special/invisible Unicode whitespace (full-width space, NBSP etc.)
+                // Preserve intentional ASCII half-width spaces (e.g. after ？ in poster titles)
+                titleText = titleText.replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/g, "").trim();
+                
+                // Wrap each character in its own <span> so html2canvas cannot insert
+                // word-segmentation spaces between Japanese word boundaries (e.g. 頼れる|もの)
+                el.innerHTML = "";
+                for (const ch of titleText) {
+                  const s = el.ownerDocument.createElement("span");
+                  s.textContent = ch;
+                  s.style.setProperty("display", "inline", "important");
+                  s.style.setProperty("word-spacing", "0", "important");
+                  s.style.setProperty("letter-spacing", "0", "important");
+                  el.appendChild(s);
                 }
+              }
 
-                el.style.setProperty("font-size", "21px", "important");
-                el.style.setProperty("line-height", "30px", "important");
-                el.style.setProperty("height", "auto", "important");
+              el.style.setProperty("font-size", "21px", "important");
+              el.style.setProperty("line-height", "30px", "important");
+              el.style.setProperty("height", "auto", "important");
+              el.style.setProperty("white-space", "nowrap", "important");
+              el.style.setProperty("text-align", "left", "important");
+              el.style.setProperty("letter-spacing", "0px", "important");
+              el.style.setProperty("word-spacing", "0px", "important");
+              el.style.setProperty("word-break", "break-all", "important");
+              el.style.setProperty("overflow-wrap", "normal", "important");
+              
+              // Allow poster title full width without truncation
+              if (isPoster) {
+                el.style.setProperty("max-width", "none", "important");
+                el.style.setProperty("overflow", "visible", "important");
+                el.style.setProperty("text-overflow", "clip", "important");
+              } else {
+                el.style.setProperty("max-width", "210px", "important");
                 el.style.setProperty("overflow", "hidden", "important");
-                el.style.setProperty("white-space", "nowrap", "important");
                 el.style.setProperty("text-overflow", "ellipsis", "important");
-                
-                // Safe max-width: ~420px for 1 item (20 chars + ...), ~210px for 2 items (10 chars + ...)
-                const maxWidth = itemCount === 1 ? "420px" : "210px";
-                el.style.setProperty("max-width", maxWidth, "important");
+              }
 
-                el.style.setProperty("display", "block", "important");
-                el.style.setProperty("margin-top", "-6px", "important");
-                el.style.setProperty("margin-bottom", "0px", "important");
-                el.style.setProperty("padding-top", "0px", "important");
-                el.style.setProperty("padding-bottom", "6px", "important");
-              });
+              el.style.setProperty("display", "block", "important");
+              el.style.setProperty("margin-top", "-6px", "important");
+              el.style.setProperty("margin-bottom", "0px", "important");
+              el.style.setProperty("padding-top", "0px", "important");
+              el.style.setProperty("padding-bottom", "6px", "important");
             });
 
             // Language label (span / select)
@@ -3129,18 +3160,18 @@ export default function CartEditor() {
                 </div>
 
                 {/* Summary Table */}
-                <div id="export-summary-table" className="w-full mt-6 flex gap-8 justify-center text-xs">
+                <div id="export-summary-table" className="w-full max-w-[740px] mx-auto mt-6 flex gap-6 justify-center text-xs">
                   {([{ id: "A" as CartId, layout: cartA, setCart: setCartA }, { id: "B" as CartId, layout: cartB, setCart: setCartB }]).map(({ id, layout, setCart }) => {
                     const SHELF_LABELS = ["上段", "中段", "下段"];
                     const posterItem = layout.poster ? itemMap[layout.poster] : null;
                     return (
-                      <div key={id} className={`flex-1 max-w-[400px] ${id === "B" ? "pl-[38px]" : ""}`}>
+                      <div key={id} className={`flex-1 max-w-[350px] ${id === "B" ? "pl-6" : ""}`}>
                         <p className="text-center font-black text-sm mb-2 text-foreground">カート{id}</p>
                         <table className="w-full border-collapse text-[11px] table-fixed">
                           <tbody>
                             {/* Poster */}
                             <tr className="border-t border-slate-300">
-                              <td className={`py-1.5 pr-2 font-bold text-slate-500 align-top whitespace-nowrap ${id === "B" ? "hidden" : ""}`}>ポスター</td>
+                              <td className={`w-14 py-1.5 pr-2 font-bold text-slate-500 align-top whitespace-nowrap ${id === "B" ? "hidden" : ""}`}>ポスター</td>
                               <td className="py-1.5">
                                 <div className="font-bold text-foreground" title={posterItem?.name || ""}>{formatPublicationTitle(posterItem?.name)}</div>
                                 <div className="flex gap-3 mt-0.5">

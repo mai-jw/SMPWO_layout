@@ -19,7 +19,16 @@ export function useItems() {
         throw new Error(error.message);
       }
 
-      return data as Item[];
+      // Normalize item names: only remove special Unicode whitespace that was stored
+      // inadvertently (full-width space, NBSP, etc.) while preserving intentional ASCII spaces
+      const normalized = (data as Item[]).map((item) => ({
+        ...item,
+        name: item.name
+          ? item.name.replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/g, "").trim()
+          : item.name,
+      }));
+
+      return normalized;
     },
   });
 }
