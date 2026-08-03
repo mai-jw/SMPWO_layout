@@ -51,6 +51,14 @@ const getTagLabel = (tag: TagData | undefined) => {
   return tag.value || "";
 };
 
+const getDisplayLangLabel = (lang?: string | null): string => {
+  if (!lang || lang === "—") return "—";
+  if (lang === "ja" || lang === "日本語" || lang === "sign_ja" || lang === "日本語手話") {
+    return "日本語";
+  }
+  return "外国語";
+};
+
 /* ═══════════════════════════════════════════════════════
      TagDisplay — Display-only tag bar on cart (no menus)
    ═══════════════════════════════════════════════════════ */
@@ -1637,7 +1645,7 @@ export default function CartEditor() {
 
           // Fix for select elements not rendering selected value in html2canvas
           clonedDoc.querySelectorAll('select').forEach(select => {
-            const selectedText = select.options[select.selectedIndex]?.text || "";
+            const selectedText = getDisplayLangLabel(select.options[select.selectedIndex]?.text || "");
             const span = clonedDoc.createElement('span');
             span.textContent = selectedText;
             
@@ -1845,10 +1853,12 @@ export default function CartEditor() {
             const cols = Array.from(finalSummaryDiv.querySelectorAll(":scope > div"));
 
             // Hide the label column (ポスター/上段...) for Cart B to maximize horizontal space
+            // and add padding-left to align Cart B's right detail column vertically with Cart B's right shelf slot
             if (cols[1]) {
               cols[1].querySelectorAll("td:first-child").forEach((td: any) => {
                 td.style.setProperty("display", "none", "important");
               });
+              (cols[1] as HTMLElement).style.setProperty("padding-left", "38px", "important");
             }
 
             cols.forEach((col: any) => {
@@ -1861,7 +1871,7 @@ export default function CartEditor() {
             // ── STEP 3: Table / Row sizing ─────────────────────────────────────────
             finalSummaryDiv.querySelectorAll("table").forEach((table: any) => {
               table.style.setProperty("width", "100%", "important");
-              table.style.setProperty("table-layout", "auto", "important");
+              table.style.setProperty("table-layout", "fixed", "important");
               table.style.setProperty("overflow", "visible", "important");
               table.style.setProperty("height", "auto", "important");
             });
@@ -3167,13 +3177,13 @@ export default function CartEditor() {
                     const SHELF_LABELS = ["上段", "中段", "下段"];
                     const posterItem = layout.poster ? itemMap[layout.poster] : null;
                     return (
-                      <div key={id} className="flex-1 max-w-[400px]">
+                      <div key={id} className={`flex-1 max-w-[400px] ${id === "B" ? "pl-[38px]" : ""}`}>
                         <p className="text-center font-black text-sm mb-2 text-foreground">カート{id}</p>
-                        <table className="w-full border-collapse text-[11px]">
+                        <table className="w-full border-collapse text-[11px] table-fixed">
                           <tbody>
                             {/* Poster */}
                             <tr className="border-t border-slate-300">
-                              <td className="py-1.5 pr-2 font-bold text-slate-500 align-top whitespace-nowrap">ポスター</td>
+                              <td className={`py-1.5 pr-2 font-bold text-slate-500 align-top whitespace-nowrap ${id === "B" ? "hidden" : ""}`}>ポスター</td>
                               <td className="py-1.5">
                                 <div className="font-bold text-foreground">{posterItem?.name || "—"}</div>
                                 <div className="flex gap-3 mt-0.5">
@@ -3187,9 +3197,9 @@ export default function CartEditor() {
                                           className={`appearance-none bg-transparent text-red-600 font-bold border-none p-0 m-0 outline-none cursor-pointer hover:bg-red-50 rounded px-1 -mx-1 transition-colors ${isLayoutLocked ? "cursor-not-allowed" : ""}`}
                                           title="表示言語を変更"
                                         >
-                                          <option value="">{LANG_FILTER_OPTIONS.find(o => o.key === posterItem.language)?.label || posterItem.language}</option>
-                                          {LANG_FILTER_OPTIONS.filter(o => o.key !== "all" && o.key !== posterItem.language).map(opt => (
-                                            <option key={opt.key} value={opt.key}>{opt.label}</option>
+                                          <option value="">{getDisplayLangLabel(layout.posterLang ? (LANG_FILTER_OPTIONS.find(o => o.key === layout.posterLang)?.label || layout.posterLang) : (LANG_FILTER_OPTIONS.find(o => o.key === posterItem.language)?.label || posterItem.language))}</option>
+                                          {LANG_FILTER_OPTIONS.filter(o => o.key !== "all").map(opt => (
+                                            <option key={opt.key} value={opt.key}>{getDisplayLangLabel(opt.label)}</option>
                                           ))}
                                         </select>
                                       </div>
@@ -3210,7 +3220,7 @@ export default function CartEditor() {
 
                               return (
                                 <tr key={sIdx} className="border-t border-slate-300">
-                                  <td className="py-1.5 pr-2 font-bold text-slate-500 align-top whitespace-nowrap">{SHELF_LABELS[sIdx]}</td>
+                                  <td className={`py-1.5 pr-2 font-bold text-slate-500 align-top whitespace-nowrap ${id === "B" ? "hidden" : ""}`}>{SHELF_LABELS[sIdx]}</td>
                                   <td className="py-1.5">
                                     {shelf.layout_type === "none" ? (
                                       <span className="text-slate-300">—</span>
@@ -3251,9 +3261,9 @@ export default function CartEditor() {
                                                     className={`appearance-none bg-transparent text-red-600 font-bold text-[9px] border-none p-0 m-0 outline-none cursor-pointer hover:bg-red-50 rounded px-0.5 -mx-0.5 transition-colors leading-normal ${isLayoutLocked ? "cursor-not-allowed" : ""}`}
                                                     title="表示言語を変更"
                                                   >
-                                                    <option value="">{LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language}</option>
-                                                    {LANG_FILTER_OPTIONS.filter(o => o.key !== "all" && o.key !== item.language).map(opt => (
-                                                      <option key={opt.key} value={opt.key}>{opt.label}</option>
+                                                    <option value="">{getDisplayLangLabel(shelf.item_langs?.[slotIndex] ? (LANG_FILTER_OPTIONS.find(o => o.key === shelf.item_langs?.[slotIndex])?.label || shelf.item_langs?.[slotIndex]) : (LANG_FILTER_OPTIONS.find(o => o.key === item.language)?.label || item.language))}</option>
+                                                    {LANG_FILTER_OPTIONS.filter(o => o.key !== "all").map(opt => (
+                                                      <option key={opt.key} value={opt.key}>{getDisplayLangLabel(opt.label)}</option>
                                                     ))}
                                                   </select>
                                                 </div>
