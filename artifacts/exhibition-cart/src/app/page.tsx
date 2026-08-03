@@ -1808,9 +1808,9 @@ export default function CartEditor() {
                 slot1.style.setProperty("margin-left", "2px", "important");
               });
 
-              // 3) Cart A right detail column (2nd slot): align vertically with Cart A right shelf slot
+              // 3) Cart A right detail column (2nd slot): shift further leftward
               cols[0].querySelectorAll("td:not(:first-child) > div > div:nth-child(2)").forEach((slot2: any) => {
-                slot2.style.setProperty("margin-left", "24px", "important");
+                slot2.style.setProperty("margin-left", "2px", "important");
               });
             }
 
