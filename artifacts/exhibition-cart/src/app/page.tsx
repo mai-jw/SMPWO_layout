@@ -59,6 +59,15 @@ const getDisplayLangLabel = (lang?: string | null): string => {
   return "外国語";
 };
 
+const formatPublicationTitle = (name?: string | null): string => {
+  if (!name || name === "—") return "—";
+  const match = name.match(/[\s　]/);
+  if (match && match.index !== undefined && match.index > 0) {
+    return name.slice(0, match.index);
+  }
+  return name;
+};
+
 /* ═══════════════════════════════════════════════════════
      TagDisplay — Display-only tag bar on cart (no menus)
    ═══════════════════════════════════════════════════════ */
@@ -1942,7 +1951,7 @@ export default function CartEditor() {
                 // Restore full name from title attribute (for shelf items) or use textContent (for poster)
                 const originalName = el.getAttribute("title") || el.textContent || "";
                 if (originalName && originalName !== "—") {
-                  const finalName = originalName.length > limit ? originalName.slice(0, limit) + "…" : originalName;
+                  const finalName = formatPublicationTitle(originalName);
                   el.textContent = finalName;
                 }
 
@@ -3185,7 +3194,7 @@ export default function CartEditor() {
                             <tr className="border-t border-slate-300">
                               <td className={`py-1.5 pr-2 font-bold text-slate-500 align-top whitespace-nowrap ${id === "B" ? "hidden" : ""}`}>ポスター</td>
                               <td className="py-1.5">
-                                <div className="font-bold text-foreground">{posterItem?.name || "—"}</div>
+                                <div className="font-bold text-foreground" title={posterItem?.name || ""}>{formatPublicationTitle(posterItem?.name)}</div>
                                 <div className="flex gap-3 mt-0.5">
                                   {posterItem && (
                                     <>
@@ -3249,10 +3258,10 @@ export default function CartEditor() {
                                         <div className="flex flex-row flex-nowrap gap-x-3 w-full">
                                           {uniqueSlots.map(({ item, slotIndex }) => {
                                             if (!item) return null;
-                                            const truncatedName = item.name.length > 10 ? item.name.slice(0, 10) + "..." : item.name;
+                                            const formattedName = formatPublicationTitle(item.name);
                                             return (
                                               <div key={slotIndex} className="flex flex-col min-w-0 flex-1">
-                                                <div className="font-bold text-foreground leading-normal text-[10px] truncate pb-0.5" title={item.name}>{truncatedName}</div>
+                                                <div className="font-bold text-foreground leading-normal text-[10px] truncate pb-0.5" title={item.name}>{formattedName}</div>
                                                 <div className="relative group/lang inline-block">
                                                   <select
                                                     value={shelf.item_langs?.[slotIndex] || ""}
