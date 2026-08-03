@@ -15,9 +15,9 @@ export const CART_IMAGE_URL = "/cart_empty_guid.png";
  * Coordinate mapping for shelf placement (Percentages)
  */
 export const SHELF_COORDINATES = [
-  { tag: "36.5%", items: "39.0%", tagH: "2%", itemsH: "14.5%" },
-  { tag: "54.9%", items: "57.4%", tagH: "2%", itemsH: "14.5%" },
-  { tag: "72.0%", items: "74.5%", tagH: "2%", itemsH: "14.5%" },
+  { tag: "36.5%", items: "38.8%", tagH: "2%", itemsH: "14.5%" },
+  { tag: "54.9%", items: "57.1%", tagH: "2%", itemsH: "14.5%" },
+  { tag: "72.0%", items: "74.2%", tagH: "2%", itemsH: "14.5%" },
 ];
 
 export const POSTER_PLACEMENT = {

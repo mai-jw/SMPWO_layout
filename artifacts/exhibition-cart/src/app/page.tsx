@@ -263,18 +263,7 @@ function ShelfSection({
 
   return (
     <>
-      {/* Tag Bar */}
-      <div 
-        className="absolute left-[35.0%] w-[30%] z-30"
-        style={{ top: coord.tag, height: coord.tagH }}
-      >
-        <TagDisplay
-          shelf={shelf}
-          shelfIndex={shelfIndex}
-          isActive={isTagActive}
-          onClick={() => onTagClick(cartId, shelfIndex)}
-        />
-      </div>
+      {/* Tag Bar — removed (tag functionality no longer needed) */}
 
       {/* Items Area - Only show if layout is set */}
       {shelf.layout_type !== "none" && (
@@ -847,78 +836,7 @@ function SelectionSidebar({
           </div>
         </div>
 
-        {/* Tag Selection */}
-        <div>
-          <p className="text-sm font-black uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
-            <Tag className="w-4 h-4" /> タグ設定
-          </p>
-          <div className="space-y-2">
-            <button onClick={() => setMode("none")}
-              className={`w-full text-left px-4 py-3 text-xs flex items-center justify-between rounded-xl transition-all border ${
-                mode === "none" ? "bg-white text-foreground font-black border-slate-300 shadow-sm" : "bg-slate-50 text-muted-foreground border-transparent hover:bg-slate-100"
-              }`}>
-              <span>タグなし</span>
-              {mode === "none" && <CheckCircle2 className="w-4 h-4 text-primary" />}
-            </button>
-
-            {isSpecialTagLayout && canFreeDist && (
-              <button onClick={() => setMode("free_dist")}
-                className={`w-full text-left px-4 py-3 text-xs flex items-center justify-between rounded-xl transition-all border ${
-                  mode === "free_dist" ? "bg-zinc-900 text-white font-black border-zinc-950 shadow-md scale-[1.02]" : "bg-zinc-50 text-zinc-500 border-transparent hover:bg-zinc-100"
-                }`}>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-current" />
-                  <span>無料で差し上げています</span>
-                </div>
-                {mode === "free_dist" && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-              </button>
-            )}
-            
-            <button 
-              disabled={!canLangTag}
-              onClick={() => setMode("lang")}
-              className={`w-full text-left px-4 py-3 text-xs flex items-center justify-between rounded-xl transition-all border ${
-                !canLangTag ? "opacity-30 cursor-not-allowed border-transparent" :
-                mode === "lang" ? "bg-red-600 text-white font-black border-red-700 shadow-md scale-[1.02]" : "bg-red-50 text-red-700/60 border-transparent hover:bg-red-50/80"
-              }`}>
-              <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${canLangTag ? "bg-red-400" : "bg-slate-300"}`} />
-                <span>言語表示</span>
-              </div>
-              {mode === "lang" && <CheckCircle2 className="w-4 h-4 text-white" />}
-            </button>
-
-            {mode === "lang" && (
-                <div className="pt-2 grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[11px] font-black text-slate-500 mb-1.5 block px-1">左タグ</label>
-                    <select
-                      value={shelf.tag_1.value.includes("中国語") ? "中国語" : shelf.tag_1.value}
-                      onChange={(e) => onTagChange(activeTarget!.cart, shelfIdx, "tag_1", { type: "lang", value: (e.target as HTMLSelectElement).value })}
-                      className="w-full text-sm bg-white border border-slate-200 rounded-xl px-3 py-3 outline-none text-foreground font-black focus:ring-4 focus:ring-primary/10 shadow-sm transition-all"
-                    >
-                      <option value="">（言語選択）</option>
-                      {TAG_LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-black text-slate-500 mb-1.5 block px-1">右タグ</label>
-                    <select
-                      value={(shelf.tag_2.type === "lang" && shelf.tag_2.value.includes("中国語")) ? "中国語" : (shelf.tag_2.type === "lang" ? shelf.tag_2.value : "")}
-                      onChange={(e) => {
-                        const val = (e.target as HTMLSelectElement).value;
-                        onTagChange(activeTarget!.cart, shelfIdx, "tag_2", val ? { type: "lang", value: val } : { type: "none", value: "" });
-                      }}
-                      className="w-full text-sm bg-white border border-slate-200 rounded-xl px-3 py-3 outline-none text-foreground font-black focus:ring-4 focus:ring-primary/10 shadow-sm transition-all"
-                    >
-                      <option value="">（なし）</option>
-                      {TAG_LANGUAGES.map((l) => <option key={l} value={l}>{l}</option>)}
-                    </select>
-                  </div>
-                </div>
-              )}
-          </div>
-        </div>
+        {/* Tag Selection — removed (tag functionality no longer needed) */}
       </div>
     );
   };
