@@ -27,6 +27,7 @@ import {
   type Item, type ShelfKey, type ShelfData, type CartLayoutV2,
   type TagData, type ShelfLayoutType, type NoteLine,
   makeInitialCartLayoutV2, makeDefaultShelf, filledCountV2, maxCountV2,
+  getPublicationDisplayName,
 } from "@/lib/supabase";
 // Heavy export libs are loaded on-demand inside handlers to reduce initial bundle size
 
@@ -3200,7 +3201,9 @@ export default function CartEditor() {
                             </tr>
                             {/* Shelves */}
                             {layout.shelves.map((shelf, sIdx) => {
-                              const shelfItems = shelf.items.map(itemId => itemId ? itemMap[itemId] : null).filter((it): it is Item => Boolean(it));
+                              const shelfItems = (shelf.items.map(itemId => itemId ? itemMap[itemId] : null).filter(Boolean) as Item[]);
+                              const uniqueItemIds = new Set(shelfItems.map(it => it.id));
+                              const isMultiItemOnShelf = uniqueItemIds.size > 1;
                               const hasItems = shelfItems.length > 0;
                               
                               // Get unique languages of items on this shelf
@@ -3237,10 +3240,11 @@ export default function CartEditor() {
                                         <div className="flex flex-row flex-nowrap gap-x-3 w-full">
                                           {uniqueSlots.map(({ item, slotIndex }) => {
                                             if (!item) return null;
-                                            const formattedName = formatPublicationTitle(item.name);
+                                            const displayName = getPublicationDisplayName(item, isMultiItemOnShelf);
+                                            const formattedName = formatPublicationTitle(displayName);
                                             return (
                                               <div key={slotIndex} className="flex flex-col min-w-0 flex-1">
-                                                <div className="font-bold text-foreground leading-normal text-[10px] truncate pb-0.5" title={item.name}>{formattedName}</div>
+                                                <div className="font-bold text-foreground leading-normal text-[10px] truncate pb-0.5" title={displayName}>{formattedName}</div>
                                                 <div className="relative group/lang inline-block">
                                                   <select
                                                     value={shelf.item_langs?.[slotIndex] || ""}

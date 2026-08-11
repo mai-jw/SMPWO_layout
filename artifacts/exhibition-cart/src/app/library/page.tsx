@@ -28,6 +28,7 @@ export default function LibraryPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [editShortName, setEditShortName] = useState("");
   const [editCategory, setEditCategory] = useState("");
   const [editLanguage, setEditLanguage] = useState("");
 
@@ -56,6 +57,7 @@ export default function LibraryPage() {
     e.stopPropagation();
     setEditingId(item.id!);
     setEditValue(item.name);
+    setEditShortName(item.short_name || "");
     setEditCategory(item.category);
     setEditLanguage(item.language);
   };
@@ -63,7 +65,7 @@ export default function LibraryPage() {
   const handleSaveEdit = async (id: string) => {
     if (!editValue.trim()) { setEditingId(null); return; }
     try {
-      await updateMutation.mutateAsync({ id, name: editValue, category: editCategory, language: editLanguage });
+      await updateMutation.mutateAsync({ id, name: editValue, short_name: editShortName, category: editCategory, language: editLanguage });
     } catch (err) {
       console.error("Failed to update item:", err);
     }
@@ -303,6 +305,14 @@ export default function LibraryPage() {
                             className="text-xs font-bold text-slate-800 bg-white border border-sky-400 rounded-lg px-2 py-1.5 w-full outline-none"
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
+                            placeholder="登録名"
+                            onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(item.id!); if (e.key === "Escape") setEditingId(null); }}
+                          />
+                          <input
+                            className="text-[11px] font-medium text-slate-700 bg-white border border-slate-200 rounded-lg px-2 py-1 w-full outline-none focus:border-sky-400"
+                            value={editShortName}
+                            onChange={(e) => setEditShortName(e.target.value)}
+                            placeholder="略称 (省略可)"
                             onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(item.id!); if (e.key === "Escape") setEditingId(null); }}
                           />
                           <div className="grid grid-cols-2 gap-1">
@@ -347,9 +357,14 @@ export default function LibraryPage() {
                         </div>
                       ) : (
                         <div className="flex-1 flex flex-col min-w-0">
-                          <p className="text-xs font-bold text-slate-800 truncate leading-tight mb-1.5" title={item.name}>
+                          <p className="text-xs font-bold text-slate-800 truncate leading-tight mb-0.5" title={item.name}>
                             {item.name}
                           </p>
+                          {item.short_name && (
+                            <p className="text-[10px] text-slate-500 font-medium truncate mb-1" title={`略称: ${item.short_name}`}>
+                              略称: {item.short_name}
+                            </p>
+                          )}
                           <div className="flex flex-wrap gap-1 mt-auto">
                             <span className="text-[10px] font-bold bg-slate-100 text-slate-600 rounded px-1.5 py-0.5 uppercase truncate">
                               {GALLERY_FILTER_LABELS[item.category as GalleryFilterType] || item.category}

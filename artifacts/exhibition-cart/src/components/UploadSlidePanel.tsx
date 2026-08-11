@@ -25,6 +25,7 @@ interface StagedFile {
   file: File;
   preview: string;
   name: string;
+  short_name?: string;
   category: string;
   language: string;
   status: UploadStatus;
@@ -49,6 +50,7 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
         file,
         preview: URL.createObjectURL(file),
         name: file.name.split('.').slice(0, -1).join('.'),
+        short_name: "",
         category,
         language,
         status: "idle" as UploadStatus,
@@ -100,6 +102,7 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
           category: item.category,
           language: item.language,
           customName: item.name,
+          customShortName: item.short_name,
         });
 
         setStagedFiles((prev) =>
@@ -275,23 +278,36 @@ export function UploadSlidePanel({ onClose }: UploadSlidePanelProps) {
 
                           {/* Details */}
                           <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                            <div className="flex justify-between items-center gap-2 group/name relative">
-                              <div className="flex-1 flex items-center gap-1.5 min-w-0">
-                                <Pencil className="w-3 h-3 text-slate-400 shrink-0" />
+                            <div className="flex flex-col gap-0.5">
+                              <div className="flex justify-between items-center gap-2 group/name relative">
+                                <div className="flex-1 flex items-center gap-1.5 min-w-0">
+                                  <Pencil className="w-3 h-3 text-slate-400 shrink-0" />
+                                  <input
+                                    type="text"
+                                    value={file.name}
+                                    onChange={(e) => updateFileMeta(file.id, "name", e.target.value)}
+                                    disabled={file.status !== "idle" && file.status !== "error"}
+                                    className="font-bold text-xs text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-primary focus:outline-none w-full truncate transition-colors"
+                                    placeholder="登録名を入力..."
+                                  />
+                                </div>
+                                {file.status === "idle" && (
+                                  <button onClick={() => removeFile(file.id)} className="text-slate-400 hover:text-red-500 p-1 rounded-md shrink-0">
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 pl-4 min-w-0">
+                                <span className="text-[10px] text-slate-400 font-bold shrink-0">略称:</span>
                                 <input
                                   type="text"
-                                  value={file.name}
-                                  onChange={(e) => updateFileMeta(file.id, "name", e.target.value)}
+                                  value={file.short_name || ""}
+                                  onChange={(e) => updateFileMeta(file.id, "short_name", e.target.value)}
                                   disabled={file.status !== "idle" && file.status !== "error"}
-                                  className="font-bold text-xs text-slate-900 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-primary focus:outline-none w-full truncate transition-colors"
-                                  placeholder="名前を入力..."
+                                  className="text-[11px] font-medium text-slate-700 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-primary focus:outline-none w-full truncate transition-colors"
+                                  placeholder="略称 (省略可)"
                                 />
                               </div>
-                              {file.status === "idle" && (
-                                <button onClick={() => removeFile(file.id)} className="text-slate-400 hover:text-red-500 p-1 rounded-md shrink-0">
-                                  <X className="w-4 h-4" />
-                                </button>
-                              )}
                             </div>
 
                             <div className="flex flex-wrap gap-2 mt-1">

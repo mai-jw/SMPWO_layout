@@ -39,12 +39,33 @@ export const LAYOUTS_TABLE = "layouts";
 export interface Item {
   id?: string;
   name: string;
+  short_name?: string;
   url: string;
   category: string;
   language: string;
   poster_type?: string;
   created_at?: string;
 }
+
+/**
+ * Determines the display name for a publication item in detailed summary tables.
+ * - If only 1 type of item is on the shelf (isMultiItemOnShelf === false), use registered name (name).
+ * - If multiple types of items are on the shelf (isMultiItemOnShelf === true) AND short_name is present and shorter than registered name, use short_name.
+ * - Otherwise fallback to registered name (name).
+ */
+export function getPublicationDisplayName(item: Item | null | undefined, isMultiItemOnShelf: boolean): string {
+  if (!item) return "—";
+  if (
+    isMultiItemOnShelf &&
+    item.short_name &&
+    item.short_name.trim().length > 0 &&
+    item.short_name.trim().length < item.name.trim().length
+  ) {
+    return item.short_name.trim();
+  }
+  return item.name;
+}
+
 
 /* ─── Cart Layout V2 ─── */
 export type ShelfLayoutType = "booklet" | "booklet_doc" | "document" | "pamphlet" | "bible" | "none";

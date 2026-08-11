@@ -26,6 +26,9 @@ export function useItems() {
         name: item.name
           ? item.name.replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/g, "").trim()
           : item.name,
+        short_name: item.short_name
+          ? item.short_name.replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/g, "").trim()
+          : item.short_name,
       }));
 
       return normalized;
@@ -39,6 +42,7 @@ export interface UploadItemPayload {
   category: string;
   language: string;
   customName?: string;
+  customShortName?: string;
   poster_type?: string;
 }
 
@@ -46,7 +50,7 @@ export function useUploadItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ file, category, language, customName, poster_type }: UploadItemPayload) => {
+    mutationFn: async ({ file, category, language, customName, customShortName, poster_type }: UploadItemPayload) => {
       // 1. Generate safe unique filename
       const ext = file.name.split(".").pop() || "bin";
       const fileName = `${Date.now()}-${uuidv4()}.${ext}`;
@@ -82,6 +86,7 @@ export function useUploadItem() {
         .insert([
           {
             name: displayName,
+            short_name: customShortName ? customShortName.trim() : undefined,
             url: publicUrlData.publicUrl,
             category,
             language,
@@ -150,9 +155,10 @@ export function useUpdateItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, name, category, language, poster_type }: { id: string; name?: string; category?: string; language?: string; poster_type?: string }) => {
+    mutationFn: async ({ id, name, short_name, category, language, poster_type }: { id: string; name?: string; short_name?: string; category?: string; language?: string; poster_type?: string }) => {
       const updates: any = {};
       if (name !== undefined) updates.name = name;
+      if (short_name !== undefined) updates.short_name = short_name;
       if (category !== undefined) updates.category = category;
       if (language !== undefined) updates.language = language;
       if (poster_type !== undefined) updates.poster_type = poster_type;
@@ -213,6 +219,7 @@ export function useCopyItem() {
         .insert([
           {
             name: `${item.name} (コピー)`,
+            short_name: item.short_name,
             url: publicUrlData.publicUrl,
             category: item.category,
             language: item.language,
