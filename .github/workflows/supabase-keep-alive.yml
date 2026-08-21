@@ -2,8 +2,8 @@ name: Supabase Keep Alive
 
 on:
   schedule:
-    # 3日ごとの午前0時(UTC)に実行
-    - cron: '0 0 */3 * *'
+    # 毎日午前1時(UTC)に実行（Supabaseの7日間非アクティブpauseを防ぐため）
+    - cron: '0 1 * * *'
   workflow_dispatch: # GitHub UIから手動で実行できるようにする
 
 jobs:
@@ -12,6 +12,7 @@ jobs:
     steps:
       - name: Ping Supabase API
         run: |
-          curl -i -s -S -X GET "https://dugmuhbuujmfwmdehgdt.supabase.co/rest/v1/" \
+          curl --fail -s -S -X GET "https://dugmuhbuujmfwmdehgdt.supabase.co/rest/v1/" \
             -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1Z211aGJ1dWptZndtZGVoZ2R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NDQ3MzYsImV4cCI6MjA5MDQyMDczNn0.GWeuAnAIVPRYhanjrgdcKxcL5mdCvzo6sMeQA0HlkyI" \
             -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1Z211aGJ1dWptZndtZGVoZ2R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NDQ3MzYsImV4cCI6MjA5MDQyMDczNn0.GWeuAnAIVPRYhanjrgdcKxcL5mdCvzo6sMeQA0HlkyI"
+          echo "✅ Supabase ping successful"
