@@ -1565,7 +1565,6 @@ export default function CartEditor() {
         logging: false,
         backgroundColor: "#ffffff",
         windowWidth: version === "with-info" ? 1180 : 820,
-        windowHeight: version === "with-info" ? 900 : 1458,
         onclone: (clonedDoc) => {
           const exportStyle = clonedDoc.createElement("style");
           exportStyle.innerHTML = [
@@ -1718,7 +1717,8 @@ export default function CartEditor() {
             clonedContainer.style.setProperty("display", "block", "important");
           } else {
             clonedContainer.style.setProperty("width", "820px", "important");
-            clonedContainer.style.setProperty("height", "1458px", "important");
+            clonedContainer.style.setProperty("min-height", "1458px", "important");
+            clonedContainer.style.setProperty("height", "auto", "important");
             clonedContainer.style.setProperty("display", "flex", "important");
             clonedContainer.style.setProperty("flex-direction", "column", "important");
             clonedContainer.style.setProperty("align-items", "center", "important");
@@ -1994,9 +1994,10 @@ export default function CartEditor() {
             });
           }
 
-          clonedContainer.style.setProperty("height", version === "with-info" ? "auto" : "1458px", "important");
+          clonedContainer.style.setProperty("min-height", version === "with-info" ? "auto" : "1458px", "important");
+          clonedContainer.style.setProperty("height", "auto", "important");
           clonedContainer.style.setProperty("background-color", "#ffffff", "important");
-          clonedContainer.style.setProperty("padding", version === "with-info" ? "40px 40px 60px" : "40px 40px 40px", "important");
+          clonedContainer.style.setProperty("padding", version === "with-info" ? "40px 40px 60px" : "40px 40px 50px", "important");
           clonedContainer.style.setProperty("margin", "0", "important");
         }
       });
