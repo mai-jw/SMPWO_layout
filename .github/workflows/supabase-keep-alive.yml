@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Ping Supabase API
         run: |
-          curl --fail -s -S -X GET "https://dugmuhbuujmfwmdehgdt.supabase.co/rest/v1/" \
+          curl --fail -s -S -X GET "https://dugmuhbuujmfwmdehgdt.supabase.co/rest/v1/items?select=id&limit=1" \
             -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1Z211aGJ1dWptZndtZGVoZ2R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NDQ3MzYsImV4cCI6MjA5MDQyMDczNn0.GWeuAnAIVPRYhanjrgdcKxcL5mdCvzo6sMeQA0HlkyI" \
             -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1Z211aGJ1dWptZndtZGVoZ2R0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NDQ3MzYsImV4cCI6MjA5MDQyMDczNn0.GWeuAnAIVPRYhanjrgdcKxcL5mdCvzo6sMeQA0HlkyI"
           echo "✅ Supabase ping successful"
