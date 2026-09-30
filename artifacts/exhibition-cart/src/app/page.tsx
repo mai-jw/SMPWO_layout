@@ -1586,6 +1586,7 @@ export default function CartEditor() {
             const selectedText = getDisplayLangLabel(select.options[select.selectedIndex]?.text || "");
             const span = clonedDoc.createElement('span');
             span.textContent = selectedText;
+            span.className = "export-lang-label";
             
             // Basic styles to match the table's red bold text
             span.style.color = "#dc2626";
@@ -1756,8 +1757,8 @@ export default function CartEditor() {
               cartWrapper.style.setProperty("gap", "0px", "important");
               Array.from(cartWrapper.children).forEach((kid: any, i: number) => {
                 // i=0: CartA — shift right 30px
-                // i=1: CartB — -80px shifts CartB 20px left to prevent overlapping/improve offset
-                kid.style.setProperty("margin-left", i === 0 ? "30px" : "-80px", "important");
+                // i=1: CartB — -92px shifts CartB slightly left toward CartA
+                kid.style.setProperty("margin-left", i === 0 ? "30px" : "-92px", "important");
               });
             }
 
@@ -1904,7 +1905,7 @@ export default function CartEditor() {
               // Restore full name from title attribute
               const originalName = el.getAttribute("title") || el.textContent || "";
               const tr = el.closest("tr");
-              const isPoster = tr ? tr.previousElementSibling === null : false;
+              const isPoster = tr ? (tr.previousElementSibling === null || tr.parentElement?.firstElementChild === tr) : false;
 
               if (originalName && originalName !== "—") {
                 let titleText = isPoster ? originalName : formatPublicationTitle(originalName);
@@ -1930,7 +1931,7 @@ export default function CartEditor() {
               el.style.setProperty("line-height", "30px", "important");
               el.style.setProperty("height", "auto", "important");
               el.style.setProperty("white-space", "nowrap", "important");
-              el.style.setProperty("text-align", "left", "important");
+              el.style.setProperty("text-align", isPoster ? "center" : "left", "important");
               el.style.setProperty("letter-spacing", "0px", "important");
               el.style.setProperty("word-spacing", "0px", "important");
               el.style.setProperty("word-break", "break-all", "important");
@@ -1939,6 +1940,9 @@ export default function CartEditor() {
               // Allow poster title full width without truncation
               if (isPoster) {
                 el.style.setProperty("max-width", "none", "important");
+                el.style.setProperty("width", "100%", "important");
+                el.style.setProperty("margin-left", "auto", "important");
+                el.style.setProperty("margin-right", "auto", "important");
                 el.style.setProperty("overflow", "visible", "important");
                 el.style.setProperty("text-overflow", "clip", "important");
               } else {
@@ -1954,12 +1958,52 @@ export default function CartEditor() {
               el.style.setProperty("padding-bottom", "6px", "important");
             });
 
-            // Language label (span / select)
-            finalSummaryDiv.querySelectorAll("td:not(:first-child) span").forEach((el: any) => {
+            // Center poster title and language precisely to match Cart A and Cart B center lines
+            cols.forEach((col: any, colIdx: number) => {
+              const posterTr = col.querySelector("tr:first-child");
+              if (posterTr) {
+                const posterTd = posterTr.querySelector("td:not(:first-child)");
+                if (posterTd) {
+                  posterTd.style.setProperty("text-align", "center", "important");
+                  // Cart A (colIdx === 0): shelf slots offset is 2px -> align poster to exact same center line
+                  // Cart B (colIdx === 1): shelf slot 2 offset is 6px (center +3px) -> align poster to exact same center line
+                  posterTd.style.setProperty("margin-left", colIdx === 0 ? "2px" : "3px", "important");
+                  
+                  const posterTitle = posterTd.querySelector("div.font-bold");
+                  if (posterTitle) {
+                    posterTitle.style.setProperty("text-align", "center", "important");
+                    posterTitle.style.setProperty("width", "100%", "important");
+                    posterTitle.style.setProperty("margin-left", "auto", "important");
+                    posterTitle.style.setProperty("margin-right", "auto", "important");
+                  }
+
+                  const langContainer = posterTd.querySelector("div.flex");
+                  if (langContainer) {
+                    langContainer.style.setProperty("display", "flex", "important");
+                    langContainer.style.setProperty("justify-content", "center", "important");
+                    langContainer.style.setProperty("align-items", "center", "important");
+                    langContainer.style.setProperty("width", "100%", "important");
+                    langContainer.style.setProperty("margin-left", "auto", "important");
+                    langContainer.style.setProperty("margin-right", "auto", "important");
+                    langContainer.style.setProperty("text-align", "center", "important");
+                  }
+
+                  const langLabel = posterTd.querySelector(".export-lang-label");
+                  if (langLabel) {
+                    langLabel.style.setProperty("text-align", "center", "important");
+                  }
+                }
+              }
+            });
+
+            // Language label (span / select) - ONLY style .export-lang-label so title character spans are not corrupted
+            finalSummaryDiv.querySelectorAll(".export-lang-label").forEach((el: any) => {
               el.classList.remove("text-[10px]", "text-[11px]", "text-xs", "text-sm", "text-md");
               el.style.setProperty("font-size", "17px", "important");
               el.style.setProperty("line-height", "22px", "important");
               el.style.setProperty("display", "inline-block", "important");
+              el.style.setProperty("color", "#dc2626", "important");
+              el.style.setProperty("font-weight", "bold", "important");
               el.style.setProperty("overflow", "visible", "important");
               el.style.setProperty("white-space", "nowrap", "important");
               el.style.setProperty("margin-top", "-2px", "important");
@@ -3174,9 +3218,9 @@ export default function CartEditor() {
                             {/* Poster */}
                             <tr className="border-t border-slate-300">
                               <td className={`w-14 py-1.5 pr-2 font-bold text-slate-500 align-top whitespace-nowrap ${id === "B" ? "hidden" : ""}`}>ポスター</td>
-                              <td className="py-1.5">
-                                <div className="font-bold text-foreground" title={posterItem?.name || ""}>{formatPublicationTitle(posterItem?.name)}</div>
-                                <div className="flex gap-3 mt-0.5">
+                              <td className="py-1.5 text-center">
+                                <div className="font-bold text-foreground text-center w-full" title={posterItem?.name || ""}>{formatPublicationTitle(posterItem?.name)}</div>
+                                <div className="flex justify-center gap-3 mt-0.5 w-full">
                                   {posterItem && (
                                     <>
                                       <div className="relative group/lang inline-block">
