@@ -1757,8 +1757,8 @@ export default function CartEditor() {
               cartWrapper.style.setProperty("gap", "0px", "important");
               Array.from(cartWrapper.children).forEach((kid: any, i: number) => {
                 // i=0: CartA — shift right 30px
-                // i=1: CartB — -92px shifts CartB slightly left toward CartA
-                kid.style.setProperty("margin-left", i === 0 ? "30px" : "-92px", "important");
+                // i=1: CartB — -91px shifts CartB 1px away from CartA
+                kid.style.setProperty("margin-left", i === 0 ? "30px" : "-91px", "important");
               });
             }
 
@@ -1908,22 +1908,23 @@ export default function CartEditor() {
               const isPoster = tr ? (tr.previousElementSibling === null || tr.parentElement?.firstElementChild === tr) : false;
 
               if (originalName && originalName !== "—") {
-                let titleText = isPoster ? originalName : formatPublicationTitle(originalName);
-                
-                // Only remove special/invisible Unicode whitespace (full-width space, NBSP etc.)
-                // Preserve intentional ASCII half-width spaces (e.g. after ？ in poster titles)
-                titleText = titleText.replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/g, "").trim();
-                
-                // Wrap each character in its own <span> so html2canvas cannot insert
-                // word-segmentation spaces between Japanese word boundaries (e.g. 頼れる|もの)
-                el.innerHTML = "";
-                for (const ch of titleText) {
-                  const s = el.ownerDocument.createElement("span");
-                  s.textContent = ch;
-                  s.style.setProperty("display", "inline", "important");
-                  s.style.setProperty("word-spacing", "0", "important");
-                  s.style.setProperty("letter-spacing", "0", "important");
-                  el.appendChild(s);
+                if (isPoster) {
+                  // For poster title: keep intact as textContent to avoid span-splitting space kerning issues
+                  el.textContent = originalName.trim();
+                } else {
+                  let titleText = formatPublicationTitle(originalName);
+                  titleText = titleText.replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/g, "").trim();
+                  
+                  // Wrap each character in its own <span> for shelf items to prevent Japanese word-segmentation spacing
+                  el.innerHTML = "";
+                  for (const ch of titleText) {
+                    const s = el.ownerDocument.createElement("span");
+                    s.textContent = ch;
+                    s.style.setProperty("display", "inline", "important");
+                    s.style.setProperty("word-spacing", "0", "important");
+                    s.style.setProperty("letter-spacing", "0", "important");
+                    el.appendChild(s);
+                  }
                 }
               }
 
@@ -1958,44 +1959,6 @@ export default function CartEditor() {
               el.style.setProperty("padding-bottom", "6px", "important");
             });
 
-            // Center poster title and language precisely to match Cart A and Cart B center lines
-            cols.forEach((col: any, colIdx: number) => {
-              const posterTr = col.querySelector("tr:first-child");
-              if (posterTr) {
-                const posterTd = posterTr.querySelector("td:not(:first-child)");
-                if (posterTd) {
-                  posterTd.style.setProperty("text-align", "center", "important");
-                  // Cart A (colIdx === 0): shelf slots offset is 2px -> align poster to exact same center line
-                  // Cart B (colIdx === 1): shelf slot 2 offset is 6px (center +3px) -> align poster to exact same center line
-                  posterTd.style.setProperty("margin-left", colIdx === 0 ? "2px" : "3px", "important");
-                  
-                  const posterTitle = posterTd.querySelector("div.font-bold");
-                  if (posterTitle) {
-                    posterTitle.style.setProperty("text-align", "center", "important");
-                    posterTitle.style.setProperty("width", "100%", "important");
-                    posterTitle.style.setProperty("margin-left", "auto", "important");
-                    posterTitle.style.setProperty("margin-right", "auto", "important");
-                  }
-
-                  const langContainer = posterTd.querySelector("div.flex");
-                  if (langContainer) {
-                    langContainer.style.setProperty("display", "flex", "important");
-                    langContainer.style.setProperty("justify-content", "center", "important");
-                    langContainer.style.setProperty("align-items", "center", "important");
-                    langContainer.style.setProperty("width", "100%", "important");
-                    langContainer.style.setProperty("margin-left", "auto", "important");
-                    langContainer.style.setProperty("margin-right", "auto", "important");
-                    langContainer.style.setProperty("text-align", "center", "important");
-                  }
-
-                  const langLabel = posterTd.querySelector(".export-lang-label");
-                  if (langLabel) {
-                    langLabel.style.setProperty("text-align", "center", "important");
-                  }
-                }
-              }
-            });
-
             // Language label (span / select) - ONLY style .export-lang-label so title character spans are not corrupted
             finalSummaryDiv.querySelectorAll(".export-lang-label").forEach((el: any) => {
               el.classList.remove("text-[10px]", "text-[11px]", "text-xs", "text-sm", "text-md");
@@ -2013,6 +1976,68 @@ export default function CartEditor() {
               el.classList.remove("text-[10px]", "text-[11px]", "text-xs", "text-sm", "text-md");
               el.style.setProperty("font-size", "17px", "important");
               el.style.setProperty("line-height", "22px", "important");
+            });
+
+            // Center poster title and language precisely to match Cart A and Cart B center lines (between the 2 magazine slots)
+            cols.forEach((col: any) => {
+              const allTrs = Array.from(col.querySelectorAll("tr"));
+              const posterTr = allTrs[0] as HTMLElement | undefined;
+              if (posterTr) {
+                const posterTd = posterTr.querySelector("td:not(:first-child)") as HTMLElement | null;
+                if (posterTd) {
+                  posterTd.style.setProperty("text-align", "center", "important");
+                  posterTd.style.setProperty("vertical-align", "top", "important");
+                  posterTd.style.setProperty("padding-left", "2px", "important");
+                  posterTd.style.setProperty("padding-right", "2px", "important");
+                  
+                  // Poster Title (preserve exact title rendering without alteration)
+                  const posterTitle = posterTd.querySelector("div.font-bold") as HTMLElement | null;
+                  if (posterTitle) {
+                    posterTitle.style.setProperty("display", "block", "important");
+                    posterTitle.style.setProperty("text-align", "center", "important");
+                    posterTitle.style.setProperty("width", "100%", "important");
+                    posterTitle.style.setProperty("margin", "0 auto", "important");
+                    posterTitle.style.setProperty("padding", "0", "important");
+                    posterTitle.style.setProperty("position", "static", "important");
+                    posterTitle.style.setProperty("letter-spacing", "0px", "important");
+                    posterTitle.style.setProperty("word-spacing", "0px", "important");
+                  }
+
+                  // Extract language text and recreate a single, pure, clean block div directly under posterTd
+                  const langLabelEl = posterTd.querySelector(".export-lang-label, select") as HTMLElement | null;
+                  const langText = langLabelEl ? (langLabelEl.textContent || "").trim() : "";
+                  
+                  // Remove old language wrapper divs
+                  Array.from(posterTd.children).forEach((child: HTMLElement) => {
+                    if (child !== posterTitle) {
+                      posterTd.removeChild(child);
+                    }
+                  });
+
+                  // Append single clean language div directly under posterTd (same centering mechanism as title)
+                  if (langText && langText !== "—") {
+                    const langDiv = posterTd.ownerDocument.createElement("div");
+                    langDiv.textContent = langText;
+                    langDiv.style.cssText = [
+                      "display: block !important;",
+                      "width: 100% !important;",
+                      "text-align: center !important;",
+                      "margin: 0px auto 0px auto !important;",
+                      "padding: 0 !important;",
+                      "color: #dc2626 !important;",
+                      "font-weight: bold !important;",
+                      "font-size: 17px !important;",
+                      "line-height: 22px !important;",
+                      "white-space: nowrap !important;",
+                      "position: static !important;",
+                      "letter-spacing: 0px !important;",
+                      "word-spacing: 0px !important;",
+                      "font-feature-settings: 'palt' 0 !important;",
+                    ].join(" ");
+                    posterTd.appendChild(langDiv);
+                  }
+                }
+              }
             });
           }
 
@@ -3220,10 +3245,10 @@ export default function CartEditor() {
                               <td className={`w-14 py-1.5 pr-2 font-bold text-slate-500 align-top whitespace-nowrap ${id === "B" ? "hidden" : ""}`}>ポスター</td>
                               <td className="py-1.5 text-center">
                                 <div className="font-bold text-foreground text-center w-full" title={posterItem?.name || ""}>{formatPublicationTitle(posterItem?.name)}</div>
-                                <div className="flex justify-center gap-3 mt-0.5 w-full">
+                                <div className="text-center mt-0.5 w-full">
                                   {posterItem && (
                                     <>
-                                      <div className="relative group/lang inline-block">
+                                      <div className="relative group/lang inline-block text-center">
                                         <select
                                           value={layout.posterLang || ""}
                                           onChange={(e) => handleLangOverride(id, "poster", undefined, undefined, e.target.value || undefined)}
