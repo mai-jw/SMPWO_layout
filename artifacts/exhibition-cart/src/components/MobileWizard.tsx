@@ -25,8 +25,10 @@ import {
   FileText,
   SortAsc,
   Lock,
-  LockOpen
+  LockOpen,
+  Library
 } from "lucide-react";
+import { LeftGallery } from "@/components/LeftGallery";
 import { 
   CartId, 
   ActiveTarget,
@@ -78,8 +80,8 @@ interface MobileWizardProps {
   loadLayoutForEdit: (targetPeriod: string) => void;
   saveStatus: "idle" | "saving" | "saved" | "error";
   exporting: "png" | "pdf" | "xlsx" | null;
-  step: "menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete" | "cart-preview";
-  setStep: (s: "menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete" | "cart-preview") => void;
+  step: "menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete" | "cart-preview" | "library";
+  setStep: (s: "menu" | "new" | "edit" | "preview" | "select-edit" | "select-delete" | "cart-preview" | "library") => void;
   newMonth: number;
   setNewMonth: (m: number) => void;
   newHalf: "前半" | "後半";
@@ -246,7 +248,7 @@ export function MobileWizard({
               </div>
             </div>
 
-            <div className="flex-1 px-8 -mt-6 relative z-20 space-y-4 pb-8 overflow-hidden">
+            <div className="flex-1 px-8 -mt-6 relative z-20 space-y-4 pb-8 overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <MenuCard 
                   icon={<Plus className="w-8 h-8" />} 
@@ -268,6 +270,14 @@ export function MobileWizard({
                 desc="現在のレイアウトを確認"
                 color={COLORS.peach}
                 onClick={() => setStep("cart-preview")}
+              />
+              <MenuCard 
+                wide
+                icon={<Library className="w-8 h-8" />} 
+                title="ライブラリ" 
+                desc="登録画像の閲覧・編集・検索"
+                color={COLORS.white}
+                onClick={() => setStep("library")}
               />
               <MenuCard 
                 wide
@@ -976,6 +986,29 @@ export function MobileWizard({
                     </button>
                  ));
                })()}
+            </div>
+          </motion.div>
+        )}
+
+        {step === "library" && (
+          <motion.div 
+            key="library" 
+            initial={{ x: "100%" }} 
+            animate={{ x: 0 }} 
+            exit={{ x: "-100%" }} 
+            className="flex flex-col h-full bg-cream overflow-hidden"
+          >
+            <WizardHeader title="ライブラリ" onBack={() => setStep("menu")} />
+            <div className="flex-1 overflow-hidden">
+              <LeftGallery 
+                items={items} 
+                onOpenUpload={onOpenUpload} 
+                cartA={cartA}
+                setCartA={setCartA}
+                cartB={cartB}
+                setCartB={setCartB}
+                onClose={() => setStep("menu")}
+              />
             </div>
           </motion.div>
         )}
