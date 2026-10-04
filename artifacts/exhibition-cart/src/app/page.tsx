@@ -60,13 +60,28 @@ const getDisplayLangLabel = (lang?: string | null): string => {
   return "外国語";
 };
 
+const getLibraryLangLabel = (lang?: string | null): string => {
+  if (!lang || lang === "—") return "—";
+  const found = LANG_FILTER_OPTIONS.find((o) => o.key === lang || o.label === lang);
+  if (found && found.key !== "all" && found.key !== "foreign") {
+    return found.label;
+  }
+  return lang;
+};
+
 const formatPublicationTitle = (name?: string | null): string => {
   if (!name || name === "—") return "—";
-  const match = name.match(/[\s　]/);
+  // First, remove accidental spaces inserted between Japanese characters by browsers/fonts
+  const cleaned = name
+    .replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/g, "")
+    .replace(/([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９A-Za-z])\s+([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９])/g, "$1$2")
+    .replace(/([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９])\s+([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９A-Za-z])/g, "$1$2");
+  // Then split at the first remaining intentional space (e.g. "孤独感 どうしたらいい?" → "孤独感")
+  const match = cleaned.match(/[\s　]/);
   if (match && match.index !== undefined && match.index > 0) {
-    return name.slice(0, match.index);
+    return cleaned.slice(0, match.index);
   }
-  return name;
+  return cleaned;
 };
 
 /* ═══════════════════════════════════════════════════════
@@ -1578,12 +1593,30 @@ export default function CartEditor() {
             "  text-rendering: optimizeSpeed !important;",
             "  font-variant-ligatures: none !important;",
             "}",
+            "#export-summary-table div.font-bold span {",
+            "  display: inline !important;",
+            "  word-spacing: 0px !important;",
+            "  letter-spacing: 0px !important;",
+            "  margin: 0px !important;",
+            "  padding: 0px !important;",
+            "}",
           ].join("\n");
           clonedDoc.head.appendChild(exportStyle);
 
           // Fix for select elements not rendering selected value in html2canvas
           clonedDoc.querySelectorAll('select').forEach(select => {
-            const selectedText = getDisplayLangLabel(select.options[select.selectedIndex]?.text || "");
+            const tr = select.closest("tr");
+            const isPosterSelect = !!tr && (
+              tr.previousElementSibling === null ||
+              tr.parentElement?.firstElementChild === tr ||
+              !!tr.querySelector("td:first-child")?.textContent?.includes("ポスター")
+            );
+
+            const rawSelectedText = select.options[select.selectedIndex]?.text || "";
+            const selectedText = isPosterSelect
+              ? getLibraryLangLabel(rawSelectedText)
+              : getDisplayLangLabel(rawSelectedText);
+
             const span = clonedDoc.createElement('span');
             span.textContent = selectedText;
             span.className = "export-lang-label";
@@ -1908,23 +1941,36 @@ export default function CartEditor() {
               const isPoster = tr ? (tr.previousElementSibling === null || tr.parentElement?.firstElementChild === tr) : false;
 
               if (originalName && originalName !== "—") {
-                if (isPoster) {
-                  // For poster title: keep intact as textContent to avoid span-splitting space kerning issues
-                  el.textContent = originalName.trim();
-                } else {
-                  let titleText = formatPublicationTitle(originalName);
-                  titleText = titleText.replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/g, "").trim();
-                  
-                  // Wrap each character in its own <span> for shelf items to prevent Japanese word-segmentation spacing
-                  el.innerHTML = "";
-                  for (const ch of titleText) {
-                    const s = el.ownerDocument.createElement("span");
+                // Determine title string (poster keeps full name, shelf uses shortened title)
+                let titleText = isPoster ? originalName.trim() : formatPublicationTitle(originalName);
+
+                // Clean spaces: remove all Unicode whitespace, fullwidth spaces
+                titleText = titleText
+                  .replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/g, "")
+                  .replace(/ +/g, " ");
+
+                // Remove all spaces between Japanese characters (e.g. "孤独 感 どう したら いい ？" -> "孤独感どうしたらいい？")
+                while (/([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９])\s+([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９])/.test(titleText)) {
+                  titleText = titleText.replace(/([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９])\s+([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９])/g, "$1$2");
+                }
+                titleText = titleText.trim();
+
+                // Wrap each character in its own <span> for BOTH poster and shelf items.
+                // This prevents html2canvas from tokenizing Japanese words and inserting word-segmentation gaps.
+                el.innerHTML = "";
+                for (const ch of titleText) {
+                  const s = el.ownerDocument.createElement("span");
+                  if (ch === " ") {
+                    s.innerHTML = "&nbsp;";
+                  } else {
                     s.textContent = ch;
-                    s.style.setProperty("display", "inline", "important");
-                    s.style.setProperty("word-spacing", "0", "important");
-                    s.style.setProperty("letter-spacing", "0", "important");
-                    el.appendChild(s);
                   }
+                  s.style.setProperty("display", "inline", "important");
+                  s.style.setProperty("word-spacing", "0px", "important");
+                  s.style.setProperty("letter-spacing", "0px", "important");
+                  s.style.setProperty("margin", "0px", "important");
+                  s.style.setProperty("padding", "0px", "important");
+                  el.appendChild(s);
                 }
               }
 
@@ -3244,7 +3290,7 @@ export default function CartEditor() {
                             <tr className="border-t border-slate-300">
                               <td className={`w-14 py-1.5 pr-2 font-bold text-slate-500 align-top whitespace-nowrap ${id === "B" ? "hidden" : ""}`}>ポスター</td>
                               <td className="py-1.5 text-center">
-                                <div className="font-bold text-foreground text-center w-full" title={posterItem?.name || ""}>{formatPublicationTitle(posterItem?.name)}</div>
+                                <div className="font-bold text-foreground text-center w-full" title={posterItem?.name || ""}>{posterItem ? posterItem.name : "—"}</div>
                                 <div className="text-center mt-0.5 w-full">
                                   {posterItem && (
                                     <>
@@ -3256,9 +3302,15 @@ export default function CartEditor() {
                                           className={`appearance-none bg-transparent text-red-600 font-bold border-none p-0 m-0 outline-none cursor-pointer hover:bg-red-50 rounded px-1 -mx-1 transition-colors ${isLayoutLocked ? "cursor-not-allowed" : ""}`}
                                           title="表示言語を変更"
                                         >
-                                          <option value="">{getDisplayLangLabel(layout.posterLang ? (LANG_FILTER_OPTIONS.find(o => o.key === layout.posterLang)?.label || layout.posterLang) : (LANG_FILTER_OPTIONS.find(o => o.key === posterItem.language)?.label || posterItem.language))}</option>
-                                          {LANG_FILTER_OPTIONS.filter(o => o.key !== "all").map(opt => (
-                                            <option key={opt.key} value={opt.key}>{getDisplayLangLabel(opt.label)}</option>
+                                          <option value="">
+                                            {getLibraryLangLabel(
+                                              layout.posterLang
+                                                ? (LANG_FILTER_OPTIONS.find((o) => o.key === layout.posterLang)?.label || layout.posterLang)
+                                                : (LANG_FILTER_OPTIONS.find((o) => o.key === posterItem.language)?.label || posterItem.language)
+                                            )}
+                                          </option>
+                                          {LANG_FILTER_OPTIONS.filter((o) => o.key !== "all" && o.key !== "foreign").map((opt) => (
+                                            <option key={opt.key} value={opt.key}>{opt.label}</option>
                                           ))}
                                         </select>
                                       </div>

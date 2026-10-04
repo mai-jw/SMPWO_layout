@@ -49,18 +49,12 @@ export interface Item {
 
 /**
  * Determines the display name for a publication item in detailed summary tables.
- * - If only 1 type of item is on the shelf (isMultiItemOnShelf === false), use registered name (name).
- * - If multiple types of items are on the shelf (isMultiItemOnShelf === true) AND short_name is present and shorter than registered name, use short_name.
- * - Otherwise fallback to registered name (name).
+ * - Always prioritizes library short_name (略称) if present.
+ * - Otherwise fallbacks to registered name (name).
  */
-export function getPublicationDisplayName(item: Item | null | undefined, isMultiItemOnShelf: boolean): string {
+export function getPublicationDisplayName(item: Item | null | undefined, _isMultiItemOnShelf?: boolean): string {
   if (!item) return "—";
-  if (
-    isMultiItemOnShelf &&
-    item.short_name &&
-    item.short_name.trim().length > 0 &&
-    item.short_name.trim().length < item.name.trim().length
-  ) {
+  if (item.short_name && item.short_name.trim().length > 0) {
     return item.short_name.trim();
   }
   return item.name;
