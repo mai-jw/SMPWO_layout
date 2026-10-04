@@ -19,21 +19,11 @@ export function useItems() {
         throw new Error(error.message);
       }
 
-      // Normalize item names: remove special Unicode whitespace, full-width spaces,
-      // and accidental spaces between Japanese characters while preserving intentional ASCII spaces in English
-      const cleanItemText = (text?: string | null): string => {
-        if (!text) return "";
-        return text
-          .replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/g, "")
-          .replace(/([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９A-Za-z])\s+([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９])/g, "$1$2")
-          .replace(/([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９])\s+([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９A-Za-z])/g, "$1$2")
-          .trim();
-      };
-
+      // Normalize item names: preserve user-entered spaces (both half-width and full-width)
       const normalized = (data as Item[]).map((item) => ({
         ...item,
-        name: item.name ? cleanItemText(item.name) : item.name,
-        short_name: item.short_name ? cleanItemText(item.short_name) : item.short_name,
+        name: item.name ? item.name.replace(/[\u00A0\uFEFF]/g, " ").trim() : item.name,
+        short_name: item.short_name ? item.short_name.replace(/[\u00A0\uFEFF]/g, " ").trim() : item.short_name,
       }));
 
       return normalized;

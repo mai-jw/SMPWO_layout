@@ -71,17 +71,7 @@ const getLibraryLangLabel = (lang?: string | null): string => {
 
 const formatPublicationTitle = (name?: string | null): string => {
   if (!name || name === "—") return "—";
-  // First, remove accidental spaces inserted between Japanese characters by browsers/fonts
-  const cleaned = name
-    .replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/g, "")
-    .replace(/([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９A-Za-z])\s+([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９])/g, "$1$2")
-    .replace(/([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９])\s+([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９A-Za-z])/g, "$1$2");
-  // Then split at the first remaining intentional space (e.g. "孤独感 どうしたらいい?" → "孤独感")
-  const match = cleaned.match(/[\s　]/);
-  if (match && match.index !== undefined && match.index > 0) {
-    return cleaned.slice(0, match.index);
-  }
-  return cleaned;
+  return name.trim();
 };
 
 /* ═══════════════════════════════════════════════════════
@@ -1941,35 +1931,33 @@ export default function CartEditor() {
               const isPoster = tr ? (tr.previousElementSibling === null || tr.parentElement?.firstElementChild === tr) : false;
 
               if (originalName && originalName !== "—") {
-                // Determine title string (poster keeps full name, shelf uses shortened title)
+                // Determine title string:
+                // Poster keeps registered full name (never uses short_name).
+                // Shelf uses formatPublicationTitle on originalName (which already reflects short_name if set).
                 let titleText = isPoster ? originalName.trim() : formatPublicationTitle(originalName);
+                // Only replace invisible control characters / NBSP with standard space; preserve user spaces!
+                titleText = titleText.replace(/[\u00A0\uFEFF]/g, " ").trim();
 
-                // Clean spaces: remove all Unicode whitespace, fullwidth spaces
-                titleText = titleText
-                  .replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/g, "")
-                  .replace(/ +/g, " ");
-
-                // Remove all spaces between Japanese characters (e.g. "孤独 感 どう したら いい ？" -> "孤独感どうしたらいい？")
-                while (/([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９])\s+([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９])/.test(titleText)) {
-                  titleText = titleText.replace(/([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９])\s+([ぁ-んァ-ヶー一-龠々〆ヵヶ！？0-9０-９])/g, "$1$2");
-                }
-                titleText = titleText.trim();
-
-                // Wrap each character in its own <span> for BOTH poster and shelf items.
-                // This prevents html2canvas from tokenizing Japanese words and inserting word-segmentation gaps.
+                // Wrap each character (and user-configured spaces) in its own <span>.
+                // This preserves user-entered spaces exactly while preventing html2canvas from
+                // inserting unintended word-segmentation gaps between Japanese characters.
                 el.innerHTML = "";
                 for (const ch of titleText) {
                   const s = el.ownerDocument.createElement("span");
                   if (ch === " ") {
                     s.innerHTML = "&nbsp;";
+                    s.style.setProperty("display", "inline", "important");
+                  } else if (ch === "　") {
+                    s.textContent = "　";
+                    s.style.setProperty("display", "inline", "important");
                   } else {
                     s.textContent = ch;
+                    s.style.setProperty("display", "inline", "important");
+                    s.style.setProperty("word-spacing", "0px", "important");
+                    s.style.setProperty("letter-spacing", "0px", "important");
+                    s.style.setProperty("margin", "0px", "important");
+                    s.style.setProperty("padding", "0px", "important");
                   }
-                  s.style.setProperty("display", "inline", "important");
-                  s.style.setProperty("word-spacing", "0px", "important");
-                  s.style.setProperty("letter-spacing", "0px", "important");
-                  s.style.setProperty("margin", "0px", "important");
-                  s.style.setProperty("padding", "0px", "important");
                   el.appendChild(s);
                 }
               }
